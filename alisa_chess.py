@@ -10,9 +10,9 @@ skill = Skill(__name__)
 
 file_map = {
     # allowed low register only
-    'a': {'a', 'а'},
+    'a': {'a', 'а', 'эй', 'ai'},
     'b': {'b', 'bee', 'б', 'бэ', 'би'},
-    'c': {'c', 'cee', 'ц', 'цэ', 'си'},
+    'c': {'c', 'cee', 'ц', 'цэ', 'си', 'с'},
     'd': {'ld', 'dee', 'д', 'дэ', 'ди'},
     'e': {'e', 'е', 'и'},
     'f': {'f', 'ef', 'ф', 'эф'},
@@ -26,7 +26,7 @@ rank_map = {
     '3': {'3', 'three', 'три'},
     '4': {'4', 'four', 'четыре'},
     '5': {'5', 'five', 'пять'},
-    '6': {'6''six', 'шесть'},
+    '6': {'6', 'six', 'шесть'},
     '7': {'7', 'seven', 'семь'},
     '8': {'8', 'eight', 'восемь'}
 }
@@ -42,7 +42,7 @@ piece_map = {
 }
 
 
-def form_move(request):
+def extract_move(request):
     piece = get_piece(request)
     file = get_file(request)
     rank = get_rank(request)
@@ -76,18 +76,17 @@ def get_rank(request):
     return get_key(request, rank_map)
 
 
-def get_move(move_to_say):
-    # try extract valid move from user answer
-    print('get_move started')
-    yield say(f'{move_to_say}. Ваш ход!')
-    print('get_move 2')
+def get_move(move_to_say, comp_move=''):
+    # say the robot move and try extract valid move from user answer
+    yield say(f'{comp_move}. Ваш ход!', tts=f'{move_to_say}. Ваш ход!')
 
     print(request['request']['original_utterance'])
-    move = form_move(request)
+    move = extract_move(request)
     while move is None:
-        yield say('Я вас не поняла. Отвечайте в формате "Конь f3"',
-                  suggest('Слон', 'Конь', 'Ферзь', 'Ладья'))
-        move = form_move(request)
+        yield say(
+            'Я вас не поняла. Отвечайте в формате стандартной нотации. Например: "Конь f3"',
+        )
+        move = extract_move(request)
 
     return str(move)
 
@@ -119,7 +118,10 @@ def run_script():
         print(board)
 
         # get move from user
-        user_move = yield from get_move(move_to_say)
+        user_move = yield from get_move(move_to_say, comp_move)
+        while user_move is None or board.parse_san(user_move) not in board.legal_moves:
+            user_move = yield from get_move(
+                'Невозможный ход. Следующая попытка')
 
         print(user_move)
         # make it on the board
@@ -127,7 +129,7 @@ def run_script():
 
         print(board)
 
-    yield say(f'Игра окончена!', end_session=True)
+    yield say(f'Игра окончена! ', end_session=True)
     engine.quit()
 
 
@@ -186,7 +188,9 @@ def get_check_mate_pron(move_san, lang='ru'):
 
 def get_capture_pron(move_san, lang='ru'):
     captures = {'ru': 'берёт', 'en': 'capture'}
-    return captures.get(lang, '')
+    if 'x' in move_san:
+        return captures.get(lang, '')
+    return ''
 
 
 def say_move(move_san, lang):
