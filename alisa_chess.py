@@ -48,7 +48,7 @@ def extract_move(request):
     rank = get_rank(request)
     print('[piece, file, rank]:', [piece, file, rank])
 
-    if not (len(file) or len(rank)):
+    if not (len(file) and len(rank)):
         return None
 
     return ''.join(filter(None, [piece, file, rank]))
@@ -84,11 +84,21 @@ def get_move(move_to_say, comp_move=''):
     move = extract_move(request)
     while move is None:
         yield say(
-            'Я вас не поняла. Отвечайте в формате стандартной нотации. Например: "Конь f3"',
+            '''Я вас не поняла. Отвечайте в формате стандартной нотации 
+            с названием фигуры. Например: "Конь f3"''',
         )
         move = extract_move(request)
 
     return str(move)
+
+
+def is_move_legal(move, board):
+    try:
+        return board.parse_san(move) in board.legal_moves
+    except ValueError:
+        return False
+    except Exception:
+        raise (Exception)
 
 
 @skill.script
@@ -119,9 +129,9 @@ def run_script():
 
         # get move from user
         user_move = yield from get_move(move_to_say, comp_move)
-        while user_move is None or board.parse_san(user_move) not in board.legal_moves:
+        while not is_move_legal(user_move, board):
             user_move = yield from get_move(
-                'Невозможный ход. Следующая попытка')
+                'Невозможный ход. Попробуйте ещё раз')
 
         print(user_move)
         # make it on the board
