@@ -1,8 +1,13 @@
+import sys
 from flask import Flask
 from alice_scripts import Skill, request, say, suggest
-import config
 import chess.engine
 import chess.pgn
+
+import config
+import game
+import move_extractor
+import speaker
 
 app = Flask(__name__)
 
@@ -233,4 +238,10 @@ def say_hi():
 
 
 if __name__ == "__main__":
-    skill.run(host=config.HOST_IP)
+    if 'win' in str(sys.platform):
+        # it seems this is my win home comp
+        cur_host = config.TEST_IP
+    else:
+        # lets sugget it is production ruvds server
+        cur_host = config.HOST_IP
+    skill.run(host=cur_host)
