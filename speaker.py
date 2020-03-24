@@ -24,6 +24,9 @@ class Speaker(object):
         '0-0-0': {'ru': 'Длинная рокировка', 'en': 'Queenside castling'}
     }
 
+    def __init__(self):
+        pass
+
     def _castling_pron_(self, move_san, lang='ru'):
         res = ''
         castlings = self.castling_names.get(lang, None)
@@ -43,6 +46,9 @@ class Speaker(object):
     def _square_pron_(self, move_san, lang='ru'):
         # returns column pronunciation in specified language + rank (row) as
         # digit 
+        if not move_san:
+            return ''
+
         file = move_san[-2]
         rank = move_san[-1]
         file_pron = self._file_pron_(file, lang)
@@ -57,6 +63,7 @@ class Speaker(object):
             res = piece_name.get(lang, '')
         return res
 
+    @staticmethod
     def _checkmate_pron_(self, move_san, lang='ru'):
         # returns check or mate pronunciation in specified language
         # todo: stalemate pronunciation
@@ -67,7 +74,8 @@ class Speaker(object):
             return self.mate.get(lang, '')
         return res
 
-    def _capture_pron_(self, move_san, lang='ru'):
+    @staticmethod
+    def _capture_pron_(move_san, lang='ru'):
         captures = {'ru': 'берёт', 'en': 'capture'}
         if 'x' in move_san:
             return captures.get(lang, '')

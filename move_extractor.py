@@ -45,6 +45,9 @@ class MoveExtractor(object):
                   'castling long', 'long castling'}
     }
 
+    def __init__(self):
+        pass
+
     def extract_move(self, request):
         # extracting move in SAN from user speech
         castling = self._extract_castling(request)
@@ -56,7 +59,7 @@ class MoveExtractor(object):
         # get piece from request
         piece = self._get_piece_(request)
 
-        square_rex = re.compile(r'[a-ba-я]+ [1-8]', flags=re.IGNORECASE)
+        square_rex = re.compile(r"\w+ [1-8]", flags=re.IGNORECASE)
         command_text = request.command
         squares = re.findall(square_rex, command_text)
 
@@ -64,9 +67,9 @@ class MoveExtractor(object):
             return None
 
         file_to, rank_to = self._get_square(squares[-1])
-        file_from, rank_from = ''
+        file_from, rank_from = '', ''
         if len(squares) > 1:
-            file_from, rank_from = self._get_square(squares[1])
+            file_from, rank_from = self._get_square(squares[0])
 
         # print('[piece, file, rank]:', [piece, file, rank])
 
@@ -85,16 +88,17 @@ class MoveExtractor(object):
                 elem_list = value.split()  # if there are few words in value
                 has_key = len(elem_list) > 0  # true if list is not empty
                 for elem in elem_list:
-                    # has_key = has_key and request.has_lemmas(elem)
                     has_key = has_key and self._has_lemma_(request, elem)
                 if has_key:
                     return key
         return ''
 
-    def _has_lemma_(self, request, lemma):
+    @staticmethod
+    def _has_lemma_(request, lemma):
         # decorator for str
         if isinstance(request, str):
-            return lemma in request
+            # elem looks like 'эф', request looks like 'эф 5'
+            return lemma == request.split()[0]
         else:
             # suggest it is request from user
             return request.has_lemmas(lemma)
@@ -111,7 +115,8 @@ class MoveExtractor(object):
     def _get_file_(self, request):
         return self._get_key_(request, self.file_map)
 
-    def _get_rank_(self, request):
+    @staticmethod
+    def _get_rank_(request):
         match = re.search(r'[1-8]', request)
         rank = match[0] if match else ''
         return rank
