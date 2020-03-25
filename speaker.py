@@ -54,14 +54,33 @@ class Speaker(object):
             res = letters_set.get(file, file)
         return res
 
+    @staticmethod
+    def _file_extr_(move_san):
+        # return file from simple square like 'a3'
+        file_susp = re.search(r'[a-h]', move_san)
+        file = file_susp[0] if file_susp else ''
+        return file
+
+    @staticmethod
+    def _rank_extr_(move_san):
+        # return rank from simple square like 'a3'
+        rank_susp = re.search(r'[1-8]', move_san)
+        rank = rank_susp[0] if rank_susp else ''
+        return rank
+
+    @staticmethod
+    def _piece_extr_(move_san):
+        piece_susp = re.search(r'KQRBN', move_san)
+        piece = piece_susp[0] if piece_susp else ''
+        return piece
+
     def _square_pron_(self, move_san, lang='ru'):
         # returns column pronunciation in specified language + rank (row) as
         # digit 
-        if not move_san:
-            return ''
 
-        file = move_san[-2]
-        rank = move_san[-1]
+        file = self._file_extr_(move_san)
+        rank = self._rank_extr_(move_san)
+
         file_pron = self._file_pron_(file, lang)
 
         return file_pron + rank
@@ -91,16 +110,21 @@ class Speaker(object):
             res = checkmates.get(lang, '')
         return res
 
-    def _capture_pron_(self, move_san, lang='ru'):
-        if 'x' in move_san:
-            return self.captures_names.get(lang, '')
-        return ''
+    def _capture_pron_(self, lang='ru'):
+        return self.captures_names.get(lang, '')
 
     def _say_one_square_move_(self, move_san, lang):
-        # todo
-        square_pron = self._square_pron_(move_san, lang)
-
+        # todo ------
+        # square_pron = self._square_pron_(move_san, lang)
+        move = move_san
         piece = ''
+
+        piece_candidate = move[0]
+
+        if piece_candidate in self.piece_names.keys():
+            piece = self._piece_pron_(piece_candidate, lang)
+            move = move[1:]
+
         if len(move_san) > 2:
             piece_candidate = move_san[0]
             if piece_candidate in self.piece_names.keys():
@@ -116,19 +140,20 @@ class Speaker(object):
         capture_pron = ''
         postfix = ''
         piece = ''
+        move_body = ''
 
         if '0-0' in move_san:
             # castling detected
             return self._castling_pron_(move_san)
 
         # todo
-        
-        move_parts = re.split('x', move_san)
-
-        square_moves = []
-        for mp in move_parts:
-            move_speak = self._say_one_square_move_(mp, lang)
-            square_moves.append(move_speak)
+        if 'x' in move_san:
+            move_parts = re.split('x', move_san)
+            square_from = self._say_one_square_move_(move_parts[0], lang)
+            square_to = self._say_one_square_move_(move_parts[1], lang)
+            capture_pron = self._capture_pron_(lang)
+            move_body = filter(None,
+                               [square_from, capture_pron, square_to]).strip()
 
         square_pron = self._square_pron_(move_san, lang)
 
