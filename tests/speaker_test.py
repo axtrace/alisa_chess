@@ -26,6 +26,13 @@ class MyTestCase(unittest.TestCase):
         speak = self.speaker.say_move('0-0-0', 'ru')
         self.assertEqual(speak, 'Длинная рокировка')
 
+    def test_caputure(self):
+        speak = self.speaker.say_move('Bf3xa3', 'ru')
+        self.assertEqual(speak, 'Конь берёт а3')
+
+    def test_caputure(self):
+        speak = self.speaker.say_move('Bf3xa3', 'ru')
+        self.assertEqual(speak, 'Конь берёт а3')
 
 if __name__ == '__main__':
     unittest.main()
