@@ -87,7 +87,7 @@ def run_script():
 def say_turn():
     text = texts.help_text.format('Конь f3') + texts.choose_turn_text
     tts_text = texts.help_text.format(
-        speaker.say_move('Nf3')) + texts.choose_turn_text
+        speaker.say_move('Nf3', 'ru')) + texts.choose_turn_text
     yield say(text, tts=tts_text)
 
 

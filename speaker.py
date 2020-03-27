@@ -84,7 +84,7 @@ class Speaker(object):
         # returns capture pronunciation in specified language
         return self.captures_names.get(lang, '')
 
-    def say_move(self, move_san, lang):
+    def say_move(self, move_san, lang='ru'):
         speak_list = []
         move_regex = re.compile(r'[a-h]|[1-8]|x|[KQRBN]|[+#]|0-0-0|0-0')
         for sym in re.finditer(move_regex, move_san):
