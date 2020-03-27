@@ -37,10 +37,16 @@ class Speaker(object):
         '0-0-0': {'ru': 'Длинная рокировка', 'en': 'Queenside castling'}
     }
 
+    white_black_names = {
+        'White': {'ru': 'Белые', 'en': 'White'},
+        'Black': {'ru': 'Черные', 'en': 'Black'}
+    }
+
     def __init__(self):
         pass
 
     def _castling_pron_(self, move_san, lang='ru'):
+        # returns castling pronunciation in specified language
         res = ''
         castlings = self.castling_names.get(move_san, None)
         if castlings is not None:
@@ -75,6 +81,7 @@ class Speaker(object):
         return res
 
     def _capture_pron_(self, lang='ru'):
+        # returns capture pronunciation in specified language
         return self.captures_names.get(lang, '')
 
     def say_move(self, move_san, lang):
@@ -100,3 +107,10 @@ class Speaker(object):
                 # check or mate
                 speak_list.append(self._checkmate_pron_(sym[0], lang))
         return ' '.join(speak_list)
+
+    def say_turn(self, who, lang='ru'):
+        res = ''
+        turn_names = self.white_black_names.get(who, None)
+        if turn_names is not None:
+            res = turn_names.get(lang, '')
+        return res

@@ -58,25 +58,29 @@ class MyTestCase(unittest.TestCase):
         speak = self.speaker.say_move('0-0-0#', 'ru')
         self.assertEqual(speak, 'Длинная рокировка мат')
 
-    def test_caputure_with_piece(self):
+    def test_capture_with_piece(self):
         speak = self.speaker.say_move('Nxe5', 'ru')
         self.assertEqual(speak, 'Конь берёт е 5')
 
-    def test_caputure_with_piece_and_square_from(self):
+    def test_capture_with_piece_and_square_from(self):
         speak = self.speaker.say_move('Bf3xg4', 'ru')
         self.assertEqual(speak, 'Слон эф 3 берёт же 4')
 
-    def test_caputure_with_file_from(self):
+    def test_capture_with_file_from(self):
         speak = self.speaker.say_move('exd6', 'ru')
         self.assertEqual(speak, 'е берёт дэ 6')
 
-    def test_caputure_with_piece_and_file_from(self):
+    def test_capture_with_piece_and_file_from(self):
         speak = self.speaker.say_move('Rdxh8', 'ru')
         self.assertEqual(speak, 'Ладья дэ берёт аш 8')
 
-    def test_caputure(self):
+    def test_capture(self):
         speak = self.speaker.say_move('Bf3xa3', 'ru')
         self.assertEqual(speak, 'Слон эф 3 берёт а 3')
+
+    def test_say_who(self):
+        speak = self.speaker.say_turn('White', 'ru')
+        self.assertEqual(speak, 'Белые')
 
 
 if __name__ == '__main__':

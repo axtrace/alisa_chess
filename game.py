@@ -1,5 +1,8 @@
+import sys
 import chess.engine
 import chess.pgn
+
+import config
 
 
 class Game(object):
@@ -8,19 +11,18 @@ class Game(object):
     """
 
     def __init__(self):
-        self.engine_path = "/usr/games/stockfish"
+        path_index = 'win' if 'win' in str(sys.platform) else 'nix'
+        self.engine_path = config.engine_path['win']
         self.engine = chess.engine.SimpleEngine.popen_uci(self.engine_path)
-        self.time_level = 0.1  # default
-
-    def start_game(self, turn='white'):
+        # self.time_level = 0.1  # default
+        self.skill_level = 1  # default
         self.board = chess.Board()
 
     def user_move(self, move_san):
         self.board.push_san(move_san)
 
     def comp_move(self):
-        result = self.engine.play(self.board,
-                                  chess.engine.Limit(time=self.time_level))
+        result = self.engine.play(self.board, chess.engine.Limit(time=0.1))
         # define the best comp move from engine
         comp_move = self.board.san(result.move)
 
@@ -28,20 +30,41 @@ class Game(object):
         self.board.push(result.move)
         return comp_move
 
+    def unmake_move(self):
+        # board.pop()  # Unmake the last move
+        # define the user was last moved
+        pass
+
     def is_game_over(self):
         return self.board.is_game_over()
 
     def quit(self):
         self.engine.quit()
 
-    def is_move_legal(self, move, board):
+    def is_move_legal(self, move):
         try:
-            return board.parse_san(move) in board.legal_moves
+            return self.board.parse_san(move) in self.board.legal_moves
         except ValueError:
             return False
         except Exception:
-            raise (Exception)
+            raise Exception
 
-    def change_time_level(self, time_level):
-        if 1 < time_level < 10:
-            self.time_level = 0.1 * time_level
+    def set_skill_level(self, skill_level):
+        self.skill_level = int(skill_level)
+        if 0 <= int(skill_level) <= 20:
+            self.engine.configure({"Skill Level": self.skill_level})
+
+    def get_skill_level(self):
+        return self.skill_level
+
+    def who_invert(self, turn):
+        if turn == 'Black':
+            return 'White'
+        elif turn == 'White':
+            return 'Black'
+        return ''
+
+    def who(self):
+        # who's turn now
+        player = self.board.turn
+        return 'White' if player == chess.WHITE else 'Black'

@@ -5,236 +5,102 @@ import chess.engine
 import chess.pgn
 
 import config
-import game
-import move_extractor
-import speaker
+import texts
+from game import Game
+from move_extractor import MoveExtractor
+from speaker import Speaker
 
 app = Flask(__name__)
-
 skill = Skill(__name__)
 
-file_map = {
-    # allowed low register only
-    'a': {'a', 'а', 'эй', 'ai'},
-    'b': {'b', 'bee', 'б', 'бэ', 'би'},
-    'c': {'c', 'cee', 'ц', 'цэ', 'си', 'с'},
-    'd': {'ld', 'dee', 'д', 'дэ', 'ди'},
-    'e': {'e', 'е', 'и'},
-    'f': {'f', 'ef', 'ф', 'эф'},
-    'g': {'g', 'gee', 'je', 'ж', 'жи', 'же', 'жэ', 'джи'},
-    'h': {'h', 'aitch', 'аш', 'ш', 'эйч'}
-}
-
-rank_map = {
-    '1': {'1', 'один', 'one'},
-    '2': {'2', 'two', 'два'},
-    '3': {'3', 'three', 'три'},
-    '4': {'4', 'four', 'четыре'},
-    '5': {'5', 'five', 'пять'},
-    '6': {'6', 'six', 'шесть'},
-    '7': {'7', 'seven', 'семь'},
-    '8': {'8', 'eight', 'восемь'}
-}
-
-piece_map = {
-    # allowed low register only
-    'K': {'king', 'король'},
-    'Q': {'queen', 'ферзь', 'королева'},
-    'R': {'rook', 'ладья', 'тура'},
-    'N': {'kNight', 'конь', 'лошадь'},
-    'B': {'bishop', 'слон', 'офицер'},
-    'p': {'pawn', 'пешка'}
-}
+move_ext = MoveExtractor()
+speaker = Speaker()
 
 
-def extract_move(request):
-    piece = get_piece(request)
-    file = get_file(request)
-    rank = get_rank(request)
-    print('[piece, file, rank]:', [piece, file, rank])
-
-    if not (len(file) and len(rank)):
-        return None
-
-    return ''.join(filter(None, [piece, file, rank]))
-
-
-def get_key(request, dict_of_sets):
-    # try to get key of dict with has at least one elem in request.lemmas
-    for key in dict_of_sets:
-        cur_set = dict_of_sets[key]
-        for elem in cur_set:
-            if request.has_lemmas(elem):
-                return key
-    return ''
-
-
-def get_piece(request):
-    return get_key(request, piece_map)
-
-
-def get_file(request):
-    return get_key(request, file_map)
-
-
-def get_rank(request):
-    return get_key(request, rank_map)
-
-
-def get_move(move_to_say, comp_move=''):
+def get_move(comp_move='', prev_turn='', text_to_show='',
+             text_to_say=''):
     # say the robot move and try extract valid move from user answer
-    yield say(f'{comp_move}. Ваш ход!', tts=f'{move_to_say}. Ваш ход!')
+    text = text_to_show + '. '
+    tts = text_to_say + '. '
+    if prev_turn:
+        turn_to_say = speaker.say_turn(prev_turn)
+        tts += f'{turn_to_say} пошли '
+        text += f'{turn_to_say} пошли '
+    if comp_move:
+        move_to_say = speaker.say_move(comp_move, 'ru')
+        tts += f'{move_to_say}. '
+        text += f'{comp_move}. '
+    tts += 'Ваш ход!'
+    text += 'Ваш ход!'
 
-    print(request['request']['original_utterance'])
-    move = extract_move(request)
+    yield say(text, tts=tts)
+    move = MoveExtractor.extract_move(request)
+
     while move is None:
-        yield say(
-            '''Я вас не поняла. Отвечайте в формате стандартной нотации 
-            с названием фигуры. Например: "Конь f3"''',
-        )
-        move = extract_move(request)
+        not_get = texts.not_get_move.format(request['request']['command'])
+        yield say(not_get)
+        move = MoveExtractor.extract_move(request)
 
     return str(move)
-
-
-def is_move_legal(move, board):
-    try:
-        return board.parse_san(move) in board.legal_moves
-    except ValueError:
-        return False
-    except Exception:
-        raise (Exception)
 
 
 @skill.script
 def run_script():
     yield from say_hi()
+    while not request.has_lemmas('да', 'давай', 'ага', 'угу', 'yes', 'yeh'):
+        yield from say_do_not_get
 
-    engine_path = "/usr/games/stockfish"
-    engine = chess.engine.SimpleEngine.popen_uci(engine_path)
+    yield from say_turn()
+    while not request.has_lemmas('белый', 'white', 'черный', 'black'):
+        yield from say_do_not_get_turn
 
-    board = chess.Board()
+    game = Game()
+    move_to_say = ''
+    comp_move = ''
+    prev_turn = ''
 
-    while not board.is_game_over():
-        # start the game
-        result = engine.play(board, chess.engine.Limit(time=0.1))
+    if request.has_lemmas('черный', 'black'):
+        # user plays black
+        prev_turn = game.who()
+        comp_move = game.comp_move()
 
-        # define the best comp move from engine
-        comp_move = board.san(result.move)
-
-        # say it on Russian
-        move_to_say = say_move(comp_move, 'ru')
-        # yield say(move_to_say)
-        print(comp_move)
-
-        # make it on the board
-        board.push(result.move)
-
-        print(board)
-
-        # get move from user
-        user_move = yield from get_move(move_to_say, comp_move)
-        while not is_move_legal(user_move, board):
-            user_move = yield from get_move(
-                'Невозможный ход. Попробуйте ещё раз')
+    # get user move
+    while not game.is_game_over():
+        user_move = yield from get_move(comp_move, prev_turn)
+        while not game.is_move_legal():
+            text = texts.not_legal_move.format(user_move)
+            tts = texts.not_legal_move.format(speaker.say_move(user_move))
+            user_move = yield from get_move(comp_move, prev_turn, text, tts)
 
         print(user_move)
-        # make it on the board
-        board.push_san(user_move)
+        # make user move
+        game.user_move(user_move)
 
-        print(board)
+        # comp make move
+        prev_turn = game.who()
+        comp_move = game.comp_move()
 
     yield say(f'Игра окончена! ', end_session=True)
-    engine.quit()
+    game.quit()
 
 
-def get_file_pronunciation(file, lang='ru'):
-    # returns file (column) pronunciation in specified language
-    res = file
-    letters_for_pronunciation = {
-        'ru': {'a': 'а', 'b': 'б', 'c': 'ц', 'd': 'д', 'e': 'е', 'g': 'ж',
-               'h': 'аш'}}
-    letters_set = letters_for_pronunciation.get(lang, None)
-    if letters_set is not None:
-        res = letters_set.get(file, file)
-    return res
+def say_turn():
+    text = texts.help_text.format('Конь f3') + texts.choose_turn_text
+    tts_text = texts.help_text.format(
+        speaker.say_move('Nf3')) + texts.choose_turn_text
+    yield say(text, tts=tts_text)
 
 
-def get_square_pronunciation(move_san, lang='ru'):
-    # returns column pronunciation in specified language + rank (row) as digit
-    file = move_san[-2]
-    rank = move_san[-1]
-    file_pron = get_file_pronunciation(file, lang)
-
-    return file_pron + rank
+def say_do_not_get():
+    yield say(texts.dng_start_text)
 
 
-def get_piece_name(piece, lang):
-    # returns piece name in specified language
-    piece_names = {
-        'K': {'ru': 'Король', 'en': 'King'},
-        'Q': {'ru': 'Ферзь', 'en': 'Queen'},
-        'R': {'ru': 'Ладья', 'en': 'Rock'},
-        'N': {'ru': 'Конь', 'en': 'Knight'},
-        'B': {'ru': 'Слон', 'en': 'Bishop'},
-        'p': {'ru': 'Пешка', 'en': 'Pawn'}
-    }
-    res = ''
-    piece_name = piece_names.get(piece, None)
-    if piece_name is not None:
-        res = piece_name.get(lang, '')
-    return res
-
-
-def get_check_mate_pron(move_san, lang='ru'):
-    # returns check or mate pronunciation in specified language
-    # todo: stalemate pronunciation
-    check = {'ru': 'шах', 'en': 'check'}
-    mate = {'ru': 'мат', 'en': 'mate'}
-
-    res = ''
-
-    if '+' in move_san:
-        return check.get(lang, '')
-    elif '#' in move_san:
-        return mate.get(lang, '')
-    return res
-
-
-def get_capture_pron(move_san, lang='ru'):
-    captures = {'ru': 'берёт', 'en': 'capture'}
-    if 'x' in move_san:
-        return captures.get(lang, '')
-    return ''
-
-
-def say_move(move_san, lang):
-    capture_pron = ''
-    postfix = ''
-    piece = ''
-
-    square_pron = get_square_pronunciation(move_san, lang)
-
-    if len(move_san) > 2:
-        piece_candidate = move_san[0]
-
-        if 'a' < piece_candidate < 'h':
-            piece = get_piece_name('p', lang)
-            piece += ' ' + piece_candidate
-        else:
-            piece = get_piece_name(piece_candidate, lang)
-        capture_pron = get_capture_pron(move_san, lang)
-
-        check_or_mate_pron = get_check_mate_pron(move_san, lang)
-        postfix = check_or_mate_pron  # for scaleability in future
-
-    return ' '.join(
-        filter(None, [piece, capture_pron, square_pron, postfix])).strip()
+def say_do_not_get_turn():
+    yield say(texts.not_get_turn_text)
 
 
 def say_hi():
-    yield say('Давайте я обыграю вас в шахматы. Готовы?')
-    print(request['request']['original_utterance'])
+    yield say(texts.hi_text)
 
 
 if __name__ == "__main__":
