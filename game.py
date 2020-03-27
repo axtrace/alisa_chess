@@ -12,7 +12,7 @@ class Game(object):
 
     def __init__(self):
         path_index = 'win' if 'win' in str(sys.platform) else 'nix'
-        self.engine_path = config.engine_path['win']
+        self.engine_path = config.engine_path[path_index]
         self.engine = chess.engine.SimpleEngine.popen_uci(self.engine_path)
         # self.time_level = 0.1  # default
         self.skill_level = 1  # default
