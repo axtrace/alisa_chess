@@ -51,7 +51,8 @@ def run_script():
         yield from say_do_not_get
 
     yield from say_turn()
-    while not request.has_lemmas('белый', 'white', 'черный', 'black'):
+    while not request.has_lemmas('белый', 'белые', 'white', 'черный', 'черные',
+                                 'black'):
         yield from say_do_not_get_turn
 
     game = Game()
@@ -85,8 +86,8 @@ def run_script():
 
 
 def say_turn():
-    text = texts.help_text.format('Конь f3') + texts.choose_turn_text
-    tts_text = texts.help_text.format(
+    text = texts.hi_turn_text.format('Конь f3') + texts.choose_turn_text
+    tts_text = texts.hi_turn_text.format(
         speaker.say_move('Nf3', 'ru')) + texts.choose_turn_text
     yield say(text, tts=tts_text)
 
