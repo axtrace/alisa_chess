@@ -48,12 +48,13 @@ def get_move(comp_move='', prev_turn='', text_to_show='',
 def run_script():
     yield from say_hi()
     while not request.has_lemmas('да', 'давай', 'ага', 'угу', 'yes', 'yeh'):
-        yield from say_do_not_get
+        yield from say_do_not_get()
 
     yield from say_turn()
     while not request.has_lemmas('белый', 'белые', 'white', 'черный', 'черные',
                                  'black'):
-        yield from say_do_not_get_turn
+        print(request['request']['command'])
+        yield from say_do_not_get_turn()
 
     game = Game()
     move_to_say = ''
