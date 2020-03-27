@@ -34,12 +34,13 @@ def get_move(comp_move='', prev_turn='', text_to_show='',
     text += 'Ваш ход!'
 
     yield say(text, tts=tts)
-    move = MoveExtractor.extract_move(request)
+    move = move_ext.extract_move(request)
 
     while move is None:
+        print(request['request']['command'])
         not_get = texts.not_get_move.format(request['request']['command'])
         yield say(not_get)
-        move = MoveExtractor.extract_move(request)
+        move = move_ext.extract_move(request)
 
     return str(move)
 
