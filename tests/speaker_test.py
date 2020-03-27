@@ -82,6 +82,10 @@ class MyTestCase(unittest.TestCase):
         speak = self.speaker.say_turn('White', 'ru')
         self.assertEqual(speak, 'Белые')
 
+    def test_say_reason(self):
+        speak = self.speaker.say_reason('#', 'ru')
+        self.assertEqual(speak, 'мат')
+
 
 if __name__ == '__main__':
     unittest.main()

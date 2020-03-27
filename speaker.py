@@ -42,6 +42,14 @@ class Speaker(object):
         'Black': {'ru': 'Черные', 'en': 'Black'}
     }
 
+    gameover_reasons = {
+        '#': {'ru': 'мат', 'en': 'mate'},
+        '=': {'ru': 'пат', 'en': 'stalemate'},
+        '5': {'ru': 'ничья из-за 5 повторов', 'en': 'fivefold repetition'},
+        'insufficient': {'ru': 'ничья из-за недостаточности материала',
+                         'en': 'draw due to insufficient material'}
+    }
+
     def __init__(self):
         pass
 
@@ -113,4 +121,11 @@ class Speaker(object):
         turn_names = self.white_black_names.get(who, None)
         if turn_names is not None:
             res = turn_names.get(lang, '')
+        return res
+
+    def say_reason(self, reason, lang='ru'):
+        res = ''
+        reasons = self.gameover_reasons.get(reason, None)
+        if reasons is not None:
+            res = reasons.get(lang, '')
         return res

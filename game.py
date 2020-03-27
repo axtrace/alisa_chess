@@ -17,6 +17,7 @@ class Game(object):
         # self.time_level = 0.1  # default
         self.skill_level = 1  # default
         self.board = chess.Board()
+        self.winner = ''
 
     def user_move(self, move_san):
         self.board.push_san(move_san)
@@ -68,3 +69,19 @@ class Game(object):
         # who's turn now
         player = self.board.turn
         return 'White' if player == chess.WHITE else 'Black'
+
+    def gameover_reason(self):
+        commentary = ''
+
+        if self.board.is_checkmate():
+            commentary = "Game ends in checkmate. " + who(
+                not board.turn) + " wins!"
+        elif board.is_stalemate():
+            commentary = "Game ends in draw due to stalemate."
+        elif board.is_fivefold_repetition():
+            commentary = "Game ends in draw due to 5-fold repetition."
+        elif board.is_insufficient_material():
+            commentary = "Game ends in draw due to insufficient material."
+
+        commentary += 'Say, "start new game", to play again!'
+        return commentary

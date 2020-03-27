@@ -35,10 +35,13 @@ def get_move(comp_move='', prev_turn='', text_to_show='',
 
     yield say(text, tts=tts)
     move = move_ext.extract_move(request)
-
+    attempts = 0
     while move is None:
+        attempts += 1
         print(request['request']['command'])
         not_get = texts.not_get_move.format(request['request']['command'])
+        if attempts % 3 == 1:
+            not_get += texts.names_for_files
         yield say(not_get)
         move = move_ext.extract_move(request)
 
@@ -84,7 +87,17 @@ def run_script():
         prev_turn = game.who()
         comp_move = game.comp_move()
 
-    yield say(f'Игра окончена! ', end_session=True)
+    move_tts = speaker.say_move(comp_move)
+    winner = ''
+    reason = game.gameover_reason()
+    if reason == '#':
+        winner += ' Победили '
+        winner += speaker.say_turn(prev_turn, 'ru')
+    result = speaker.say_reason(reason, 'ru')
+
+    text = f'{comp_move}. Игра окончена! Резульат: {result}.{winner}'
+    text_tts = f'{move_tts}. Игра окончена! Резульат: {result}.{winner}'
+    yield say(text, tts=text_tts, end_session=True)
     game.quit()
 
 
