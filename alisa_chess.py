@@ -54,6 +54,7 @@ def run_script():
     while not request.has_lemmas('белый', 'белые', 'white', 'черный', 'черные',
                                  'black'):
         print(request['request']['command'])
+        print(request.lemmas)
         yield from say_do_not_get_turn()
 
     game = Game()
