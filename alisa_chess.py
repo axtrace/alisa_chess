@@ -67,7 +67,7 @@ def run_script():
     # get user move
     while not game.is_game_over():
         user_move = yield from get_move(comp_move, prev_turn)
-        while not game.is_move_legal():
+        while not game.is_move_legal(user_move):
             text = texts.not_legal_move.format(user_move)
             tts = texts.not_legal_move.format(speaker.say_move(user_move))
             user_move = yield from get_move(comp_move, prev_turn, text, tts)
