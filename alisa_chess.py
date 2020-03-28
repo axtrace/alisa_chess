@@ -56,9 +56,11 @@ def run_script():
         # get user move
         user_move = yield from get_move(comp_move, prev_turn)
         while not game.is_move_legal(user_move):
-            text, text_tts = tp.say_not_legal_move(user_move, speaker.say_move(
-                user_move))
-            user_move = yield from get_move('', '', text, text_tts)
+            text, text_tts = tp.say_not_legal_move(user_move,
+                                                   speaker.say_move(user_move))
+            print(text)
+            user_move = yield from get_move(comp_move, prev_turn, text,
+                                            text_tts)
 
         # make user move
         prev_turn = game.who()
@@ -77,7 +79,6 @@ def run_script():
                                    speaker.say_reason(reason, 'ru'),
                                    speaker.say_turn(prev_turn, 'ru'))
     # say results
-    # yield say(text, tts=text_tts, end_session=True)
     yield from say_text(text, text_tts, True)
     game.quit()
 
@@ -90,16 +91,15 @@ def get_move(comp_move='', prev_turn='', text_to_show='', text_to_say=''):
     text, text_tts = tp.say_your_move(comp_move, move_to_say, prev_turn,
                                       prev_turn_tts, text_to_show, text_to_say)
 
-    # yield say(text, tts=text_tts)
     yield from say_text(text, text_tts)
     move = move_ext.extract_move(request)
 
     while move is None:
         attempts += 1
-        print(request['request']['command'])
+        print(not_get)
         not_get, not_get_tts = tp.say_do_not_get(request['request']['command'],
                                                  attempts)
-        # yield say(not_get, tts=not_get_tts)
+        print(not_get)
         yield from say_text(not_get, not_get_tts)
         move = move_ext.extract_move(request)
 

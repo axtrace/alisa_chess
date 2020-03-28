@@ -73,12 +73,9 @@ class MoveExtractor(object):
             return None
 
         file_to, rank_to = self._get_square(squares[-1])
-        print('squares: ', squares, command_text, file_to, rank_to)
         file_from, rank_from = '', ''
         if len(squares) > 1:
             file_from, rank_from = self._get_square(squares[0])
-
-        # print('[piece, file, rank]:', [piece, file, rank])
 
         if not (len(file_to) and len(rank_to)):
             return None
