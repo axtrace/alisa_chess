@@ -1,4 +1,5 @@
 import sys
+import re
 from flask import Flask
 from alice_scripts import Skill, request, say, suggest
 import chess.engine
@@ -97,16 +98,20 @@ def run_script():
         winner += speaker.say_turn(prev_turn, 'ru')
     result = speaker.say_reason(reason, 'ru')
 
-    text = f'{comp_move}. Игра окончена! Резульат: {result}.{winner}'
-    text_tts = f'{move_tts}. Игра окончена! Резульат: {result}.{winner}'
+    text = f'{comp_move}. Игра окончена!  Результат: {result}.{winner}'
+    text_tts = f'{move_tts}. Игра окончена! sil <[70]> Результат: {result}.{winner}'
     yield say(text, tts=text_tts, end_session=True)
     game.quit()
 
 
 def say_turn():
-    text = texts.hi_turn_text.format('Конь f3') + texts.choose_turn_text
-    tts_text = texts.hi_turn_text.format(
-        speaker.say_move('Nf3', 'ru')) + texts.choose_turn_text
+    text = texts.hi_turn_text.format('', '', '', '', '',
+                                     'Конь f3') + texts.choose_turn_text
+    move_to_say = speaker.say_move('Nf3', 'ru')
+    tts_text = texts.hi_turn_text.format('sil <[70]>', 'sil <[60]>',
+                                         'sil <[60]>', 'sil <[60]>',
+                                         'sil <[60]>',
+                                         move_to_say) + texts.choose_turn_text
     yield say(text, tts=tts_text)
 
 
