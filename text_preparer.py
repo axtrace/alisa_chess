@@ -66,7 +66,7 @@ class TextPreparer(object):
         text += f' Результат: {reason_tts}.{winner}'
         text_tts += f' Результат: {reason_tts}.{winner}'
 
-        # text += f''
+        text += f' Спасибо за игру!'
         text_tts += f' Спасибо за игру!'
 
         text += f' Если хотите сыграть еще раз, заново запустите навык'
