@@ -47,7 +47,8 @@ def run_script():
 
     if user_color == 'BLACK':
         # user plays black
-        comp_move, prev_turn = game.comp_move(), game.who()
+        prev_turn = game.who()
+        comp_move = game.comp_move()
         print(prev_turn, comp_move)
 
     # game circle
@@ -66,7 +67,8 @@ def run_script():
         print(prev_turn, user_move)
 
         # make comp move
-        comp_move, prev_turn = game.comp_move(), game.who()
+        prev_turn = game.who()
+        comp_move = game.comp_move()
         print(prev_turn, comp_move)
 
     # form result text
