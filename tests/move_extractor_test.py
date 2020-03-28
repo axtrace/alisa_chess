@@ -12,6 +12,11 @@ class TestMoveExtractor(unittest.TestCase):
         move = self.move_extractor.extract_move(request)
         self.assertEqual(move, 'b5')
 
+    def test_move_without_space(self):
+        request = RequestTest('e5')
+        move = self.move_extractor.extract_move(request)
+        self.assertEqual(move, 'e5')
+
     def test_move_with_piece(self):
         request = RequestTest('Конь эф 3')
         move = self.move_extractor.extract_move(request)

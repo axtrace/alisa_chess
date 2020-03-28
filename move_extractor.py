@@ -7,6 +7,7 @@ class MoveExtractor(object):
     """
     file_map = {
         # allowed low register only
+        # анна, борис и прочее - из официального фонетического алфавита
         'a': {'a', 'а', 'эй', 'ai', 'alpha', 'анна'},
         'b': {'b', 'bee', 'б', 'бэ', 'би', 'bravo', 'борис'},
         'c': {'c', 'cee', 'ц', 'цэ', 'си', 'с', 'charlie', 'цапля'},
@@ -50,16 +51,17 @@ class MoveExtractor(object):
 
     def extract_move(self, request):
         # extracting move in SAN from user speech
-        castling = self._extract_castling(request)
 
+        castling = self._extract_castling(request)
         if castling:
-            # castling - ok, return it
+            # castling detected, return it
             return castling
 
         # get piece from request
         piece = self._get_piece_(request)
 
-        square_rex = re.compile(r"\w+ [1-8]", flags=re.IGNORECASE)
+        # get square (file and rank) from request
+        square_rex = re.compile(r'\w+\s*[1-8]', flags=re.IGNORECASE)
         command_text = request.command
         squares = re.findall(square_rex, command_text)
 
@@ -67,6 +69,7 @@ class MoveExtractor(object):
             return None
 
         file_to, rank_to = self._get_square(squares[-1])
+        print('squares: ', squares, command_text, file_to, rank_to)
         file_from, rank_from = '', ''
         if len(squares) > 1:
             file_from, rank_from = self._get_square(squares[0])
@@ -113,7 +116,18 @@ class MoveExtractor(object):
         return self._get_file_(request), self._get_rank_(request)
 
     def _get_file_(self, request):
-        return self._get_key_(request, self.file_map)
+        file_susp = self._get_key_(request, self.file_map)
+        if not file_susp:
+            # hm, try extract by own way
+            if isinstance(request, str):
+                # elem looks like 'эф', request looks like 'эф 5'
+                text = request
+            else:
+                # suggest it is request from user
+                text = request.command
+            text_wo_digits = re.sub(r'[1-8]', '', text)
+            file_susp = self._get_key_(text_wo_digits, self.file_map)
+        return file_susp
 
     @staticmethod
     def _get_rank_(request):

@@ -3,7 +3,7 @@ import re
 
 class Speaker(object):
     """
-    Class for spelling moves
+    Class for spelling moves and some texts
     """
     piece_names = {
         'K': {'ru': 'Король', 'en': 'King'},
@@ -129,3 +129,5 @@ class Speaker(object):
         if reasons is not None:
             res = reasons.get(lang, '')
         return res
+
+

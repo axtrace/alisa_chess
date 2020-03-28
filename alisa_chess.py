@@ -1,5 +1,5 @@
-import sys
-import re
+# import sys
+# import re
 from flask import Flask
 from alice_scripts import Skill, request, say, suggest
 import chess.engine
@@ -10,120 +10,106 @@ import texts
 from game import Game
 from move_extractor import MoveExtractor
 from speaker import Speaker
+from text_preparer import TextPreparer
 
 app = Flask(__name__)
 skill = Skill(__name__)
 
 move_ext = MoveExtractor()
 speaker = Speaker()
+tp = TextPreparer()
+
+# Globals
+attempts = 0
 
 
 def get_move(comp_move='', prev_turn='', text_to_show='',
              text_to_say=''):
-    # say the robot move and try extract valid move from user answer
-    text = text_to_show + '. '
-    tts = text_to_say + '. '
-    if prev_turn:
-        turn_to_say = speaker.say_turn(prev_turn)
-        tts += f'{turn_to_say} пошли '
-        text += f'{turn_to_say} пошли '
-    if comp_move:
-        move_to_say = speaker.say_move(comp_move, 'ru')
-        tts += f'{move_to_say}. '
-        text += f'{comp_move}. '
-    tts += 'Ваш ход!'
-    text += 'Ваш ход!'
+    # say the comp move and try extract valid move from user answer
+    global attempts
+    move_to_say = speaker.say_move(comp_move, 'ru')
+    text, text_tts = tp.say_your_move(comp_move, move_to_say, prev_turn,
+                                      text_to_show,
+                                      text_to_say)
 
-    yield say(text, tts=tts)
+    yield say(text, tts=text_tts)
     move = move_ext.extract_move(request)
-    attempts = 0
+
     while move is None:
         attempts += 1
         print(request['request']['command'])
-        not_get = texts.not_get_move.format(request['request']['command'])
-        not_get_tts = not_get
-        if attempts % 3 == 1:
-            not_get += texts.names_for_files.format('', '', '', '', '', '', '')
-            not_get_tts += texts.names_for_files.format('sil <[60]>',
-                                                        'sil <[60]>',
-                                                        'sil <[60]>',
-                                                        'sil <[60]>',
-                                                        'sil <[60]>',
-                                                        'sil <[60]>',
-                                                        'sil <[60]>')
+        not_get, not_get_tts = tp.say_do_not_get(request['request']['command'],
+                                                 attempts)
         yield say(not_get, tts=not_get_tts)
         move = move_ext.extract_move(request)
 
     return str(move)
 
 
+def is_color_defined(req):
+    # define user color
+    white_lemmas = ['белый', 'белые', 'белых', 'белое', 'white']
+    black_lemmas = ['черный', 'черные', 'черных', 'черное', 'black']
+    white_and_black_lemmas = white_lemmas + black_lemmas
+    return req.has_lemmas(*white_and_black_lemmas)
+
+
 @skill.script
 def run_script():
+    global attempts
+    attempts += 1
+
     yield from say_hi()
     while not request.has_lemmas('да', 'давай', 'ага', 'угу', 'yes', 'yeh'):
         yield from say_do_not_get()
 
     yield from say_turn()
 
-    white_lemmas = ['белый', 'белые', 'белых', 'белое', 'white']
-    black_lemmas = ['черный', 'черные', 'черных', 'черное', 'black']
-    white_and_black_lemmas = white_lemmas + black_lemmas
-    while not request.has_lemmas(*white_and_black_lemmas):
-        print(request['request']['command'])
-        print(request.lemmas)
+    # define user color
+    while not is_color_defined(request):
         yield from say_do_not_get_turn()
 
     game = Game()
-    comp_move = ''
-    prev_turn = ''
+    comp_move, prev_turn = '', ''
 
     if request.has_lemmas(*black_lemmas):
         # user plays black
-        prev_turn = game.who()
-        comp_move = game.comp_move()
+        comp_move, prev_turn = game.comp_move(), game.who()
         print(prev_turn, comp_move)
 
-    # get user move
+    # game circle
     while not game.is_game_over():
+        # get user move
         user_move = yield from get_move(comp_move, prev_turn)
         while not game.is_move_legal(user_move):
-            text = texts.not_legal_move.format(user_move)
-            tts = texts.not_legal_move.format(speaker.say_move(user_move))
-            user_move = yield from get_move(comp_move, prev_turn, text, tts)
+            text, text_tts = tp.say_not_legal_move(user_move, speaker.say_move(
+                user_move))
+            user_move = yield from get_move(comp_move, prev_turn, text,
+                                            text_tts)
 
         # make user move
         prev_turn = game.who()
         game.user_move(user_move)
         print(prev_turn, user_move)
 
-        # comp make move
-        prev_turn = game.who()
-        comp_move = game.comp_move()
+        # make comp move
+        comp_move, prev_turn = game.comp_move(), game.who()
         print(prev_turn, comp_move)
 
+    # form result text
     move_tts = speaker.say_move(comp_move)
-    winner = ''
     reason = game.gameover_reason()
-    if reason == '#':
-        winner += ' Победили '
-        winner += speaker.say_turn(prev_turn, 'ru')
-    result = speaker.say_reason(reason, 'ru')
-
-    text = f'{comp_move}. Игра окончена!  Результат: {result}.{winner}'
-    text_tts = f'{move_tts}. Игра окончена! sil <[70]> Результат: {result}.{winner}'
+    text, text_tts = tp.say_result(comp_move, move_tts, reason,
+                                   speaker.say_reason(reason, 'ru'),
+                                   speaker.say_turn(prev_turn, 'ru'))
+    # say results
     yield say(text, tts=text_tts, end_session=True)
     game.quit()
 
 
 def say_turn():
-    text = texts.hi_turn_text.format('', '', '', '', '',
-                                     'Конь f3') + texts.choose_turn_text
-    move_to_say = speaker.say_move('Nf3', 'ru')
-    tts_text = texts.hi_turn_text.format('sil <[70]>', 'sil <[60]>',
-                                         'sil <[60]>', 'sil <[60]>',
-                                         'sil <[60]>',
-                                         move_to_say) + texts.choose_turn_text
-    yield say(text, tts=tts_text)
+    text, text_tts = tp.say_hi_text('Конь f3', speaker.say_move('Nf3', 'ru'))
+    yield say(text, tts=text_tts)
 
 
 def say_do_not_get():
