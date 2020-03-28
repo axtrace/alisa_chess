@@ -55,18 +55,18 @@ def run_script():
         yield from say_do_not_get()
 
     yield from say_turn()
-    while not request.has_lemmas('белый', 'белые', 'white', 'черный', 'черные',
-                                 'black'):
+    white_lemmas = ['белый', 'белые', 'белых', 'белое', 'white']
+    black_lemmas = ['черный', 'черные', 'черных', 'черное', 'black']
+    while not request.has_lemmas(white_lemmas + black_lemmas):
         print(request['request']['command'])
         print(request.lemmas)
         yield from say_do_not_get_turn()
 
     game = Game()
-    move_to_say = ''
     comp_move = ''
     prev_turn = ''
 
-    if request.has_lemmas('черный', 'black'):
+    if request.has_lemmas(black_lemmas):
         # user plays black
         prev_turn = game.who()
         comp_move = game.comp_move()

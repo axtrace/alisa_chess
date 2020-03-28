@@ -32,6 +32,7 @@ class Game(object):
         return comp_move
 
     def unmake_move(self):
+        # unmake the last user move
         # board.pop()  # Unmake the last move
         # define the user was last moved
         pass
@@ -71,17 +72,14 @@ class Game(object):
         return 'White' if player == chess.WHITE else 'Black'
 
     def gameover_reason(self):
-        commentary = ''
+        # returns a code for reason of game ends
 
         if self.board.is_checkmate():
-            commentary = "Game ends in checkmate. " + who(
-                not board.turn) + " wins!"
-        elif board.is_stalemate():
-            commentary = "Game ends in draw due to stalemate."
-        elif board.is_fivefold_repetition():
-            commentary = "Game ends in draw due to 5-fold repetition."
-        elif board.is_insufficient_material():
-            commentary = "Game ends in draw due to insufficient material."
-
-        commentary += 'Say, "start new game", to play again!'
-        return commentary
+            return '#'
+        elif self.board.is_stalemate():
+            return '='
+        elif self.board.is_fivefold_repetition():
+            return '5'
+        elif self.board.is_insufficient_material():
+            return 'insufficient'
+        return ''
