@@ -57,7 +57,7 @@ def run_script():
     yield from say_turn()
     white_lemmas = ['белый', 'белые', 'белых', 'белое', 'white']
     black_lemmas = ['черный', 'черные', 'черных', 'черное', 'black']
-    while not request.has_lemmas(white_lemmas + black_lemmas):
+    while not request.has_lemmas(list(white_lemmas + black_lemmas)):
         print(request['request']['command'])
         print(request.lemmas)
         yield from say_do_not_get_turn()
