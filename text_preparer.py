@@ -72,8 +72,8 @@ class TextPreparer(object):
         text = f'{comp_move}. Игра окончена!'
         text_tts = f'{comp_move_tts}. Игра окончена! sil <[70]>'
 
-        text += f' Результат: {reason_tts}.{winner}'
-        text_tts += f' Результат: {reason_tts}.{winner}'
+        text += f' Результат: {reason_tts}.{winner}.' if winner else ''
+        text_tts += f' Результат: {reason_tts}.{winner}.' if winner else ''
 
         text += f' Спасибо за игру!'
         text_tts += f' Спасибо за игру!'
