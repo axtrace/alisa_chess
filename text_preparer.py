@@ -23,6 +23,15 @@ class TextPreparer(object):
                                                         'sil <[60]>',
                                                         'sil <[60]>',
                                                         'sil <[60]>')
+            not_get += texts.names_for_pieces.format('', '', '', '', '')
+            not_get_tts += texts.names_for_pieces.format('sil <[70]>',
+                                                         'sil <[60]>',
+                                                         'sil <[60]>',
+                                                         'sil <[60]>',
+                                                         'sil <[60]>')
+
+            not_get += texts.coord_rules.format('Слон d3')
+            not_get_tts += texts.coord_rules.format('Слон дэ 3')
         return not_get, not_get_tts
 
     @staticmethod
@@ -86,8 +95,24 @@ class TextPreparer(object):
 
     @staticmethod
     def say_help_text(move, move_tts):
-        text = texts.help_text.format('', '', '', '', '', move)
-        text_tts = texts.help_text.format('sil <[70]>', 'sil <[60]>',
-                                          'sil <[60]>', 'sil <[60]>',
-                                          'sil <[60]>', move_tts)
+
+        text = texts.help_text_intro
+        text_tts = texts.help_text_intro
+
+        text += texts.names_for_pieces.format('', '', '', '', '')
+        text_tts += texts.names_for_pieces.format('sil <[70]>',
+                                                  'sil <[60]>',
+                                                  'sil <[60]>',
+                                                  'sil <[60]>',
+                                                  'sil <[60]>')
+
+        text += texts.coord_rules.format('Слон d3')
+        text_tts += texts.coord_rules.format('Слон дэ 3')
+
+        text += texts.undo_available
+        text_tts += texts.undo_available
+
+        text += texts.engine_info
+        text_tts += texts.engine_info
+
         return text, text_tts
