@@ -68,7 +68,7 @@ def run_script():
     comp_move = ''
     prev_turn = ''
 
-    if request.has_lemmas(black_lemmas):
+    if request.has_lemmas(*black_lemmas):
         # user plays black
         prev_turn = game.who()
         comp_move = game.comp_move()
