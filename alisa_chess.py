@@ -41,9 +41,17 @@ def get_move(comp_move='', prev_turn='', text_to_show='',
         attempts += 1
         print(request['request']['command'])
         not_get = texts.not_get_move.format(request['request']['command'])
+        not_get_tts = not_get
         if attempts % 3 == 1:
-            not_get += texts.names_for_files
-        yield say(not_get)
+            not_get += texts.names_for_files.format('', '', '', '', '', '', '')
+            not_get_tts += texts.names_for_files.format('sil <[60]>',
+                                                        'sil <[60]>',
+                                                        'sil <[60]>',
+                                                        'sil <[60]>',
+                                                        'sil <[60]>',
+                                                        'sil <[60]>',
+                                                        'sil <[60]>')
+        yield say(not_get, tts=not_get_tts)
         move = move_ext.extract_move(request)
 
     return str(move)
@@ -73,6 +81,7 @@ def run_script():
         # user plays black
         prev_turn = game.who()
         comp_move = game.comp_move()
+        print(prev_turn, comp_move)
 
     # get user move
     while not game.is_game_over():
@@ -82,13 +91,15 @@ def run_script():
             tts = texts.not_legal_move.format(speaker.say_move(user_move))
             user_move = yield from get_move(comp_move, prev_turn, text, tts)
 
-        print(user_move)
         # make user move
+        prev_turn = game.who()
         game.user_move(user_move)
+        print(prev_turn, user_move)
 
         # comp make move
         prev_turn = game.who()
         comp_move = game.comp_move()
+        print(prev_turn, comp_move)
 
     move_tts = speaker.say_move(comp_move)
     winner = ''
