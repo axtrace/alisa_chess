@@ -23,56 +23,29 @@ tp = TextPreparer()
 attempts = 0
 
 
-def get_move(comp_move='', prev_turn='', text_to_show='',
-             text_to_say=''):
-    # say the comp move and try extract valid move from user answer
-    global attempts
-    move_to_say = speaker.say_move(comp_move, 'ru')
-    text, text_tts = tp.say_your_move(comp_move, move_to_say, prev_turn,
-                                      text_to_show,
-                                      text_to_say)
-
-    yield say(text, tts=text_tts)
-    move = move_ext.extract_move(request)
-
-    while move is None:
-        attempts += 1
-        print(request['request']['command'])
-        not_get, not_get_tts = tp.say_do_not_get(request['request']['command'],
-                                                 attempts)
-        yield say(not_get, tts=not_get_tts)
-        move = move_ext.extract_move(request)
-
-    return str(move)
-
-
-def is_color_defined(req):
-    # define user color
-    white_lemmas = ['белый', 'белые', 'белых', 'белое', 'white']
-    black_lemmas = ['черный', 'черные', 'черных', 'черное', 'black']
-    white_and_black_lemmas = white_lemmas + black_lemmas
-    return req.has_lemmas(*white_and_black_lemmas)
-
-
 @skill.script
 def run_script():
+    # main part of program. Enter point
     global attempts
     attempts += 1
 
     yield from say_hi()
-    while not request.has_lemmas('да', 'давай', 'ага', 'угу', 'yes', 'yeh'):
-        yield from say_do_not_get()
+
+    while not is_request_yes(request):
+        yield from say_not_get_yes()
 
     yield from say_turn()
 
     # define user color
-    while not is_color_defined(request):
-        yield from say_do_not_get_turn()
+    is_color_defined, user_color = color_define(request)
+    while not is_color_defined:
+        yield from say_not_get_turn()
+        is_color_defined, user_color = color_define(request)
 
     game = Game()
     comp_move, prev_turn = '', ''
 
-    if request.has_lemmas(*black_lemmas):
+    if user_color == 'BLACK':
         # user plays black
         comp_move, prev_turn = game.comp_move(), game.who()
         print(prev_turn, comp_move)
@@ -103,25 +76,87 @@ def run_script():
                                    speaker.say_reason(reason, 'ru'),
                                    speaker.say_turn(prev_turn, 'ru'))
     # say results
-    yield say(text, tts=text_tts, end_session=True)
+    # yield say(text, tts=text_tts, end_session=True)
+    yield from say_text(text, text_tts, True)
     game.quit()
+
+
+def get_move(comp_move='', prev_turn='', text_to_show='',
+             text_to_say=''):
+    # say the comp move and try extract valid move from user answer
+    global attempts
+    move_to_say = speaker.say_move(comp_move, 'ru')
+    prev_turn_tts = speaker.say_turn(prev_turn, 'ru')
+    text, text_tts = tp.say_your_move(comp_move, move_to_say, prev_turn,
+                                      prev_turn_tts, text_to_show, text_to_say)
+
+    # yield say(text, tts=text_tts)
+    yield from say_text(text, text_tts)
+    move = move_ext.extract_move(request)
+
+    while move is None:
+        attempts += 1
+        print(request['request']['command'])
+        not_get, not_get_tts = tp.say_do_not_get(request['request']['command'],
+                                                 attempts)
+        # yield say(not_get, tts=not_get_tts)
+        yield from say_text(text, text_tts)
+        move = move_ext.extract_move(request)
+
+    return str(move)
 
 
 def say_turn():
     text, text_tts = tp.say_hi_text('Конь f3', speaker.say_move('Nf3', 'ru'))
-    yield say(text, tts=text_tts)
+    yield from say_text(text, text_tts)
 
 
-def say_do_not_get():
-    yield say(texts.dng_start_text)
-
-
-def say_do_not_get_turn():
-    yield say(texts.not_get_turn_text)
+def say_help():
+    text, text_tts = tp.say_help_text('Конь f3', speaker.say_move('Nf3', 'ru'))
+    yield from say_text(text, text_tts)
 
 
 def say_hi():
-    yield say(texts.hi_text)
+    yield from say_text(texts.hi_text)
+
+
+def say_not_get_yes():
+    yield from say_text(texts.dng_start_text)
+
+
+def say_not_get_turn():
+    yield from say_text(texts.not_get_turn_text)
+
+
+def say_text(text, text_tts='', end_session=False):
+    # say text and check answer for help
+    tts = text_tts if text_tts else text
+    yield say(text, tts=tts, end_session=end_session)
+    if is_request_help(request):
+        yield from say_help()
+
+
+def color_define(req):
+    # define user color
+    white_lemmas = ['белый', 'белые', 'белых', 'белое', 'white']
+    black_lemmas = ['черный', 'черные', 'черных', 'черное', 'black']
+    if req.has_lemmas(*white_lemmas):
+        return True, 'WHITE'
+    elif req.has_lemmas(*black_lemmas):
+        return True, 'BLACK'
+    return False, ''
+
+
+def is_request_yes(req):
+    yes_lemmas = ['да', 'давай', 'ага', 'угу', 'yes', 'yeh', 'ok', 'ок',
+                  'поехали', 'старт']
+    return request.has_lemmas(*yes_lemmas)
+
+
+def is_request_help(req):
+    # define if user asked help
+    help_lemmas = ['помощь', 'умеешь']
+    return req.has_lemmas(*help_lemmas)
 
 
 if __name__ == "__main__":

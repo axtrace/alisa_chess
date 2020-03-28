@@ -27,17 +27,15 @@ class TextPreparer(object):
 
     @staticmethod
     def say_your_move(comp_move='', move_to_say='', prev_turn='',
-                      text_to_show='',
-                      text_to_say=''):
+                      prev_turn_tts='', text_to_show='', text_to_say=''):
         # form speech for your move
 
         text = text_to_show + '. ' if text_to_show else ''
         tts = text_to_say + '. ' if text_to_say else ''
         if prev_turn:
             # if previous turn was given
-            turn_to_say = speaker.say_turn(prev_turn)
-            tts += f'{turn_to_say} пошли '
-            text += f'{turn_to_say} пошли '
+            tts += f'{prev_turn_tts} пошли '
+            text += f'{prev_turn_tts} пошли '
         if comp_move:
             # if comp move was given
             # move_to_say = speaker.say_move(comp_move, 'ru')
@@ -84,4 +82,14 @@ class TextPreparer(object):
                                              'sil <[60]>', 'sil <[60]>',
                                              'sil <[60]>',
                                              move_tts) + texts.choose_turn_text
+        return text, text_tts
+
+    @staticmethod
+    def say_help_text(move, move_tts):
+        text = texts.help_text.format('', '', '', '', '',
+                                      move) + texts.choose_turn_text
+        text_tts = texts.help_text.format('sil <[70]>', 'sil <[60]>',
+                                          'sil <[60]>', 'sil <[60]>',
+                                          'sil <[60]>',
+                                          move_tts) + texts.choose_turn_text
         return text, text_tts
