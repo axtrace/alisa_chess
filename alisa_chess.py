@@ -96,7 +96,6 @@ def get_move(comp_move='', prev_turn='', text_to_show='', text_to_say=''):
 
     while move is None:
         attempts += 1
-        print(not_get)
         not_get, not_get_tts = tp.say_do_not_get(request['request']['command'],
                                                  attempts)
         print(not_get)
