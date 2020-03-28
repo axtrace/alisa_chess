@@ -86,10 +86,8 @@ class TextPreparer(object):
 
     @staticmethod
     def say_help_text(move, move_tts):
-        text = texts.help_text.format('', '', '', '', '',
-                                      move) + texts.choose_turn_text
+        text = texts.help_text.format('', '', '', '', '', move)
         text_tts = texts.help_text.format('sil <[70]>', 'sil <[60]>',
                                           'sil <[60]>', 'sil <[60]>',
-                                          'sil <[60]>',
-                                          move_tts) + texts.choose_turn_text
+                                          'sil <[60]>', move_tts)
         return text, text_tts
