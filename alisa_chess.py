@@ -139,10 +139,8 @@ def say_hi():
 
 
 if __name__ == "__main__":
-    if 'win' in str(sys.platform):
-        # it seems this is my win home comp
-        cur_host = config.TEST_IP
-    else:
-        # lets sugget it is production ruvds server
-        cur_host = config.HOST_IP
-    skill.run(host=cur_host)
+    cur_host = config.HOST_IP
+    port = 5000
+
+    skill.run(host=cur_host, port=5000,
+              ssl_context=(config.ssl_cert, config.ssl_priv), debug=False)
