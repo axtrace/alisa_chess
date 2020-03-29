@@ -67,10 +67,11 @@ def run_script():
         game.user_move(user_move)
         print(prev_turn, user_move)
 
-        # make comp move
-        prev_turn = game.who()
-        comp_move = game.comp_move()
-        print(prev_turn, comp_move)
+        if not not game.is_game_over():
+            # check that game is not over and make comp move
+            prev_turn = game.who()
+            comp_move = game.comp_move()
+            print(prev_turn, comp_move)
 
     # form result text
     move_tts = speaker.say_move(comp_move)
