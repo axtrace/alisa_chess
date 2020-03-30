@@ -67,7 +67,7 @@ class TextPreparer(object):
                    prev_turn_tts):
         winner = ''
         if reason == '#':
-            winner = ' Победили ' + prev_turn_tts
+            winner = 'Победили ' + prev_turn_tts
 
         text = texts.gameover_text.format(comp_move, '', reason_tts,
                                           winner)
