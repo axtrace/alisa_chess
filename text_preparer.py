@@ -69,17 +69,10 @@ class TextPreparer(object):
         if reason == '#':
             winner = ' Победили ' + prev_turn_tts
 
-        text = f'{comp_move}. Игра окончена!'
-        text_tts = f'{comp_move_tts}. Игра окончена! sil <[70]>'
-
-        text += f' Результат: {reason_tts}.{winner}.' if winner else ''
-        text_tts += f' Результат: {reason_tts}.{winner}.' if winner else ''
-
-        text += f' Спасибо за игру!'
-        text_tts += f' Спасибо за игру!'
-
-        text += f' Если хотите сыграть еще раз, заново запустите навык'
-        text_tts += f' Если хотите сыграть еще раз, заново запустите навык'
+        text = texts.gameover_text.format(comp_move, '', reason_tts,
+                                          winner)
+        text_tts = texts.gameover_text.format(comp_move, 'sil <[70]>',
+                                              reason_tts, winner)
 
         return text, text_tts
 

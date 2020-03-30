@@ -18,7 +18,7 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual(res_tts,
                          '\nХод Конь эф 3 невозможен. Попробуйте ещё раз.\n')
 
-    def test(self):
+    def test_help(self):
         help_text_expected = """
 Навык Шахматы вслепую. Ходим по очереди. 
  Ходы называем в формате: фигура + только координаты клетки, куда ходим.
@@ -54,8 +54,7 @@ class MyTestCase(unittest.TestCase):
  Но скоро я научусь играть лучше и можно будет менять уровень сложности.
         """
         res = self.tp.say_help_text('Nf3', 'Конь эф 3')
-        self.assertEqual(res,
-                         '\nХод Конь эф 3 невозможен. Попробуйте ещё раз.\n')
+        self.assertEqual(res, help_text_expected)
 
 
 if __name__ == '__main__':
