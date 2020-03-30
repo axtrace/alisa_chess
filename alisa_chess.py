@@ -81,6 +81,7 @@ def run_script():
     text, text_tts = tp.say_result(comp_move, move_tts, reason,
                                    speaker.say_reason(reason, 'ru'),
                                    speaker.say_turn(prev_turn, 'ru'))
+    text += game.get_board()
     # say results
     yield from say_text(text, text_tts, True)
     game.quit()
