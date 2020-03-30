@@ -32,7 +32,6 @@ class Speaker(object):
     promotions_names = {'ru': 'превращение в', 'en': 'promotion to'}
 
     castling_names = {
-
         '0-0': {'ru': 'Короткая рокировка', 'en': 'Kingside castling'},
         '0-0-0': {'ru': 'Длинная рокировка', 'en': 'Queenside castling'}
     }
@@ -56,7 +55,8 @@ class Speaker(object):
     def _castling_pron_(self, move_san, lang='ru'):
         # returns castling pronunciation in specified language
         res = ''
-        castlings = self.castling_names.get(move_san, None)
+        castle_index = move_san.replace('O', '0')
+        castlings = self.castling_names.get(castle_index, None)
         if castlings is not None:
             res = castlings.get(lang, '')
         return res
@@ -94,9 +94,10 @@ class Speaker(object):
 
     def say_move(self, move_san, lang='ru'):
         speak_list = []
-        move_regex = re.compile(r'[a-h]|[1-8]|x|[KQRBN]|[+#]|0-0-0|0-0')
+        regex_body = r'[a-h]|[1-8]|x|[KQRBN]|[+#]|0-0-0|0-0|O-O-O|O-O'
+        move_regex = re.compile(regex_body)
         for sym in re.finditer(move_regex, move_san):
-            if '0-0' in sym[0]:
+            if '0-0' in sym[0] or 'O-O' in sym[0]:
                 # castling
                 speak_list.append(self._castling_pron_(sym[0], lang))
             elif 'a' <= sym[0] <= 'h':
@@ -129,5 +130,3 @@ class Speaker(object):
         if reasons is not None:
             res = reasons.get(lang, '')
         return res
-
-

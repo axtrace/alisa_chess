@@ -45,9 +45,10 @@ class MoveExtractor(object):
 
     castling_map = {
         '0-0': {'короткая рокировка', 'два нуля', '00', 'kingside castling',
-                'castling short', 'short castling'},
+                'castling short', 'short castling', '0-0', 'O-O', 'О-О'},
         '0-0-0': {'длинная рокировка', 'три нуля', '000', 'queenside castling',
-                  'castling long', 'long castling'}
+                  'castling long', 'long castling', '0-0-0', 'O-O-O', 'О-О-О',
+                  'трио'}
     }
 
     def __init__(self):

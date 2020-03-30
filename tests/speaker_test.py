@@ -46,6 +46,14 @@ class MyTestCase(unittest.TestCase):
         speak = self.speaker.say_move('0-0', 'ru')
         self.assertEqual(speak, 'Короткая рокировка')
 
+    def test_short_castling_OO(self):
+        speak = self.speaker.say_move('O-O', 'ru')
+        self.assertEqual(speak, 'Короткая рокировка')
+
+    def test_long_castling_OOO(self):
+        speak = self.speaker.say_move('O-O-O', 'ru')
+        self.assertEqual(speak, 'Длинная рокировка')
+
     def test_long_castling(self):
         speak = self.speaker.say_move('0-0-0', 'ru')
         self.assertEqual(speak, 'Длинная рокировка')
