@@ -71,7 +71,7 @@ class TextPreparer(object):
 
         text = texts.gameover_text.format(comp_move, '', reason_tts,
                                           winner)
-        text_tts = texts.gameover_text.format(comp_move, 'sil <[70]>',
+        text_tts = texts.gameover_text.format(comp_move_tts, 'sil <[70]>',
                                               reason_tts, winner)
 
         return text, text_tts
