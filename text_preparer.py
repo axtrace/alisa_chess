@@ -78,14 +78,12 @@ class TextPreparer(object):
 
     @staticmethod
     def say_hi_text(move, move_tts):
-        # text = texts.hi_turn_text.format(move) + texts.choose_turn_text
-        # text_tts = texts.hi_turn_text.format(move_tts) + texts.choose_turn_text
         text = texts.choose_turn_text
         text_tts = text
         return text, text_tts
 
     @staticmethod
-    def say_help_text(move, move_tts):
+    def say_help_text(level):
 
         text = texts.help_text_intro
         text_tts = texts.help_text_intro
@@ -105,5 +103,8 @@ class TextPreparer(object):
 
         text += texts.engine_info
         text_tts += texts.engine_info
+
+        # text += texts.current_level_text.format(level)
+        # text_tts += texts.current_level_text.format(level)
 
         return text, text_tts

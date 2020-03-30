@@ -80,8 +80,8 @@ def run_script():
     reason = game.gameover_reason()
     board_printed = game.get_board()
     text, text_tts = tp.say_result(comp_move, move_tts, reason,
-                                    speaker.say_reason(reason, 'ru'),
-                                    speaker.say_turn(prev_turn, 'ru'))
+                                   speaker.say_reason(reason, 'ru'),
+                                   speaker.say_turn(prev_turn, 'ru'))
 
     # say results
     yield from say_text(board_printed + text, text_tts, True)
@@ -116,7 +116,7 @@ def say_turn():
 
 
 def say_help():
-    text, text_tts = tp.say_help_text('Конь f3', speaker.say_move('Nf3', 'ru'))
+    text, text_tts = tp.say_help_text()
     yield from say_text(text, text_tts)
 
 
