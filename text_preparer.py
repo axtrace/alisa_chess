@@ -83,7 +83,7 @@ class TextPreparer(object):
         return text, text_tts
 
     @staticmethod
-    def say_help_text(level):
+    def say_help_text():
 
         text = texts.help_text_intro
         text_tts = texts.help_text_intro
