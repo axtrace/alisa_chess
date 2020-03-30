@@ -79,7 +79,7 @@ def run_script():
     move_tts = speaker.say_move(comp_move)
     reason = game.gameover_reason()
     board_printed = game.get_board()
-    text1, text_tts = tp.say_result(comp_move, move_tts, reason,
+    text, text_tts = tp.say_result(comp_move, move_tts, reason,
                                     speaker.say_reason(reason, 'ru'),
                                     speaker.say_turn(prev_turn, 'ru'))
 
