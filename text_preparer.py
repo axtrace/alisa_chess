@@ -85,8 +85,10 @@ class TextPreparer(object):
 
     @staticmethod
     def say_hi_text(move, move_tts):
-        text = texts.hi_turn_text.format(move) + texts.choose_turn_text
-        text_tts = texts.hi_turn_text.format(move_tts) + texts.choose_turn_text
+        # text = texts.hi_turn_text.format(move) + texts.choose_turn_text
+        # text_tts = texts.hi_turn_text.format(move_tts) + texts.choose_turn_text
+        text = 'Начинаем игру' + texts.choose_turn_text
+        text_tts = text
         return text, text_tts
 
     @staticmethod
