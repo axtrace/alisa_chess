@@ -78,12 +78,13 @@ def run_script():
     # form result text
     move_tts = speaker.say_move(comp_move)
     reason = game.gameover_reason()
-    text, text_tts = tp.say_result(comp_move, move_tts, reason,
-                                   speaker.say_reason(reason, 'ru'),
-                                   speaker.say_turn(prev_turn, 'ru'))
-    text += game.get_board()
+    board_printed = game.get_board()
+    text1, text_tts = tp.say_result(comp_move, move_tts, reason,
+                                    speaker.say_reason(reason, 'ru'),
+                                    speaker.say_turn(prev_turn, 'ru'))
+
     # say results
-    yield from say_text(text, text_tts, True)
+    yield from say_text(board_printed + text, text_tts, True)
     game.quit()
 
 
