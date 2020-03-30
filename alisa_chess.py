@@ -54,10 +54,12 @@ def run_script():
     # game circle
     while not game.is_game_over():
         # get user move
-        user_move = yield from get_move(comp_move, prev_turn)
+        user_move = yield from get_move(comp_move, prev_turn,
+                                        text_to_show=game.get_board())
         while not game.is_move_legal(user_move):
             text, text_tts = tp.say_not_legal_move(user_move,
                                                    speaker.say_move(user_move))
+            text += game.get_board()
             print(text)
             user_move = yield from get_move(comp_move, prev_turn, text,
                                             text_tts)

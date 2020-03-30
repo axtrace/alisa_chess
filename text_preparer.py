@@ -13,25 +13,25 @@ class TextPreparer(object):
     def say_do_not_get(command_text, attempt):
         not_get = texts.not_get_move.format(command_text)
         not_get_tts = not_get
-        if attempt % 3 == 1:
-            # every N case try to remember of
-            not_get += texts.names_for_files.format('', '', '', '', '', '', '')
-            not_get_tts += texts.names_for_files.format('sil <[60]>',
-                                                        'sil <[60]>',
-                                                        'sil <[60]>',
-                                                        'sil <[60]>',
-                                                        'sil <[60]>',
-                                                        'sil <[60]>',
-                                                        'sil <[60]>')
-            not_get += texts.names_for_pieces.format('', '', '', '', '')
-            not_get_tts += texts.names_for_pieces.format('sil <[70]>',
-                                                         'sil <[60]>',
-                                                         'sil <[60]>',
-                                                         'sil <[60]>',
-                                                         'sil <[60]>')
-
-            not_get += texts.coord_rules.format('Слон d3')
-            not_get_tts += texts.coord_rules.format('Слон дэ 3')
+        # if attempt % 3 == 1:
+        #     # every N case try to remember of
+        #     not_get += texts.names_for_files.format('', '', '', '', '', '', '')
+        #     not_get_tts += texts.names_for_files.format('sil <[60]>',
+        #                                                 'sil <[60]>',
+        #                                                 'sil <[60]>',
+        #                                                 'sil <[60]>',
+        #                                                 'sil <[60]>',
+        #                                                 'sil <[60]>',
+        #                                                 'sil <[60]>')
+        #     not_get += texts.names_for_pieces.format('', '', '', '', '')
+        #     not_get_tts += texts.names_for_pieces.format('sil <[70]>',
+        #                                                  'sil <[60]>',
+        #                                                  'sil <[60]>',
+        #                                                  'sil <[60]>',
+        #                                                  'sil <[60]>')
+        #
+        #     not_get += texts.coord_rules.format('Слон d3')
+        #     not_get_tts += texts.coord_rules.format('Слон дэ 3')
         return not_get, not_get_tts
 
     @staticmethod
@@ -39,8 +39,8 @@ class TextPreparer(object):
                       prev_turn_tts='', text_to_show='', text_to_say=''):
         # form speech for your move
 
-        text = text_to_show + '. ' if text_to_show else ''
-        tts = text_to_say + '. ' if text_to_say else ''
+        text = text_to_show if text_to_show else ''
+        tts = text_to_say if text_to_say else ''
         if prev_turn:
             # if previous turn was given
             tts += f'{prev_turn_tts} пошли '
@@ -85,12 +85,8 @@ class TextPreparer(object):
 
     @staticmethod
     def say_hi_text(move, move_tts):
-        text = texts.hi_turn_text.format('', '', '', '', '',
-                                         move) + texts.choose_turn_text
-        text_tts = texts.hi_turn_text.format('sil <[70]>', 'sil <[60]>',
-                                             'sil <[60]>', 'sil <[60]>',
-                                             'sil <[60]>',
-                                             move_tts) + texts.choose_turn_text
+        text = texts.hi_turn_text.format(move) + texts.choose_turn_text
+        text_tts = texts.hi_turn_text.format(move_tts) + texts.choose_turn_text
         return text, text_tts
 
     @staticmethod

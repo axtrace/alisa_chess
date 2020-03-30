@@ -15,7 +15,7 @@ class Speaker(object):
     }
 
     letters_for_pronunciation = {
-        'ru': {'a': 'а', 'b': 'бэ', 'c': 'цэ', 'd': 'дэ', 'e': 'е', 'f': 'эф',
+        'ru': {'a': 'а', 'b': 'бэ', 'c': 'цэ', 'd': 'дэ', 'e': 'Е', 'f': 'эф',
                'g': 'же', 'h': 'аш'}}
 
     check = {'ru': 'шах', 'en': 'check'}

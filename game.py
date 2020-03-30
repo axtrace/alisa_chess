@@ -71,6 +71,9 @@ class Game(object):
         player = self.board.turn
         return 'White' if player == chess.WHITE else 'Black'
 
+    def get_board(self):
+        return self.board
+
     def gameover_reason(self):
         # returns a code for reason of game ends
 
