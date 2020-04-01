@@ -72,7 +72,7 @@ class Game(object):
         return 'White' if player == chess.WHITE else 'Black'
 
     def get_board(self):
-        return str(self.board) + '\n'
+        return str(self.board).replace(' ', '\t') + '\n'
 
     def gameover_reason(self):
         # returns a code for reason of game ends
