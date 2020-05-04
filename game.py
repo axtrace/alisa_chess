@@ -33,9 +33,8 @@ class Game(object):
 
     def unmake_move(self):
         # unmake the last user move
-        # board.pop()  # Unmake the last move
+        return self.board.pop()  # Unmake the last move
         # define the user was last moved
-        pass
 
     def is_game_over(self):
         return self.board.is_game_over()

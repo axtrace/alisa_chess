@@ -1,5 +1,3 @@
-# import sys
-# import re
 from flask import Flask
 from alice_scripts import Skill, request, say, suggest
 import chess.engine
@@ -56,6 +54,11 @@ def run_script():
         # get user move
         user_move = yield from get_move(comp_move, prev_turn,
                                         text_to_show=game.get_board())
+        if user_move == -1:
+            # отмена хода
+            pass
+            # continue
+
         while not game.is_move_legal(user_move):
             text, text_tts = tp.say_not_legal_move(user_move,
                                                    speaker.say_move(user_move))
@@ -97,6 +100,9 @@ def get_move(comp_move='', prev_turn='', text_to_show='', text_to_say=''):
                                       prev_turn_tts, text_to_show, text_to_say)
 
     yield from say_text(text, text_tts)
+    if is_request_unmake(request):
+        # user request undo his move
+        return -1
     move = move_ext.extract_move(request)
 
     while move is None:
@@ -132,12 +138,18 @@ def say_not_get_turn():
     yield from say_text(texts.not_get_turn_text)
 
 
+def say_unmake():
+    pass
+
+
 def say_text(text, text_tts='', end_session=False):
     # say text and check answer for help
     tts = text_tts if text_tts else text
     yield say(text, tts=tts, end_session=end_session)
     if is_request_help(request):
         yield from say_help()
+    # elif is_request_unmake(request):
+    #    yield from say_unmkae()
 
 
 def color_define(req):
@@ -155,6 +167,12 @@ def is_request_yes(req):
     yes_lemmas = ['да', 'давай', 'ага', 'угу', 'yes', 'yeh', 'ok', 'ок',
                   'поехали', 'старт']
     return request.has_lemmas(*yes_lemmas)
+
+
+def is_request_unmake(req):
+    unmake_lemmas = ['отмена', 'отменить', 'отмени', 'отставить', 'unmake',
+                     'undo']
+    return req.has_lemmas(*unmake_lemmas)
 
 
 def is_request_help(req):
