@@ -62,7 +62,7 @@ class MoveExtractor(object):
 
     def _color_by_intents_(self, req):
         intents = self._get_intents_(req)
-        if intents is None:
+        if intents is None or not len(intents):
             return False, ''
         elif 'WHITE_WORD' in intents:
             return True, 'WHITE'
