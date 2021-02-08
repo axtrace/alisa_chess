@@ -82,7 +82,11 @@ class MoveExtractor(object):
 
     def extract_color(self, request):
         # extracting color (turn) from user speech
-        is_color_defined, user_color = self._color_by_intents_(request)
+        intent_color = self._color_by_intents_(request)
+        if intent_color is None:
+            is_color_defined = False
+        else:
+            is_color_defined, user_color = self._color_by_intents_(request)
         if not is_color_defined:
             return self._color_by_lemma(request)
         return is_color_defined, user_color
