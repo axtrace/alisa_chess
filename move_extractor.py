@@ -133,7 +133,7 @@ class MoveExtractor(object):
         return ''
 
     @staticmethod
-    def _has_lemma_(self, request, lemma):
+    def _has_lemma_(request, lemma):
         # decorator for str
         if isinstance(request, str):
             # elem looks like 'эф', request looks like 'эф 5'
@@ -166,7 +166,7 @@ class MoveExtractor(object):
         return file_susp
 
     @staticmethod
-    def _get_rank_(self, request):
+    def _get_rank_(request):
         match = re.search(r'[1-8]', request)
         rank = match[0] if match else ''
         return rank
