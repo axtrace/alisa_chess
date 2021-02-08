@@ -209,9 +209,10 @@ def is_request_yes(req):
     yes_lemmas = ['да', 'давай', 'ага', 'угу', 'yes', 'yeh', 'ok', 'ок',
                   'поехали', 'старт']
     intents = get_intents(req)
+    has_lemmas_bool = req.has_lemmas(*yes_lemmas)
     if intents is not None:
-        return 'YANDEX.CONFIRM' in intents
-    return req.has_lemmas(*yes_lemmas)
+        return "YANDEX.CONFIRM" in intents or has_lemmas_bool
+    return has_lemmas_bool
 
 
 def is_request_unmake(req):
