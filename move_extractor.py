@@ -54,7 +54,7 @@ class MoveExtractor(object):
     def __init__(self):
         pass
 
-    def _get_intents_(req):
+    def _get_intents_(self, req):
         if 'nlu' in req['request']:
             if 'intents' in req['request']['nlu']:
                 return req['request']['nlu']['intents']
@@ -132,7 +132,7 @@ class MoveExtractor(object):
         return ''
 
     @staticmethod
-    def _has_lemma_(request, lemma):
+    def _has_lemma_(self, request, lemma):
         # decorator for str
         if isinstance(request, str):
             # elem looks like 'эф', request looks like 'эф 5'
@@ -165,7 +165,7 @@ class MoveExtractor(object):
         return file_susp
 
     @staticmethod
-    def _get_rank_(request):
+    def _get_rank_(self, request):
         match = re.search(r'[1-8]', request)
         rank = match[0] if match else ''
         return rank
