@@ -1,7 +1,5 @@
 from flask import Flask
 from alice_scripts import Skill, request, say, suggest
-import chess.engine
-import chess.pgn
 
 import config
 import texts
@@ -24,25 +22,32 @@ attempts = 0
 @skill.script
 def run_script():
     # main part of program. Enter point
+    # attempts -
     global attempts
     attempts += 1
 
+    # say hi, do you want to play chess? say yes/
     yield from say_hi()
 
+    # expend confirmation
     while not is_request_yes(request):
         yield from say_not_get_yes()
 
+    # say "please choose color"
     yield from say_turn()
 
     # define user color
-    is_color_defined, user_color = color_define(request)
+    # is_color_defined, user_color = color_define(request)
+    is_color_defined, user_color = move_ext.extract_color(request)
     while not is_color_defined:
         yield from say_not_get_turn()
-        is_color_defined, user_color = color_define(request)
+        is_color_defined, user_color = move_ext.extract_color(request)
 
+    # start new game
     game = Game()
     comp_move, prev_turn = '', ''
 
+    # if user plays black, comp does first move
     if user_color == 'BLACK':
         # user plays black
         prev_turn = game.who()
@@ -91,18 +96,44 @@ def run_script():
     game.quit()
 
 
+def make_comp_move(game):
+    if not game.is_game_over():
+        # check that game is not over and make comp move
+        prev_turn = game.who()
+        comp_move = game.comp_move()
+        print(prev_turn, comp_move)
+        return comp_move, prev_turn
+    return None
+
+
+def prep_text_to_say(comp_move, prev_turn, text_to_show, text_to_say,
+                     lang='ru'):
+    move_to_say = speaker.say_move(comp_move, lang)
+    prev_turn_tts = speaker.say_turn(prev_turn, lang)
+    text, text_tts = tp.say_your_move(comp_move, move_to_say, prev_turn,
+                                      prev_turn_tts, text_to_show,
+                                      text_to_say)
+    return text, text_tts
+
+
 def get_move(comp_move='', prev_turn='', text_to_show='', text_to_say=''):
     # say the comp move and try extract valid move from user answer
     global attempts
-    move_to_say = speaker.say_move(comp_move, 'ru')
-    prev_turn_tts = speaker.say_turn(prev_turn, 'ru')
-    text, text_tts = tp.say_your_move(comp_move, move_to_say, prev_turn,
-                                      prev_turn_tts, text_to_show, text_to_say)
 
+    # move_to_say = speaker.say_move(comp_move, 'ru')
+    # prev_turn_tts = speaker.say_turn(prev_turn, 'ru')
+    # text, text_tts = tp.say_your_move(comp_move, move_to_say, prev_turn,
+    #                                   prev_turn_tts, text_to_show,
+    #                                   text_to_say)
+
+    text, text_tts = prep_text_to_say(comp_move, prev_turn, text_to_show,
+                                      text_to_say, 'ru')
     yield from say_text(text, text_tts)
+
     if is_request_unmake(request):
         # user request undo his move
         return -1
+
     move = move_ext.extract_move(request)
 
     while move is None:
@@ -149,7 +180,7 @@ def say_text(text, text_tts='', end_session=False):
     if is_request_help(request):
         yield from say_help()
     # elif is_request_unmake(request):
-    #    yield from say_unmkae()
+    #    yield from say_unmake()
 
 
 def color_define(req):
@@ -163,10 +194,24 @@ def color_define(req):
     return False, ''
 
 
+def get_intents(req):
+    if 'nlu' in req['request']:
+        if 'intents' in req['request']['nlu']:
+            return req['request']['nlu']['intents']
+    return None
+
+
+def get_entities(req):
+    pass
+
+
 def is_request_yes(req):
     yes_lemmas = ['да', 'давай', 'ага', 'угу', 'yes', 'yeh', 'ok', 'ок',
                   'поехали', 'старт']
-    return request.has_lemmas(*yes_lemmas)
+    intents = get_intents(req)
+    if intents is not None:
+        return 'YANDEX.CONFIRM' in intents
+    return req.has_lemmas(*yes_lemmas)
 
 
 def is_request_unmake(req):
@@ -185,5 +230,4 @@ if __name__ == "__main__":
     cur_host = config.HOST_IP
     port = 5000
 
-    skill.run(host=cur_host, port=5000,
-              ssl_context=(config.ssl_cert, config.ssl_priv), debug=False)
+    skill.run(host=cur_host, port=5000, ssl_context='adhoc', debug=False)

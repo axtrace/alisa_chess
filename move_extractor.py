@@ -54,6 +54,39 @@ class MoveExtractor(object):
     def __init__(self):
         pass
 
+    def _get_intents_(req):
+        if 'nlu' in req['request']:
+            if 'intents' in req['request']['nlu']:
+                return req['request']['nlu']['intents']
+        return None
+
+    def _color_by_intents_(self, req):
+        intents = self._get_intents_(req)
+        if intents is None:
+            return False, ''
+        elif 'WHITE_WORD' in intents:
+            return True, 'WHITE'
+        elif 'BLACK_WORD' in intents:
+            return True, 'BLACK'
+
+    def _color_by_lemma(self, req):
+        # define user color
+        white_lemmas = ['белый', 'белые', 'белых', 'белое', 'white']
+        black_lemmas = ['черный', 'черные', 'черных', 'черное',
+                        'black']
+        if req.has_lemmas(*white_lemmas):
+            return True, 'WHITE'
+        elif req.has_lemmas(*black_lemmas):
+            return True, 'BLACK'
+        return False, ''
+
+    def extract_color(self, request):
+        # extracting color (turn) from user speech
+        is_color_defined, user_color = self._color_by_intents_(request)
+        if not is_color_defined:
+            return self._color_by_lemma(request)
+        return is_color_defined, user_color
+
     def extract_move(self, request):
         # extracting move in SAN from user speech
 
