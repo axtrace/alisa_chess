@@ -1,8 +1,6 @@
-import config
-
 user = 'www-data'
 group = 'www-data'
-bind = config.HOST_IP + ':5000'
+# bind = config.HOST_IP + ':5000'
 workers = 1
 threads = 4
 accesslog = '-'
