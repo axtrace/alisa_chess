@@ -20,7 +20,7 @@ attempts = 0
 
 
 @skill.script
-def run_script():
+def run_script(environ, start_response):
     # main part of program. Enter point
     # attempts -
     global attempts
