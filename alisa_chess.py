@@ -8,7 +8,6 @@ from move_extractor import MoveExtractor
 from speaker import Speaker
 from text_preparer import TextPreparer
 
-app = Flask(__name__)
 skill = Skill(__name__)
 
 move_ext = MoveExtractor()
@@ -20,7 +19,7 @@ attempts = 0
 
 
 @skill.script
-def run_script(environ, start_response):
+def run_script():
     # main part of program. Enter point
     # attempts -
     global attempts
