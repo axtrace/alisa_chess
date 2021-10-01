@@ -1,8 +1,8 @@
-import sys
+import base64
+import io
+
 import chess.engine
 import chess.pgn
-
-import config
 
 
 class Game(object):
@@ -10,20 +10,39 @@ class Game(object):
     Class for chess game
     """
 
-    def __init__(self):
-        path_index = 'win' if 'win' in str(sys.platform) else 'nix'
-        self.engine_path = config.engine_path[path_index]
-        self.engine = chess.engine.SimpleEngine.popen_uci(self.engine_path)
-        # self.time_level = 0.1  # default
-        self.skill_level = 1  # default
-        self.board = chess.Board()
+    def __init__(self, engine_path: str, board: chess.Board, skill_level: int = 1, time_level=0.1):
+        self.engine = chess.engine.SimpleEngine.popen_uci(engine_path)
+        self.engine.configure({"Skill Level": skill_level})
+        self.board = board
+        self.attempts = 0
+        self.skill_level = skill_level
+        self.time_level = time_level
         self.winner = ''
+        self.skill_state = ''
+        self.user_color = ''
+
+    def get_user_color(self):
+        return self.user_color
+
+    def set_user_color(self, user_color):
+        self.user_color = user_color
+
+    def get_skill_state(self):
+        return self.skill_state
+
+    def set_skill_state(self, skill_state):
+        self.skill_state = skill_state
+
+    def get_attempts(self):
+        return self.attempts
 
     def user_move(self, move_san):
+        self.attempts += 1
         self.board.push_san(move_san)
 
     def comp_move(self):
-        result = self.engine.play(self.board, chess.engine.Limit(time=0.1))
+        result = self.engine.play(self.board, chess.engine.Limit(time=self.time_level))
+        self.attempts += 1
         # define the best comp move from engine
         comp_move = self.board.san(result.move)
 
@@ -71,7 +90,8 @@ class Game(object):
         return 'White' if player == chess.WHITE else 'Black'
 
     def get_board(self):
-        return str(self.board).replace(' ', '\t') + '\n'
+        return self.board.unicode() + '\n'
+        # return str(self.board).replace(' ', '\t') + '\n'
 
     def gameover_reason(self):
         # returns a code for reason of game ends
@@ -85,3 +105,30 @@ class Game(object):
         elif self.board.is_insufficient_material():
             return 'insufficient'
         return ''
+
+    @staticmethod
+    def parse_and_build_game(engine_path, state):
+        if state.get("board_state", ""):
+            pgn = io.StringIO(base64.b64decode(state['board_state']).decode('utf-8'))
+            chess_game = chess.pgn.read_game(pgn)
+            board = chess_game.board()
+        else:
+            board = chess.Board()
+        game = Game(engine_path, board)
+        game.set_skill_state(state.get('skill_state', ''))
+        game.set_user_color(state.get('user_color', ''))
+        game.attempts = state.get('attempts', 0)
+        return game
+
+    def serialize_state(self):
+        exporter = chess.pgn.StringExporter()
+        pgn_game = chess.pgn.Game()
+        pgn_game.setup(self.board)
+        board_state = pgn_game.accept(exporter)
+        encoded_board_state = base64.b64encode(board_state.encode('utf-8')).decode('utf-8')
+        return {
+            'board_state': encoded_board_state,
+            'skill_state': self.skill_state,
+            'user_color': self.user_color,
+            'attempts': self.attempts,
+        }

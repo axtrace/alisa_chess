@@ -77,7 +77,7 @@ class TextPreparer(object):
         return text, text_tts
 
     @staticmethod
-    def say_hi_text(move, move_tts):
+    def say_choose_color():
         text = texts.choose_turn_text
         text_tts = text
         return text, text_tts
