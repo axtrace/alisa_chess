@@ -199,26 +199,21 @@ class AliceChess(object):
             return True, 'BLACK'
         return False, ''
 
-    def get_intents(self):
-        if 'nlu' in self.request['request']:
-            if 'intents' in self.request['request']['nlu']:
-                return self.request['request']['nlu']['intents']
-        return None
-
     def get_entities(self):
         pass
 
+    def has_intents(self, intent_list):
+        intents = []
+        if 'nlu' in self.request['request']:
+            if 'intents' in self.request['request']['nlu']:
+                intents = self.request['request']['nlu']['intents']
+        return bool(set(intents) & set(intent_list))
+
     def is_request_yes(self):
-        intents = self.get_intents()
-        has_confirm_intent = False
-        has_lemmas_bool = False
-        if intents is not None:
-            has_confirm_intent = "YANDEX.CONFIRM" in intents
-        if not has_confirm_intent:
-            yes_lemmas = ['да', 'давай', 'ага', 'угу', 'yes', 'yeh', 'ok',
-                          'ок', 'поехали', 'старт']
-            has_lemmas_bool = self.request.has_lemmas(*yes_lemmas)
-        return has_lemmas_bool or has_confirm_intent
+        # define if user confirm flow
+        yes_lemmas = ['да', 'давай', 'ага', 'угу', 'yes', 'yeh', 'ok',
+                      'ок', 'поехали', 'старт']
+        return self.has_intents(['YANDEX.CONFIRM']) or self.request.has_lemmas(*yes_lemmas)
 
     def is_request_unmake(self):
         unmake_lemmas = ['отмена', 'отменить', 'отмени', 'отставить', 'unmake',
@@ -227,12 +222,5 @@ class AliceChess(object):
 
     def is_request_help(self):
         # define if user asked help
-        intents = self.get_intents()
-        has_lemmas_bool = False
-        has_help_intents = False
-        if intents is not None:
-            has_help_intents = 'YANDEX.HELP' in intents or 'YANDEX.WHAT_CAN_YOU_DO' in intents
-        if not has_help_intents:
-            help_lemmas = ['помощь', 'умеешь']
-            has_lemmas_bool = self.request.has_lemmas(*help_lemmas)
-        return has_lemmas_bool or has_help_intents
+        help_lemmas = ['помощь', 'умеешь']
+        return self.has_intents(['YANDEX.HELP', 'YANDEX.WHAT_CAN_YOU_DO']) or self.request.has_lemmas(*help_lemmas)
