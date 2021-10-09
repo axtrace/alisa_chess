@@ -34,6 +34,6 @@ class RequestTest(object):
     def user_id(self):
         return self['session']['user_id']
 
-    def has_lemmas(self, *lemmas):
+    def has_lemmas(self, lemmas):
         return any(morph.parse(item)[0].normal_form in self._lemmas
                    for item in lemmas)

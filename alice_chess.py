@@ -19,6 +19,9 @@ class AliceChess(object):
         return self.game.serialize_state()
 
     def processRequest(self):
+        if self.is_request_help():
+            yield from self.say_help()
+
         if self.game.get_skill_state() == '':
             # say hi, do you want to play chess? say yes/
             self.game.set_skill_state('SAY_YES')
@@ -38,10 +41,12 @@ class AliceChess(object):
         # define user color
         # is_color_defined, user_color = color_define(request)
         if self.game.get_skill_state() == 'CHOOSE_COLOR':
-            is_color_defined, user_color = self.move_ext.extract_color(self.request)
+            is_color_defined, user_color = self.move_ext.extract_color(
+                self.request)
             while not is_color_defined:
                 yield from self.say_not_get_turn()
-                is_color_defined, user_color = self.move_ext.extract_color(self.request)
+                is_color_defined, user_color = self.move_ext.extract_color(
+                    self.request)
             self.game.set_user_color(user_color)
             self.game.set_skill_state('NOTIFY_STEP')
 
@@ -67,10 +72,12 @@ class AliceChess(object):
 
             while not game.is_move_legal(user_move):
                 text, text_tts = TextPreparer.say_not_legal_move(user_move,
-                                                                 self.speaker.say_move(user_move))
+                                                                 self.speaker.say_move(
+                                                                     user_move))
                 text += game.get_board()
                 print(text)
-                user_move = yield from self.get_move(comp_move, prev_turn, text,
+                user_move = yield from self.get_move(comp_move, prev_turn,
+                                                     text,
                                                      text_tts)
 
             # make user move
@@ -89,8 +96,10 @@ class AliceChess(object):
         reason = game.gameover_reason()
         board_printed = game.get_board()
         text, text_tts = TextPreparer.say_result(comp_move, move_tts, reason,
-                                                 self.speaker.say_reason(reason, 'ru'),
-                                                 self.speaker.say_turn(prev_turn, 'ru'))
+                                                 self.speaker.say_reason(
+                                                     reason, 'ru'),
+                                                 self.speaker.say_turn(
+                                                     prev_turn, 'ru'))
 
         # say results
         yield from self.say_text(board_printed + text, text_tts, True)
@@ -109,12 +118,15 @@ class AliceChess(object):
                          lang='ru'):
         move_to_say = self.speaker.say_move(comp_move, lang)
         prev_turn_tts = self.speaker.say_turn(prev_turn, lang)
-        text, text_tts = TextPreparer.say_your_move(comp_move, move_to_say, prev_turn,
-                                                    prev_turn_tts, text_to_show,
+        text, text_tts = TextPreparer.say_your_move(comp_move, move_to_say,
+                                                    prev_turn,
+                                                    prev_turn_tts,
+                                                    text_to_show,
                                                     text_to_say)
         return text, text_tts
 
-    def get_move(self, comp_move='', prev_turn='', text_to_show='', text_to_say=''):
+    def get_move(self, comp_move='', prev_turn='', text_to_show='',
+                 text_to_say=''):
         # say the comp move and try extract valid move from user answer
 
         # move_to_say = speaker.say_move(comp_move, 'ru')
@@ -123,7 +135,8 @@ class AliceChess(object):
         #                                   prev_turn_tts, text_to_show,
         #                                   text_to_say)
 
-        text, text_tts = self.prep_text_to_say(comp_move, prev_turn, text_to_show,
+        text, text_tts = self.prep_text_to_say(comp_move, prev_turn,
+                                               text_to_show,
                                                text_to_say, 'ru')
         if self.game.get_skill_state() == 'NOTIFY_STEP':
             self.game.set_skill_state('MAKE_STEP')
@@ -137,8 +150,9 @@ class AliceChess(object):
 
         while move is None:
             # self.attempts += 1
-            not_get, not_get_tts = TextPreparer.say_do_not_get(self.request['request']['command'],
-                                                               self.game.get_attempts())
+            not_get, not_get_tts = TextPreparer.say_do_not_get(
+                self.request['request']['command'],
+                self.game.get_attempts())
             print(not_get)
             yield from self.say_text(not_get, not_get_tts)
             move = self.move_ext.extract_move(self.request)
@@ -185,23 +199,21 @@ class AliceChess(object):
             return True, 'BLACK'
         return False, ''
 
-    def get_intents(self):
-        if 'nlu' in self.request['request']:
-            if 'intents' in self.request['request']['nlu']:
-                return self.request['request']['nlu']['intents']
-        return None
-
     def get_entities(self):
         pass
 
+    def has_intents(self, intent_list):
+        intents = []
+        if 'nlu' in self.request['request']:
+            if 'intents' in self.request['request']['nlu']:
+                intents = self.request['request']['nlu']['intents']
+        return bool(set(intents) & set(intent_list))
+
     def is_request_yes(self):
-        yes_lemmas = ['да', 'давай', 'ага', 'угу', 'yes', 'yeh', 'ok', 'ок',
-                      'поехали', 'старт']
-        intents = self.get_intents()
-        has_lemmas_bool = self.request.has_lemmas(*yes_lemmas)
-        if intents is not None:
-            return "YANDEX.CONFIRM" in intents or has_lemmas_bool
-        return has_lemmas_bool
+        # define if user confirm flow
+        yes_lemmas = ['да', 'давай', 'ага', 'угу', 'yes', 'yeh', 'ok',
+                      'ок', 'поехали', 'старт']
+        return self.has_intents(['YANDEX.CONFIRM']) or self.request.has_lemmas(*yes_lemmas)
 
     def is_request_unmake(self):
         unmake_lemmas = ['отмена', 'отменить', 'отмени', 'отставить', 'unmake',
@@ -211,4 +223,4 @@ class AliceChess(object):
     def is_request_help(self):
         # define if user asked help
         help_lemmas = ['помощь', 'умеешь']
-        return self.request.has_lemmas(*help_lemmas)
+        return self.has_intents(['YANDEX.HELP', 'YANDEX.WHAT_CAN_YOU_DO']) or self.request.has_lemmas(*help_lemmas)
