@@ -140,7 +140,8 @@ class MoveExtractor(object):
         # decorator for str
         if isinstance(request, str):
             # elem looks like 'эф', request looks like 'эф 5'
-            return lemma == request.split()[0]
+            parts = request.split()
+            return len(parts) > 0 and lemma == parts[0]
         else:
             # suggest it is request from user
             return request.has_lemmas(lemma)

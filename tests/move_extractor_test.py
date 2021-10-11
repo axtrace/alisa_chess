@@ -44,6 +44,9 @@ class TestMoveExtractor(unittest.TestCase):
     def test_empty_input(self):
         self.extract_move_test('', None)
 
+    def test_two_digits(self):
+        self.extract_move_test('1 1', None)
+
     def test_no_move(self):
         self.extract_move_test('Fill something here', None)
 
