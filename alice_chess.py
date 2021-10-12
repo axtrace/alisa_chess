@@ -5,6 +5,10 @@ from game import Game
 from move_extractor import MoveExtractor
 from speaker import Speaker
 from text_preparer import TextPreparer
+import logging
+
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 
 class AliceChess(object):
@@ -19,6 +23,10 @@ class AliceChess(object):
         return self.game.serialize_state()
 
     def processRequest(self):
+        if 'request' in self.request and 'command' in self.request['request']:
+            log.debug("request command is: '%s'", self.request['request']['command'])
+        else:
+            log.debug("unknown request: '%s'", self.request)
         if self.is_request_help():
             yield from self.say_help()
 
@@ -58,7 +66,7 @@ class AliceChess(object):
             # user plays black
             prev_turn = game.who()
             comp_move = game.comp_move()
-            print(prev_turn, comp_move)
+            log.debug("%s %s", prev_turn, comp_move)
 
         # game circle
         while not game.is_game_over():
@@ -75,7 +83,7 @@ class AliceChess(object):
                                                                  self.speaker.say_move(
                                                                      user_move))
                 text += game.get_board()
-                print(text)
+                log.debug(text)
                 user_move = yield from self.get_move(comp_move, prev_turn,
                                                      text,
                                                      text_tts)
@@ -83,13 +91,13 @@ class AliceChess(object):
             # make user move
             prev_turn = game.who()
             game.user_move(user_move)
-            print(prev_turn, user_move)
+            log.debug("%s %s", prev_turn, user_move)
 
             if not game.is_game_over():
                 # check that game is not over and make comp move
                 prev_turn = game.who()
                 comp_move = game.comp_move()
-                print(prev_turn, comp_move)
+                log.debug("%s %s", prev_turn, comp_move)
 
         # form result text
         move_tts = self.speaker.say_move(comp_move)
@@ -110,7 +118,7 @@ class AliceChess(object):
             # check that game is not over and make comp move
             prev_turn = self.game.who()
             comp_move = self.game.comp_move()
-            print(prev_turn, comp_move)
+            log.debug("%s %s", prev_turn, comp_move)
             return comp_move, prev_turn
         return None
 
@@ -153,7 +161,7 @@ class AliceChess(object):
             not_get, not_get_tts = TextPreparer.say_do_not_get(
                 self.request['request']['command'],
                 self.game.get_attempts())
-            print(not_get)
+            log.debug(not_get)
             yield from self.say_text(not_get, not_get_tts)
             move = self.move_ext.extract_move(self.request)
 

@@ -8,17 +8,13 @@ from game import Game
 
 stockfish_engine_path = "./stockfish"
 
+root_handler = logging.getLogger().handlers[0]
+root_handler.setFormatter(logging.Formatter(
+    '[%(levelname)s]\t%(name)s\t[%(request_id)s]\t%(message)s\n'
+))
+
 
 def handler(event, context):
-    #    root_handler = logging.getLogger().handlers[0]
-    #    root_handler.setFormatter(logging.Formatter(
-    #        '[%(levelname)s]\t%(name)s\t%(request_id)s\t%(message)s\n'
-    #    ))
-    # logging.getLogger().setLevel(logging.DEBUG)
-    # logging.warning(json.dumps({
-    #    'event': event,
-    # }))
-
     """
     Entry-point for Serverless Function.
     :param event: request payload.
@@ -44,5 +40,5 @@ def handler(event, context):
         'response': response,
         # https://yandex.ru/dev/dialogs/alice/doc/session-persistence.html
         'session_state': alice_chess.get_session_state(),
-        #'application_state': alice_chess.get_session_state(),
+        # 'application_state': alice_chess.get_session_state(),
     }
