@@ -2,7 +2,7 @@ import unittest
 from speaker import Speaker
 
 
-class MyTestCase(unittest.TestCase):
+class SpeakerTest(unittest.TestCase):
     def setUp(self):
         self.speaker = Speaker()
 
