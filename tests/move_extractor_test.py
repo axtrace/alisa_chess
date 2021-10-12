@@ -5,7 +5,7 @@ from alice_scripts import Request
 from move_extractor import MoveExtractor
 
 
-class TestMoveExtractor(unittest.TestCase):
+class MoveExtractorTest(unittest.TestCase):
     def setUp(self):
         self.move_extractor = MoveExtractor()
 
@@ -14,8 +14,9 @@ class TestMoveExtractor(unittest.TestCase):
             {'request': {'command': command},
              'session': {
                  'session_id': '440518e7-36a2-411a-9a91-e88ce94a8e5c',
-                 'user_id': 'beafdead'
-             }})
+                 'user_id': 'beafdead'}
+             }
+        )
 
     def extract_move_test(self, command_text, expected_move):
         request = self.command(command_text)

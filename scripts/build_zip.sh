@@ -1,6 +1,8 @@
 #!/bin/bash
 set -ex
-cd $(dirname $0)/..
+cd $(dirname $0)
+SCRIPTS_DIR=$(pwd)
+cd $SCRIPTS_DIR/..
 mkdir -p target
 
 if [ ! -f ./target/stockfish ]; then
@@ -13,6 +15,6 @@ if [ ! -f ./target/stockfish ]; then
     cp ./usr/games/stockfish ./stockfish
 fi
 
-cd $(dirname $0)/..
+cd $SCRIPTS_DIR/..
 rm -f ./target/chess.zip
 zip -Dj target/chess.zip alice_serverless.py alice_chess.py texts.py game.py move_extractor.py speaker.py text_preparer.py target/stockfish requirements.txt
