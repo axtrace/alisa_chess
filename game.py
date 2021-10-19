@@ -66,8 +66,6 @@ class Game(object):
             return self.board.parse_san(move) in self.board.legal_moves
         except ValueError:
             return False
-        except Exception:
-            raise Exception
 
     def set_skill_level(self, skill_level):
         self.skill_level = int(skill_level)
