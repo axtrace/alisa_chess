@@ -74,6 +74,13 @@ class MoveExtractorTest(unittest.TestCase):
     def test_long_casting(self):
         self.extract_move_test('Длинная рокировка', 'O-O-O')
 
+    def test_bishop(self):
+        self.extract_move_test('сон да 3', 'Bd3')
+
+    def test_undo(self):
+        # undo move is processed outside move_extractor (in alice_chess.AliceChess.get_move)
+        self.extract_move_test('отмени ход', None)
+
 
 if __name__ == '__main__':
     unittest.main()

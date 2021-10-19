@@ -75,8 +75,7 @@ class AliceChess(object):
                                                  text_to_show=game.get_board())
             if user_move == -1:
                 # отмена хода
-                pass
-                # continue
+                yield from self.say_undo_unavailable()
 
             while not game.is_move_legal(user_move):
                 text, text_tts = TextPreparer.say_not_legal_move(user_move,
@@ -170,6 +169,10 @@ class AliceChess(object):
 
     def say_choose_color(self):
         text, text_tts = TextPreparer.say_choose_color()
+        yield from self.say_text(text, text_tts)
+
+    def say_undo_unavailable(self):
+        text, text_tts = TextPreparer.say_undo_unavailable()
         yield from self.say_text(text, text_tts)
 
     def say_help(self):

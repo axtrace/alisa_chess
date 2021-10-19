@@ -83,6 +83,12 @@ class TextPreparer(object):
         return text, text_tts
 
     @staticmethod
+    def say_undo_unavailable():
+        text = texts.undo_unavailable.strip()
+        text_tts = text
+        return text, text_tts
+
+    @staticmethod
     def say_help_text():
 
         text = texts.help_text_intro
@@ -98,8 +104,8 @@ class TextPreparer(object):
         text += texts.coord_rules.format('Слон d3')
         text_tts += texts.coord_rules.format('Слон дэ 3')
 
-        text += texts.undo_available
-        text_tts += texts.undo_available
+        text += texts.undo_unavailable
+        text_tts += texts.undo_unavailable
 
         text += texts.engine_info
         text_tts += texts.engine_info

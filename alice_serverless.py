@@ -7,10 +7,11 @@ from game import Game
 
 stockfish_engine_path = "./stockfish"
 
-root_handler = logging.getLogger().handlers[0]
-root_handler.setFormatter(logging.Formatter(
-    '[%(levelname)s]\t%(name)s\t[%(request_id)s]\t%(message)s\n'
-))
+if len(logging.getLogger().handlers) > 0:
+    root_handler = logging.getLogger().handlers[0]
+    root_handler.setFormatter(logging.Formatter(
+        '[%(levelname)s]\t%(name)s\t[%(request_id)s]\t%(message)s\n'
+    ))
 
 
 def handler(event, context):
