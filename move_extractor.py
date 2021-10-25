@@ -1,4 +1,5 @@
 import re
+from request_parser import RequestParser as rp
 
 
 class MoveExtractor(object):
@@ -150,7 +151,8 @@ class MoveExtractor(object):
         return self._get_key_(request, self.piece_map)
 
     def _extract_castling(self, request):
-        return self._get_key_(request, self.castling_map)
+        # return self._get_key_(request, self.castling_map)
+        return request.is_castling()
 
     def _get_square(self, request):
         return self._get_file_(request), self._get_rank_(request)

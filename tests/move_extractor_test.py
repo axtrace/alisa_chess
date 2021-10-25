@@ -39,7 +39,7 @@ class MoveExtractorTest(unittest.TestCase):
         self.extract_move_test('Конь эф 3 же 5', 'Nf3g5')
 
     def test_move_with_2_pieces(self):
-        # it returns first found piece by order in setting list
+        # it returns last found piece by order in setting list
         self.extract_move_test('Слон Конь а 3 цэ 5', 'Na3c5')
 
     def test_empty_input(self):
@@ -55,6 +55,7 @@ class MoveExtractorTest(unittest.TestCase):
         self.extract_move_test('Конь гыгыгыгы д 6', 'Nd6')
 
     def test_move_without_digits(self):
+        # it would be good to extract move from here
         self.extract_move_test('Конь гыгыгыгы эф дэ', None)
 
     def test_move_with_big_digits(self):
@@ -62,6 +63,9 @@ class MoveExtractorTest(unittest.TestCase):
 
     def test_short_casting(self):
         self.extract_move_test('Короткая рокировка', 'O-O')
+
+    def test_long_casting(self):
+        self.extract_move_test('Длинная рокировка', 'O-O-O')
 
     def test_two_zeros(self):
         self.extract_move_test('Два нуля', 'O-O')
@@ -71,8 +75,6 @@ class MoveExtractorTest(unittest.TestCase):
         self.extract_move_test('Три нуля', 'O-O-O')
         self.extract_move_test('000', 'O-O-O')
 
-    def test_long_casting(self):
-        self.extract_move_test('Длинная рокировка', 'O-O-O')
 
     def test_bishop(self):
         self.extract_move_test('сон да 3', 'Bd3')
