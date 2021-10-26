@@ -3,23 +3,43 @@ import unittest
 from alice_scripts import Request
 
 from move_extractor import MoveExtractor
+from request_parser import RequestParser
 
 
 class MoveExtractorTest(unittest.TestCase):
     def setUp(self):
         self.move_extractor = MoveExtractor()
 
-    def command(self, command):
+    def command(self, command, intent=''):
         return Request(
-            {'request': {'command': command},
-             'session': {
-                 'session_id': '440518e7-36a2-411a-9a91-e88ce94a8e5c',
-                 'user_id': 'beafdead'}
-             }
+            {
+                'request':
+                    {
+                        'command': command,
+                        'nlu': {
+                            'intents': {
+                                intent: {
+                                    'slots': {}
+                                }
+                            }
+                        }
+                    },
+                'session':
+                    {
+                        'session_id': '440518e7-36a2-411a-9a91-e88ce94a8e5c',
+                        'user_id': 'beafdead'
+                    }
+            }
         )
 
     def extract_move_test(self, command_text, expected_move):
-        request = self.command(command_text)
+        if expected_move == 'O-O':
+            command = self.command(command_text, 'SHORT_CASTLING')
+        elif expected_move == 'O-O-O':
+            command = self.command(command_text, 'LONG_CASTLING')
+        else:
+            command = self.command(command_text)
+        request = RequestParser(command)
         actual_move = self.move_extractor.extract_move(request)
         if expected_move is None:
             self.assertIsNone(actual_move)
@@ -74,7 +94,6 @@ class MoveExtractorTest(unittest.TestCase):
     def test_three_zeros(self):
         self.extract_move_test('Три нуля', 'O-O-O')
         self.extract_move_test('000', 'O-O-O')
-
 
     def test_bishop(self):
         self.extract_move_test('сон да 3', 'Bd3')

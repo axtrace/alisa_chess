@@ -95,8 +95,8 @@ class MoveExtractor(object):
     def extract_move(self, request):
         # extracting move in SAN from user speech
 
-        castling = self._extract_castling(request)
-        if castling:
+        castling = request.get_castling()
+        if castling is not None:
             # castling detected, return it
             return castling
 
@@ -105,7 +105,7 @@ class MoveExtractor(object):
 
         # get square (file and rank) from request
         square_rex = re.compile(r'\w+\s*[1-8]', flags=re.IGNORECASE)
-        command_text = request.command
+        command_text = request.request.command
         squares = re.findall(square_rex, command_text)
 
         if not squares:
@@ -124,7 +124,7 @@ class MoveExtractor(object):
             filter(None, [piece, file_from, rank_from, file_to, rank_to]))
 
     def _get_key_(self, request, dict_of_sets):
-        # try to get key of dict with has at least one elem in request.lemmas
+        # try to get key of dict with has at least one elem in request.lemma
         for key in dict_of_sets:
             current_dict = dict_of_sets[key]
             for value in current_dict:
@@ -149,10 +149,6 @@ class MoveExtractor(object):
 
     def _get_piece_(self, request):
         return self._get_key_(request, self.piece_map)
-
-    def _extract_castling(self, request):
-        # return self._get_key_(request, self.castling_map)
-        return request.is_castling()
 
     def _get_square(self, request):
         return self._get_file_(request), self._get_rank_(request)

@@ -21,11 +21,18 @@ class RequestParser(object):
                       'ок', 'поехали', 'старт']
         return self.has_intents(['YANDEX.CONFIRM']) or self.request.has_lemmas(*yes_lemmas)
 
-    def is_castling(self):
-        long_castling = self.has_intents(['LONG_CASTLING'])
-        short_castling = self.has_intents(['SHORT_CASTLING'])
-        castling = self.has_intents(['CASTLING'])
-        return long_castling or short_castling or castling
+    def has_lemmas(self, lemma):
+        return self.request.has_lemmas(lemma)
+
+    def get_castling(self):
+        if self.has_intents(['SHORT_CASTLING']):
+            return 'O-O'
+        elif self.has_intents(['LONG_CASTLING']):
+            return 'O-O-O'
+        elif self.has_intents(['CASTLING']):
+            # todo: return flag and try to find some castling in possible moves
+            return None
+        return None
 
     def get_command(self):
         return self.request.get('request', {}).get('command', {})
@@ -34,7 +41,8 @@ class RequestParser(object):
         return self.request.get('request', {}).get('nlu', {}).get('intents', {})
 
     def has_intents(self, intent_list):
-        # intents is not empty and then intersect it with incoming list as a sets
+        # intents is not empty and then intersect i
+        # t with incoming list as a sets
         # returns false in case when both lists are empty but let it be
         return self.intents and bool(set(self.intents) & set(intent_list))
 
