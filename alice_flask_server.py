@@ -15,7 +15,7 @@ def run_script():
     path_index = 'win' if 'win' in str(sys.platform) else 'nix'
     game = Game(config.engine_path[path_index], chess.Board())
     alice_chess = AliceChess(game, request)
-    yield from alice_chess.processRequest()
+    yield from alice_chess.process_request()
 
 
 if __name__ == "__main__":

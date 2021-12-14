@@ -24,7 +24,7 @@ class AliceChess(object):
     def get_session_state(self):
         return self.game.serialize_state()
 
-    def processRequest(self):
+    def process_request(self):
         if bool(self.request.get_command()):
             log.debug("request command is: '%s'", self.request.get_command())
         else:
