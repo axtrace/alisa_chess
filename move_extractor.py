@@ -11,16 +11,12 @@ class MoveExtractor(object):
         # анна, борис и прочее - из официального фонетического алфавита
         'a': {'a', 'а', 'эй', 'ai', 'alpha', 'анна'},
         'b': {'b', 'bee', 'be', 'б', 'бэ', 'би', 'bravo', 'борис'},
-        'c': {'c', 'cee', 'see', 'sea', 'ц', 'цэ', 'си', 'с', 'charlie',
-              'цапля'},
-        'd': {'d', 'dee', 'di', 'de', 'д', 'дэ', 'ди', 'де', 'до', 'да', 'дай',
-              'delta', 'дмитрий'},
+        'c': {'c', 'cee', 'see', 'sea', 'ц', 'цэ', 'си', 'с', 'charlie', 'цапля'},
+        'd': {'d', 'dee', 'di', 'de', 'д', 'дэ', 'ди', 'де', 'до', 'да', 'дай', 'delta', 'дмитрий'},
         'e': {'e', 'е', 'ee', 'и', 'echo', 'елена'},
         'f': {'f', 'ef', 'фе', 'фи', 'фэ', 'ф', 'эф', 'foxtrot', 'федор'},
-        'g': {'g', 'gee', 'je', 'г', 'гэ', 'ге', 'ж', 'жи', 'же', 'жэ', 'джи',
-              'golf', 'женя'},
-        'h': {'h', 'aitch', 'аш', 'ш', 'эйч', 'x', 'xa', 'xe', 'xэ', 'hotel',
-              'шура'}
+        'g': {'g', 'gee', 'je', 'г', 'гэ', 'ге', 'ж', 'жи', 'же', 'жэ', 'джи', 'golf', 'женя'},
+        'h': {'h', 'aitch', 'аш', 'ш', 'эйч', 'x', 'xa', 'xe', 'xэ', 'hotel', 'шура'}
     }
 
     # rank_map = {
@@ -62,13 +58,14 @@ class MoveExtractor(object):
         return None
 
     def _color_by_intents_(self, req):
-        intents = self._get_intents_(req)
-        if intents is None or not len(intents):
-            return False, ''
-        elif 'WHITE_WORD' in intents:
-            return True, 'WHITE'
-        elif 'BLACK_WORD' in intents:
-            return True, 'BLACK'
+        # intents = self._get_intents_(req)
+
+        if req.has_intents(['WHITE_WORD']):
+            return 'WHITE'
+        elif req.has_intents(['BLACK_WORD']):
+            return 'BLACK'
+        else:
+            return ''
 
     def _color_by_lemma(self, req):
         # define user color
@@ -76,21 +73,17 @@ class MoveExtractor(object):
         black_lemmas = ['черный', 'черные', 'черных', 'черное',
                         'black']
         if req.has_lemmas(*white_lemmas):
-            return True, 'WHITE'
+            return 'WHITE'
         elif req.has_lemmas(*black_lemmas):
-            return True, 'BLACK'
-        return False, ''
+            return 'BLACK'
+        return ''
 
     def extract_color(self, request):
         # extracting color (turn) from user speech
         intent_color = self._color_by_intents_(request)
-        if intent_color is None:
-            is_color_defined = False
-        else:
-            is_color_defined, user_color = self._color_by_intents_(request)
-        if not is_color_defined:
+        if intent_color is '':
             return self._color_by_lemma(request)
-        return is_color_defined, user_color
+        return intent_color
 
     def extract_move(self, request):
         # extracting move in SAN from user speech

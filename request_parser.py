@@ -8,7 +8,7 @@ class RequestParser(object):
         self.intents = self.get_intents()
 
     def is_unmake(self):
-        return self.request.has_intents('UNDO')
+        return self.has_intents('UNDO')
 
     def is_help(self):
         # define if user asked help
@@ -41,8 +41,7 @@ class RequestParser(object):
         return self.request.get('request', {}).get('nlu', {}).get('intents', {})
 
     def has_intents(self, intent_list):
-        # intents is not empty and then intersect i
-        # t with incoming list as a sets
+        # intents is not empty and then intersect it with incoming list as a sets
         # returns false in case when both lists are empty but let it be
         return self.intents and bool(set(self.intents) & set(intent_list))
 

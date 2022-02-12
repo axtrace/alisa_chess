@@ -50,12 +50,12 @@ class AliceChess(object):
 
         # define user color
         if self.game.get_skill_state() == 'CHOOSE_COLOR':
-            is_color_defined, user_color = self.move_ext.extract_color(
-                self.request)
+            user_color = self.move_ext.extract_color(self.request)
+            is_color_defined = (user_color != '')
             while not is_color_defined:
                 yield from self.say_not_get_turn()
-                is_color_defined, user_color = self.move_ext.extract_color(
-                    self.request)
+                user_color = self.move_ext.extract_color(self.request)
+                is_color_defined = (user_color != '')
             self.game.set_user_color(user_color)
             self.game.set_skill_state('NOTIFY_STEP')
 
