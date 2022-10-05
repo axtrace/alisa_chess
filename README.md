@@ -22,3 +22,5 @@ Play chess with Yandex.Alisa by voice
 
 Chess engine: stockfish 10, level 1
 Uses: https://github.com/niklasf/python-chess
+
+[Some diagrams](/tree/master/diagrams)
