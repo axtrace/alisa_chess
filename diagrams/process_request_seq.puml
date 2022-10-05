@@ -1,0 +1,59 @@
+@startuml
+
+autonumber
+loop
+User -> Yandex_Dialogs: request
+Yandex_Dialogs -> alice_chess_skill: request + intents
+'alice_chess_skill -> alice_chess_skill: processRequest()
+opt request is help
+    alice_chess_skill  --> Yandex_Dialogs: say_help
+    Yandex_Dialogs --> User: say_help
+else state == ''
+    alice_chess_skill -> alice_chess_skill: game.set_skill_state('SAY_YES')
+    alice_chess_skill  --> Yandex_Dialogs: say_hi
+    Yandex_Dialogs --> User: say_hi
+else state == 'SAY_YES'
+    alice_chess_skill -> alice_chess_skill: game.set_skill_state('SAY_CHOOSE_COLOR')
+else state == 'SAY_CHOOSE_COLOR'
+    alice_chess_skill -> alice_chess_skill: game.set_skill_state('CHOOSE_COLOR')
+    alice_chess_skill  --> Yandex_Dialogs: say_choose_color
+    Yandex_Dialogs --> User: say_choose_color
+else state == 'CHOOSE_COLOR'
+    alt is_color_define == True
+        alice_chess_skill -> alice_chess_skill: game.set_user_color(user_color)
+        alice_chess_skill -> alice_chess_skill: game.set_skill_state('NOTIFY_STEP')
+    else NOT is_color_define
+         alice_chess_skill  --> Yandex_Dialogs: say_not_get_turn
+         note right
+            сейчас тут while
+         end note
+         Yandex_Dialogs --> User: say_not_get_turn
+    end
+else state == 'NOTIFY_STEP'
+   opt user color == 'BLACK' && was no attempts
+     alice_chess_skill -> alice_chess_skill: game.comp_move()
+   end
+   loop NOT gameover
+    alice_chess_skill  --> Yandex_Dialogs: comp_move + board
+    note right
+        с этим while я вообще не понимаю,
+        как происходит обработка запросов.
+        Почему на 'помощь', например, отвечает
+        или почему тогда ходы делает по очереди
+    end note
+    Yandex_Dialogs --> User: comp_move + board
+    User -> Yandex_Dialogs: request
+    Yandex_Dialogs -> alice_chess_skill: request + intents
+    alt move is legal
+        alice_chess_skill -> alice_chess_skill: game.user_move()
+    else NOT move is legal
+        alice_chess_skill  --> Yandex_Dialogs: say_not_legal_move
+        Yandex_Dialogs --> User: say_not_legal_move
+    end
+   end
+   alice_chess_skill  --> Yandex_Dialogs: game_result + board
+   Yandex_Dialogs --> User:  game_result + board
+end
+end
+
+@enduml

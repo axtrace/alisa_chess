@@ -3,23 +3,43 @@ import unittest
 from alice_scripts import Request
 
 from move_extractor import MoveExtractor
+from request_parser import RequestParser
 
 
 class MoveExtractorTest(unittest.TestCase):
     def setUp(self):
         self.move_extractor = MoveExtractor()
 
-    def command(self, command):
+    def command(self, command, intent=''):
         return Request(
-            {'request': {'command': command},
-             'session': {
-                 'session_id': '440518e7-36a2-411a-9a91-e88ce94a8e5c',
-                 'user_id': 'beafdead'}
-             }
+            {
+                'request':
+                    {
+                        'command': command,
+                        'nlu': {
+                            'intents': {
+                                intent: {
+                                    'slots': {}
+                                }
+                            }
+                        }
+                    },
+                'session':
+                    {
+                        'session_id': '440518e7-36a2-411a-9a91-e88ce94a8e5c',
+                        'user_id': 'beafdead'
+                    }
+            }
         )
 
     def extract_move_test(self, command_text, expected_move):
-        request = self.command(command_text)
+        if expected_move == 'O-O':
+            command = self.command(command_text, 'SHORT_CASTLING')
+        elif expected_move == 'O-O-O':
+            command = self.command(command_text, 'LONG_CASTLING')
+        else:
+            command = self.command(command_text)
+        request = RequestParser(command)
         actual_move = self.move_extractor.extract_move(request)
         if expected_move is None:
             self.assertIsNone(actual_move)
@@ -39,7 +59,7 @@ class MoveExtractorTest(unittest.TestCase):
         self.extract_move_test('Конь эф 3 же 5', 'Nf3g5')
 
     def test_move_with_2_pieces(self):
-        # it returns first found piece by order in setting list
+        # it returns last found piece by order in setting list
         self.extract_move_test('Слон Конь а 3 цэ 5', 'Na3c5')
 
     def test_empty_input(self):
@@ -55,6 +75,7 @@ class MoveExtractorTest(unittest.TestCase):
         self.extract_move_test('Конь гыгыгыгы д 6', 'Nd6')
 
     def test_move_without_digits(self):
+        # it would be good to extract move from here
         self.extract_move_test('Конь гыгыгыгы эф дэ', None)
 
     def test_move_with_big_digits(self):
@@ -63,6 +84,9 @@ class MoveExtractorTest(unittest.TestCase):
     def test_short_casting(self):
         self.extract_move_test('Короткая рокировка', 'O-O')
 
+    def test_long_casting(self):
+        self.extract_move_test('Длинная рокировка', 'O-O-O')
+
     def test_two_zeros(self):
         self.extract_move_test('Два нуля', 'O-O')
         self.extract_move_test('00', 'O-O')
@@ -70,9 +94,6 @@ class MoveExtractorTest(unittest.TestCase):
     def test_three_zeros(self):
         self.extract_move_test('Три нуля', 'O-O-O')
         self.extract_move_test('000', 'O-O-O')
-
-    def test_long_casting(self):
-        self.extract_move_test('Длинная рокировка', 'O-O-O')
 
     def test_bishop(self):
         self.extract_move_test('сон да 3', 'Bd3')

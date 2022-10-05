@@ -33,7 +33,7 @@ def handler(event, context):
     else:
         req = Request({'request': {'command': ''}})
     alice_chess = AliceChess(Game.parse_and_build_game(stockfish_engine_path, state), req)
-    response = next(alice_chess.processRequest())
+    response = next(alice_chess.process_request())
     return {
         'version': event['version'],
         'session': event['session'],
