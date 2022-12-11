@@ -3,7 +3,9 @@
 
 Play chess with Yandex.Alisa by voice
 
-```
+# Use Case Example
+
+```text
 Алиса:
 - Давайте сыграем в шахматы
 Юзер:
@@ -19,8 +21,9 @@ Play chess with Yandex.Alisa by voice
 - Мат.
 ```
 
-
+# Details
 Chess engine: stockfish 10, level 1
 Uses: https://github.com/niklasf/python-chess
 
-[Some diagrams](/tree/master/diagrams)
+# Other
+[Some diagrams](/tree/master/docs/reqs/hi_seq_diag.md)
