@@ -2,6 +2,8 @@
 - [Глоссарий](#glossary)
 - [Проблема](#problem)
 - [Решение](#solution)
+- [Стейкхолдеры](#stakeholders)
+- [Сущности предметной области](#er)
 - [Бизнес-требования](#brq)
 - [Контекстная диаграмма](#context-diagram)
 - [Сценарии](#usecases)
@@ -24,6 +26,14 @@
 Навык должен быть доступен как на устройствах с экраном, так и без.
 Использовать готовый шахматный движок. 
 Поддержать один язык: русский. 
+
+# <a name="stakeholders"></a> Стейкхолдеры
+Основные классы стейкхолдеров и их интересы:
+- Пользователь - кайфануть от игры
+- Разработчик - кайфануть от рабочего кода
+- Продакт-менеджер - кайфануть от наличия навыка
+
+# <a name="er"></a> Сущности предметной области
 
 # <a name="brq"></a> Бизнес-требования и ограничения
 ## User Stories
@@ -107,20 +117,89 @@ tbd
 ## UC3: Отменить последний ход
 tbd
 ## UC4: Сдаться
+tbd
+
+## UC5: Изменить уровень сложности - НЕ РЕАЛИЗОВАН
+tbd
 
 # <a name="fr_nfr"></a> Функциональные и нефункциональные требования
 ## Функциональные требования
-FR-1: Преобразовывать текст в команды, понятные движку
+FR-1: Преобразовывать входящий от Алисы текст в команды, понятные движку
 tbd
 FR-2: 
 tbd
 
 ## Нефункциональные требования
-NFR-1:
+NFR-1: Юзабилити
 tbd
+
+
 
 ### Возможные состояния навыка
 tbd
+
+### Диаграммы последовательностей
+#### Последовательность вызовов. Приветствие
+
+Рассмотрим диаграмму последовательностей вызовов при обработке поступившего зарпоса. 
+Указаны основные моменты обработки запроса без детализации по классам.
+
+```mermaid
+sequenceDiagram
+
+  autonumber
+  
+  actor user as User
+  participant yd as "Yandex Dialogs"
+  participant chess as "Chess skill" 
+  
+  loop
+    user ->> yd: request
+    yd ->> chess: request + intents
+    %% alice_chess_skill -> alice_chess_skill: processRequest()
+    alt request is help
+      chess  -->> yd: say_help()
+      yd -->> user: say_help()
+    else state == ''
+      chess -> chess: game.set_skill_state('SAY_YES')
+      chess  -->> yd: say_hi()
+      yd -->> user: say_hi()
+    else state == 'SAY_YES'
+      chess -> chess: game.set_skill_state('SAY_CHOOSE_COLOR')
+    else state == 'SAY_CHOOSE_COLOR'
+      chess -> chess: game.set_skill_state('CHOOSE_COLOR')
+      chess  -->> yd: say_choose_color()
+      yd -->> user: say_choose_color()
+    else state == 'CHOOSE_COLOR'
+      alt is_color_define == True
+          chess -> chess: game.set_user_color(user_color)
+          chess -> chess: game.set_skill_state('NOTIFY_STEP')
+      else NOT is_color_define
+           chess  -->> Yandex_Dialogs: say_not_get_turn
+           yd -->> user: say_not_get_turn()
+      end
+    else state == 'NOTIFY_STEP'
+      opt user color == 'BLACK' && was no attempts
+       chess -> chess: game.comp_move()
+      end
+      loop NOT gameover
+        chess  -->> yd: comp_move + board
+        yd -->> user: comp_move + board
+        user -> yd: request
+        yd -->> chess: request + intents
+        alt move is legal
+            chess -> chess: game.user_move()
+        else NOT move is legal
+            chess -->> yd: say_not_legal_move()
+            yd -->> user: say_not_legal_move()
+        end
+      end
+     chess -->> yd: game_result + board
+     yd -->> user:  game_result + board
+    end
+  end
+```
+
 
 # <a name="tests"></a> Базовые тесты
 
