@@ -22,7 +22,6 @@ jobs:
         runtime: 'python39'
         memory: '1024Mb'
         entrypoint: 'alice_serverless.handler'
-        service-account: ${{ secrets.SERVICE_ACCOUNT_ID }}
         environment: |
           DEBUG=True
           COUNT=1
