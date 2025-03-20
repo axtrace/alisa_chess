@@ -1,0 +1,34 @@
+t:
+    branches: [ master, main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Deploy Function
+      id: sls-func
+      uses: yc-actions/yc-sls-function@v2
+      with:
+        yc-sa-json-credentials: ${{ secrets.YC_SA_JSON_CREDENTIALS }}
+        folder-id: ${{ secrets.FOLDER_ID }}
+        function-name: 'alice-chess-testing'
+        runtime: 'python39'
+        memory: '1024Mb'
+        entrypoint: 'alice_serverless.handler'
+        service-account: ${{ secrets.SERVICE_ACCOUNT_ID }}
+        environment: |
+          DEBUG=True
+          COUNT=1
+        include: |
+          **/*.py
+          requirements.txt
+          stockfish
+        exclude: |
+          **/*.ts
+          .github/**
+          tests/**
+          venv/**
+          **/*.ts
+          .gitignore
+          LICENSE
