@@ -1,5 +1,11 @@
-t:
+name: Deploy to Yandex Cloud Functions
+
+on:
+  push:
     branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+
 
 jobs:
   deploy:
