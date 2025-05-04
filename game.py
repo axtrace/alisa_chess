@@ -1,4 +1,5 @@
 import chess
+import chess.pgn
 import requests
 import os
 from typing import Optional
