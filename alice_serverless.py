@@ -1,16 +1,7 @@
-import logging
-import config
-
 from alice_scripts import Request
 
 from alice_chess import AliceChess
 from game import Game
-
-if len(logging.getLogger().handlers) > 0:
-    root_handler = logging.getLogger().handlers[0]
-    root_handler.setFormatter(logging.Formatter(
-        '[%(levelname)s]\t%(name)s\t[%(request_id)s]\t%(message)s\n'
-    ))
 
 
 def handler(event, context):
@@ -27,7 +18,15 @@ def handler(event, context):
     else:
         state = {}
 
-    req = Request(event)
+    if 'request' in event and 'command' in event['request']:
+        req = Request(event)
+    else:
+        req = Request({'request': {'command': ''}})
     alice_chess = AliceChess(Game.parse_and_build_game(state), req)
-    response = alice_chess.process_request()
-    return response
+    response = next(alice_chess.processRequest())
+    return {
+        'version': event['version'],
+        'session': event['session'],
+        'response': response,
+        'session_state': alice_chess.get_session_state(),
+    }

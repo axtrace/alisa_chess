@@ -5,11 +5,6 @@ from game import Game
 from move_extractor import MoveExtractor
 from speaker import Speaker
 from text_preparer import TextPreparer
-from request_parser import RequestParser
-import logging
-
-log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 class AliceChess(object):
@@ -18,18 +13,13 @@ class AliceChess(object):
 
     def __init__(self, game: Game, request):
         self.game = game
-        # self.request = request
-        self.request = RequestParser(request)
+        self.request = request
 
     def get_session_state(self):
         return self.game.serialize_state()
 
-    def process_request(self):
-        if bool(self.request.get_command()):
-            log.debug("request command is: '%s'", self.request.get_command())
-        else:
-            log.debug("unknown request: '%s'", self.request)
-        if self.request.is_help():
+    def processRequest(self):
+        if self.is_request_help():
             yield from self.say_help()
 
         if self.game.get_skill_state() == '':
@@ -38,7 +28,7 @@ class AliceChess(object):
             yield from self.say_hi()
 
         # expend confirmation
-        while not self.request.is_yes() and self.game.get_skill_state() == 'SAY_YES':
+        while not self.is_request_yes() and self.game.get_skill_state() == 'SAY_YES':
             yield from self.say_not_get_yes()
         if self.game.get_skill_state() == 'SAY_YES':
             self.game.set_skill_state('SAY_CHOOSE_COLOR')
@@ -50,12 +40,10 @@ class AliceChess(object):
 
         # define user color
         if self.game.get_skill_state() == 'CHOOSE_COLOR':
-            user_color = self.move_ext.extract_color(self.request)
-            is_color_defined = (user_color != '')
+            is_color_defined, user_color = self.move_ext.extract_color(self.request)
             while not is_color_defined:
                 yield from self.say_not_get_turn()
-                user_color = self.move_ext.extract_color(self.request)
-                is_color_defined = (user_color != '')
+                is_color_defined, user_color = self.move_ext.extract_color(self.request)
             self.game.set_user_color(user_color)
             self.game.set_skill_state('NOTIFY_STEP')
 
@@ -67,7 +55,6 @@ class AliceChess(object):
             # user plays black
             prev_turn = game.who()
             comp_move = game.comp_move()
-            log.debug("%s %s", prev_turn, comp_move)
 
         # game circle
         while not game.is_game_over():
@@ -83,7 +70,6 @@ class AliceChess(object):
                                                                  self.speaker.say_move(
                                                                      user_move))
                 text += game.get_board()
-                log.debug(text)
                 user_move = yield from self.get_move(comp_move, prev_turn,
                                                      text,
                                                      text_tts)
@@ -91,13 +77,11 @@ class AliceChess(object):
             # make user move
             prev_turn = game.who()
             game.user_move(user_move)
-            log.debug("%s %s", prev_turn, user_move)
 
             if not game.is_game_over():
                 # check that game is not over and make comp move
                 prev_turn = game.who()
                 comp_move = game.comp_move()
-                log.debug("%s %s", prev_turn, comp_move)
 
         # form result text
         move_tts = self.speaker.say_move(comp_move)
@@ -116,7 +100,6 @@ class AliceChess(object):
             # check that game is not over and make comp move
             prev_turn = self.game.who()
             comp_move = self.game.comp_move()
-            log.debug("%s %s", prev_turn, comp_move)
             return comp_move, prev_turn
         return None
 
@@ -137,7 +120,7 @@ class AliceChess(object):
             self.game.set_skill_state('MAKE_STEP')
             yield from self.say_text(text, text_tts)
 
-        if self.request.is_unmake():
+        if self.is_request_unmake():
             # user request undo his move
             return -1
 
@@ -146,9 +129,8 @@ class AliceChess(object):
         while move is None:
             # self.attempts += 1
             not_get, not_get_tts = TextPreparer.say_do_not_get(
-                self.request.get_command(),
+                self.request['request']['command'],
                 self.game.get_attempts())
-            log.debug(not_get)
             yield from self.say_text(not_get, not_get_tts)
             move = self.move_ext.extract_move(self.request)
 
@@ -182,5 +164,14 @@ class AliceChess(object):
         yield say(text, tts=tts, end_session=end_session)
         if self.is_request_help():
             yield from self.say_help()
-        # elif is_request_unmake(request):
-        #    yield from say_unmake()
+
+    def is_request_yes(self):
+        # define if user confirm flow
+        return 'request' in self.request and 'command' in self.request['request'] and self.request['request']['command'].lower() in ['да', 'yes', 'ок', 'ok']
+
+    def is_request_unmake(self):
+        return 'request' in self.request and 'command' in self.request['request'] and self.request['request']['command'].lower() in ['отмена', 'cancel', 'назад', 'back']
+
+    def is_request_help(self):
+        # define if user asked help
+        return 'request' in self.request and 'command' in self.request['request'] and self.request['request']['command'].lower() in ['помощь', 'help', 'что ты умеешь', 'what can you do']
