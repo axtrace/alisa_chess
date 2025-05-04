@@ -138,14 +138,6 @@ class Game(object):
         return game
 
     def serialize_state(self):
-        exporter = chess.pgn.StringExporter()
-        pgn_game = chess.pgn.Game()
-        pgn_game.setup(self.board)
-        board_state = pgn_game.accept(exporter)
-        encoded_board_state = base64.b64encode(board_state.encode('utf-8')).decode('utf-8')
-        return {
-            'board_state': encoded_board_state,
-            'skill_state': self.skill_state,
-            'user_color': self.user_color,
-            'attempts': self.attempts,
-        }
+        """Serialize game state to string."""
+        exporter = chess.pgn.StringExporter(headers=False, variations=False, comments=False)
+        return self.board.accept(exporter)
