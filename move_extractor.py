@@ -58,32 +58,31 @@ class MoveExtractor(object):
         return None
 
     def _color_by_intents_(self, req):
-        # intents = self._get_intents_(req)
-
-        if req.has_intents(['WHITE_WORD']):
-            return 'WHITE'
-        elif req.has_intents(['BLACK_WORD']):
-            return 'BLACK'
-        else:
-            return ''
-
-    def _color_by_lemma(self, req):
-        # define user color
-        white_lemmas = ['белый', 'белые', 'белых', 'белое', 'white']
-        black_lemmas = ['черный', 'черные', 'черных', 'черное',
-                        'black']
-        if req.has_lemmas(*white_lemmas):
-            return 'WHITE'
-        elif req.has_lemmas(*black_lemmas):
-            return 'BLACK'
-        return ''
+        """Extract color from intents."""
+        if 'request' in req and 'nlu' in req['request'] and 'intents' in req['request']['nlu']:
+            intents = req['request']['nlu']['intents']
+            if 'WHITE_WORD' in intents:
+                return True, 'WHITE'
+            elif 'BLACK_WORD' in intents:
+                return True, 'BLACK'
+        return False, ''
 
     def extract_color(self, request):
-        # extracting color (turn) from user speech
+        """Extract color from request."""
+        # try to get color from intents
         intent_color = self._color_by_intents_(request)
-        if intent_color == '':
-            return self._color_by_lemma(request)
-        return intent_color
+        if intent_color[0]:
+            return intent_color
+
+        # try to get color from tokens
+        if 'request' in request and 'command' in request['request']:
+            command = request['request']['command'].lower()
+            if any(word in command for word in ['белый', 'белые', 'white']):
+                return True, 'WHITE'
+            elif any(word in command for word in ['черный', 'черные', 'black']):
+                return True, 'BLACK'
+
+        return False, ''
 
     def extract_move(self, request):
         # extracting move in SAN from user speech
