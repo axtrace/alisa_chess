@@ -1,12 +1,42 @@
 import chess
-import sunfish
+import requests
+import os
+from typing import Optional
+import config
+import io
+import base64
+
+class ChessEngineAPI:
+    def __init__(self, api_key: str = config.CHESS_API_KEY):
+        self.api_url = config.CHESS_API_URL
+        self.api_key = api_key
+
+    def get_best_move(self, fen: str, depth: int = config.DEFAULT_DEPTH) -> Optional[str]:
+        headers = {
+            "X-API-Key": self.api_key,
+            "Content-Type": "application/json"
+        }
+        data = {
+            "fen": fen,
+            "depth": depth
+        }
+        
+        try:
+            response = requests.post(self.api_url, headers=headers, json=data)
+            response.raise_for_status()
+            result = response.json()
+            return result.get("best move")
+        except requests.exceptions.RequestException as e:
+            print(f"Error getting best move: {e}")
+            return None
 
 class Game(object):
     """
     Class for chess game
     """
-    def __init__(self, board: chess.Board, skill_level: int = 1, time_level=0.1):
-        self.engine = sunfish.Engine()
+    def __init__(self, board: chess.Board, skill_level: int = config.DEFAULT_SKILL_LEVEL, 
+                 time_level: float = config.DEFAULT_TIME_LEVEL):
+        self.engine = ChessEngineAPI()
         self.board = board
         self.attempts = 0
         self.skill_level = skill_level
@@ -36,13 +66,10 @@ class Game(object):
 
     def comp_move(self):
         self.attempts += 1
-        # Search for the best move within a limited depth
-        pos = sunfish.Position(self.board.fen())
-        move = self.engine.search(pos, depth=self.skill_level)  # Используем skill_level как depth
-        if move:
-            # Convert Sunfish move to UCI format
-            comp_move = self.sunfish_move_to_uci(move)
-            move = chess.Move.from_uci(comp_move)
+        # Get the best move from the API
+        best_move = self.engine.get_best_move(self.board.fen(), self.skill_level)
+        if best_move:
+            move = chess.Move.from_uci(best_move)
             self.board.push(move)
             return self.board.san(move)
         else:
@@ -103,14 +130,14 @@ class Game(object):
         return ''
 
     @staticmethod
-    def parse_and_build_game(engine_path, state):
+    def parse_and_build_game(state):
         if state.get("board_state", ""):
             pgn = io.StringIO(base64.b64decode(state['board_state']).decode('utf-8'))
             chess_game = chess.pgn.read_game(pgn)
             board = chess_game.board()
         else:
             board = chess.Board()
-        game = Game(board) #  Убрали engine_path
+        game = Game(board)
         game.set_skill_state(state.get('skill_state', ''))
         game.set_user_color(state.get('user_color', ''))
         game.attempts = state.get('attempts', 0)

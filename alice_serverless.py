@@ -1,11 +1,10 @@
 import logging
+import config
 
 from alice_scripts import Request
 
 from alice_chess import AliceChess
 from game import Game
-
-stockfish_engine_path = "./stockfish"
 
 if len(logging.getLogger().handlers) > 0:
     root_handler = logging.getLogger().handlers[0]
@@ -28,17 +27,7 @@ def handler(event, context):
     else:
         state = {}
 
-    if 'request' in event and 'command' in event['request']:
-        req = Request(event)
-    else:
-        req = Request({'request': {'command': ''}})
-    alice_chess = AliceChess(Game.parse_and_build_game(stockfish_engine_path, state), req)
-    response = next(alice_chess.process_request())
-    return {
-        'version': event['version'],
-        'session': event['session'],
-        'response': response,
-        # https://yandex.ru/dev/dialogs/alice/doc/session-persistence.html
-        'session_state': alice_chess.get_session_state(),
-        # 'application_state': alice_chess.get_session_state(),
-    }
+    req = Request(event)
+    alice_chess = AliceChess(Game.parse_and_build_game(state), req)
+    response = alice_chess.process_request()
+    return response
