@@ -1,5 +1,5 @@
 alice_scripts
 chess
 requests
-python-chess==1.9.4
-requests==2.31.0
+python-chess
+requests
