@@ -1,5 +1,4 @@
 # alisa_chess
-[черновик]
 
 Игра в шахматы с голосовым управлением через Яндекс.Алису
 
@@ -57,10 +56,9 @@ pip install -r requirements.txt
 ```
 
 ## Технические детали
-- Шахматный движок: Stockfish 10, уровень 1
+- Шахматный движок: Stockfish 16
 - Используется: https://github.com/niklasf/python-chess
-- Распознавание голоса: Яндекс SpeechKit
-- Варианты развертывания: Flask или Serverless
+- Варианты развертывания: Serverless
 
 ## Разработка
 - Запуск тестов: `python -m pytest tests/`
