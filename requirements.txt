@@ -1,5 +1,4 @@
 alice_scripts
 chess
 config
-sunfish
 requests

@@ -75,10 +75,6 @@ class Game(object):
         else:
             return None
 
-    def sunfish_move_to_uci(self, move):
-        # Convert Sunfish move to UCI
-        return chess.Move(move.fr, move.to).uci()
-
     def unmake_move(self):
         # unmake the last user move
         return self.board.pop() # Unmake the last move
@@ -88,7 +84,7 @@ class Game(object):
         return self.board.is_game_over()
 
     def quit(self):
-        pass # Sunfish не требует quit
+        pass # API не требует quit
 
     def is_move_legal(self, move):
         try:
