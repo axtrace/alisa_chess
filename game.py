@@ -2,16 +2,15 @@ import chess
 import requests
 import os
 from typing import Optional
-import config
 import io
 import base64
 
 class ChessEngineAPI:
-    def __init__(self, api_key: str = config.CHESS_API_KEY):
-        self.api_url = config.CHESS_API_URL
-        self.api_key = api_key
+    def __init__(self, api_key: str = None):
+        self.api_url = os.getenv("CHESS_API_URL", "https://alice-chess.ru:8000/bestmove/")
+        self.api_key = api_key or os.getenv("CHESS_API_KEY", "")
 
-    def get_best_move(self, fen: str, depth: int = config.DEFAULT_DEPTH) -> Optional[str]:
+    def get_best_move(self, fen: str, depth: int = 10) -> Optional[str]:
         headers = {
             "X-API-Key": self.api_key,
             "Content-Type": "application/json"
@@ -34,8 +33,7 @@ class Game(object):
     """
     Class for chess game
     """
-    def __init__(self, board: chess.Board, skill_level: int = config.DEFAULT_SKILL_LEVEL, 
-                 time_level: float = config.DEFAULT_TIME_LEVEL):
+    def __init__(self, board: chess.Board, skill_level: int = 1, time_level: float = 0.1):
         self.engine = ChessEngineAPI()
         self.board = board
         self.attempts = 0
