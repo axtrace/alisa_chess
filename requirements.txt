@@ -1,3 +1,4 @@
-alice_scripts==0.2.post1
-chess==1.6.1
-config==0.5.1
+alice_scripts
+chess
+config
+sunfish

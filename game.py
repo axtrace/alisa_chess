@@ -1,18 +1,12 @@
-import base64
-import io
-
-import chess.engine
-import chess.pgn
-
+import chess
+import sunfish
 
 class Game(object):
     """
     Class for chess game
     """
-
-    def __init__(self, engine_path: str, board: chess.Board, skill_level: int = 1, time_level=0.1):
-        self.engine = chess.engine.SimpleEngine.popen_uci(engine_path)
-        self.engine.configure({"Skill Level": skill_level})
+    def __init__(self, board: chess.Board, skill_level: int = 1, time_level=0.1):
+        self.engine = sunfish.Engine()
         self.board = board
         self.attempts = 0
         self.skill_level = skill_level
@@ -41,25 +35,33 @@ class Game(object):
         self.board.push_san(move_san)
 
     def comp_move(self):
-        result = self.engine.play(self.board, chess.engine.Limit(time=self.time_level))
         self.attempts += 1
-        # define the best comp move from engine
-        comp_move = self.board.san(result.move)
+        # Search for the best move within a limited depth
+        pos = sunfish.Position(self.board.fen())
+        move = self.engine.search(pos, depth=self.skill_level)  # Используем skill_level как depth
+        if move:
+            # Convert Sunfish move to UCI format
+            comp_move = self.sunfish_move_to_uci(move)
+            move = chess.Move.from_uci(comp_move)
+            self.board.push(move)
+            return self.board.san(move)
+        else:
+            return None
 
-        # make it on the board
-        self.board.push(result.move)
-        return comp_move
+    def sunfish_move_to_uci(self, move):
+        # Convert Sunfish move to UCI
+        return chess.Move(move.fr, move.to).uci()
 
     def unmake_move(self):
         # unmake the last user move
-        return self.board.pop()  # Unmake the last move
-        # define the user was last moved
+        return self.board.pop() # Unmake the last move
 
+    # define the user was last moved
     def is_game_over(self):
         return self.board.is_game_over()
 
     def quit(self):
-        self.engine.quit()
+        pass # Sunfish не требует quit
 
     def is_move_legal(self, move):
         try:
@@ -69,8 +71,6 @@ class Game(object):
 
     def set_skill_level(self, skill_level):
         self.skill_level = int(skill_level)
-        if 0 <= int(skill_level) <= 20:
-            self.engine.configure({"Skill Level": self.skill_level})
 
     def get_skill_level(self):
         return self.skill_level
@@ -89,11 +89,9 @@ class Game(object):
 
     def get_board(self):
         return self.board.unicode() + '\n'
-        # return str(self.board).replace(' ', '\t') + '\n'
 
     def gameover_reason(self):
         # returns a code for reason of game ends
-
         if self.board.is_checkmate():
             return '#'
         elif self.board.is_stalemate():
@@ -112,7 +110,7 @@ class Game(object):
             board = chess_game.board()
         else:
             board = chess.Board()
-        game = Game(engine_path, board)
+        game = Game(board) #  Убрали engine_path
         game.set_skill_state(state.get('skill_state', ''))
         game.set_user_color(state.get('user_color', ''))
         game.attempts = state.get('attempts', 0)
