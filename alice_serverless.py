@@ -1,7 +1,16 @@
-from alice_scripts import Request
-
 from alice_chess import AliceChess
 from game import Game
+
+
+class RequestAdapter:
+    def __init__(self, event):
+        self.event = event
+        self.request = event.get('request', {})
+
+    def __getitem__(self, key):
+        if key == 'request':
+            return self.request
+        return self.request.get(key, '')
 
 
 def handler(event, context):
@@ -18,10 +27,7 @@ def handler(event, context):
     else:
         state = {}
 
-    if 'request' in event and 'command' in event['request']:
-        req = Request(event)
-    else:
-        req = Request({'request': {'command': ''}})
+    req = RequestAdapter(event)
     alice_chess = AliceChess(Game.parse_and_build_game(state), req)
     response = next(alice_chess.processRequest())
     return {

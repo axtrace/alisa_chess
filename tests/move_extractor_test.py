@@ -32,6 +32,39 @@ class MoveExtractorTest(unittest.TestCase):
             }
         )
 
+    def test_extract_color_from_intent(self):
+        # Test white color from intent
+        command = self.command('', 'WHITE_WORD')
+        is_defined, color = self.move_extractor.extract_color(command)
+        self.assertTrue(is_defined)
+        self.assertEqual(color, 'WHITE')
+
+        # Test black color from intent
+        command = self.command('', 'BLACK_WORD')
+        is_defined, color = self.move_extractor.extract_color(command)
+        self.assertTrue(is_defined)
+        self.assertEqual(color, 'BLACK')
+
+    def test_extract_color_from_command(self):
+        # Test white color from command
+        command = self.command('я хочу играть белыми')
+        is_defined, color = self.move_extractor.extract_color(command)
+        self.assertTrue(is_defined)
+        self.assertEqual(color, 'WHITE')
+
+        # Test black color from command
+        command = self.command('буду играть черными')
+        is_defined, color = self.move_extractor.extract_color(command)
+        self.assertTrue(is_defined)
+        self.assertEqual(color, 'BLACK')
+
+    def test_extract_color_no_color(self):
+        # Test no color in command
+        command = self.command('давай играть')
+        is_defined, color = self.move_extractor.extract_color(command)
+        self.assertFalse(is_defined)
+        self.assertEqual(color, '')
+
     def extract_move_test(self, command_text, expected_move):
         if expected_move == 'O-O':
             command = self.command(command_text, 'SHORT_CASTLING')

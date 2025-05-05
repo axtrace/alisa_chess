@@ -1,4 +1,4 @@
-from alice_scripts import say
+from alice_scripts_adapter import say
 
 import texts
 from game import Game

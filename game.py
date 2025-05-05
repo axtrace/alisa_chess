@@ -25,7 +25,7 @@ class ChessEngineAPI:
             response = requests.post(self.api_url, headers=headers, json=data)
             response.raise_for_status()
             result = response.json()
-            return result.get("best move")
+            return result.get("best_move")
         except requests.exceptions.RequestException as e:
             print(f"Error getting best move: {e}")
             return None
