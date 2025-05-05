@@ -21,24 +21,27 @@ class AliceChess(object):
         return self.game.serialize_state()
 
     def processRequest(self):
-        print(f"Processing request: {self.request}, command: {self.request.get('request', {}).get('command')}, state: {self.game.get_skill_state()}")
+        print(f"Processing request, command: {self.request.get('request', {}).get('command')}, state: {self.game.get_skill_state()}")
         
         # Если это первый запрос или состояние INITIATED
         if self.game.get_skill_state() in ['INITIATED', '']:
-            yield from self.say_hi()
             self.game.set_skill_state('SAID_HI')
+            print(f"State changed from {self.game.get_skill_state()} to SAID_HI")
+            yield from self.say_hi()
+           
             self.game.set_skill_state('WAITING_CONFIRM')
-            return
+            print(f"State changed from {self.game.get_skill_state()} to WAITING_CONFIRM")
+            
 
         # Обработка подтверждения
         if self.game.get_skill_state() == 'WAITING_CONFIRM':
             if not self.is_request_yes():
                 yield from self.say_not_get_yes()
-                return
             self.game.set_skill_state('SAID_CONFIRM')
+            print(f"State changed from {self.game.get_skill_state()} to SAID_CONFIRM")
             self.game.set_skill_state('WAITING_COLOR')
+            print(f"State changed from {self.game.get_skill_state()} to WAITING_COLOR")
             yield from self.say_choose_color()
-            return
 
         # Обработка выбора цвета
         if self.game.get_skill_state() == 'WAITING_COLOR':
@@ -48,15 +51,16 @@ class AliceChess(object):
                 return
             self.game.set_user_color(user_color)
             self.game.set_skill_state('SAID_COLOR')
+            print(f"State changed from {self.game.get_skill_state()} to SAID_COLOR")
             self.game.set_skill_state('WAITING_MOVE')
-            return
+            print(f"State changed from {self.game.get_skill_state()} to WAITING_MOVE")
 
         # Если пользователь играет черными, делаем первый ход
         if self.game.get_user_color() == 'BLACK' and self.game.get_attempts() == 0:
             prev_turn = self.game.who()
             comp_move = self.game.comp_move()
             self.game.set_skill_state('SAID_MOVE')
-
+            print(f"State changed from {self.game.get_skill_state()} to SAID_MOVE")
         # Основной игровой цикл
         while not self.game.is_game_over():
             print(f"CIRCLE while not self.game.is_game_over(). command: {self.request.get('request', {}).get('command')}, state: {self.game.get_skill_state()}")
