@@ -21,6 +21,7 @@ class AliceChess(object):
     def processRequest(self):
         # Проверяем, есть ли команда в запросе
         if not self.request.get('request', {}).get('command'):
+            self.game.set_skill_state('SAY_YES')
             yield from self.say_hi()
             return
 
@@ -33,15 +34,12 @@ class AliceChess(object):
             yield from self.say_hi()
 
         # expend confirmation
-        while not self.is_request_yes() and self.game.get_skill_state() == 'SAY_YES':
-            yield from self.say_not_get_yes()
         if self.game.get_skill_state() == 'SAY_YES':
-            self.game.set_skill_state('SAY_CHOOSE_COLOR')
-
-        # say "please choose color"
-        if self.game.get_skill_state() == 'SAY_CHOOSE_COLOR':
-            self.game.set_skill_state('CHOOSE_COLOR')
-            yield from self.say_choose_color()
+            if not self.is_request_yes():
+                yield from self.say_not_get_yes()
+            else:
+                self.game.set_skill_state('SAY_CHOOSE_COLOR')
+                yield from self.say_choose_color()
 
         # define user color
         if self.game.get_skill_state() == 'CHOOSE_COLOR':
