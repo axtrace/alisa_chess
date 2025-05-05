@@ -21,7 +21,7 @@ class AliceChess(object):
         return self.game.serialize_state()
 
     def processRequest(self):
-        print(f"Processing request, command: {self.request.get('request', {}).get('command')}, state: {self.game.get_skill_state()}")
+        print(f"processRequest. Command: {self.request.get('request', {}).get('command')}, state: {self.game.get_skill_state()}")
         
         # Если это первый запрос или состояние INITIATED
         if self.game.get_skill_state() in ['INITIATED', '']:
@@ -46,9 +46,9 @@ class AliceChess(object):
         # Обработка выбора цвета
         if self.game.get_skill_state() == 'WAITING_COLOR':
             is_color_defined, user_color = self.move_ext.extract_color(self.request)
-            if not is_color_defined:
+            while not is_color_defined:
                 yield from self.say_not_get_turn()
-                return
+                is_color_defined, user_color = self.move_ext.extract_color(self.request)
             self.game.set_user_color(user_color)
             self.game.set_skill_state('SAID_COLOR')
             print(f"State changed from {self.game.get_skill_state()} to SAID_COLOR")
