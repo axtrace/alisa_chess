@@ -65,14 +65,15 @@ class AliceChess(object):
         # if user plays black, comp does first move
         if self.game.get_user_color() == 'BLACK' and self.game.get_attempts() == 0:
             # user plays black
-            prev_turn = game.who()
-            comp_move = game.comp_move()
+            prev_turn = self.game.who()
+            comp_move = self.game.comp_move()
             print(f"Changing state from {self.game.get_skill_state()} to SAID_MOVE (computer)")
             self.game.set_skill_state('SAID_MOVE')
 
         # game circle
-        while not game.is_game_over():
+        while not self.game.is_game_over():
             # get user move
+            print(f"CIRCLE while not self.game.is_game_over(). command: {self.request.get('request', {}).get('command')}, state: {self.game.get_skill_state()}")
             if self.game.get_skill_state() == 'SAID_MOVE':
                 print(f"Changing state from {self.game.get_skill_state()} to WAITING_MOVE")
                 self.game.set_skill_state('WAITING_MOVE')
@@ -82,15 +83,15 @@ class AliceChess(object):
                 # move undo
                 yield from self.say_undo_unavailable()
 
-            while not game.is_move_legal(user_move):
+            while not self.game.is_move_legal(user_move):
                 text, text_tts = TextPreparer.say_not_legal_move(user_move,
                                                                  self.speaker.say_move(
                                                                      user_move))
-                text += game.get_board()
+                text += self.game.get_board()
                 user_move = yield from self.get_move(comp_move, prev_turn, text, text_tts)
 
             # make user move
-            prev_turn = game.who()
+            prev_turn = self.game.who()
             self.game.user_move(user_move)
             print(f"Changing state from {self.game.get_skill_state()} to SAID_MOVE (user)")
             self.game.set_skill_state('SAID_MOVE')
