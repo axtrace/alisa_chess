@@ -19,6 +19,11 @@ class AliceChess(object):
         return self.game.serialize_state()
 
     def processRequest(self):
+        # Проверяем, есть ли команда в запросе
+        if not self.request.get('request', {}).get('command'):
+            yield from self.say_hi()
+            return
+
         if self.is_request_help():
             yield from self.say_help()
 
