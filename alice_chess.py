@@ -14,15 +14,15 @@ class AliceChess(object):
     def __init__(self, game: Game, request):
         self.game = game
         self.request = request
-        print(f"AliceChess initialized with game: {self.game.get_skill_state()} and request: {self.request}")
+        print(f"AliceChess initialized with game: {self.game} and request: {self.request}")
 
     def get_session_state(self):
         return self.game.serialize_state()
 
     def processRequest(self):
-        print(f"Processing request: {self.request}")
+        print(f"Processing request: {self.request}, command: {self.request.get('request', {}).get('command')}")
         # Проверяем, есть ли команда в запросе
-        if not self.request.get('request', {}).get('command') or self.game.get_skill_state() == '':
+        if (not self.request.get('request', {}).get('command')) or (self.game.get_skill_state() in ['INITIATED', '']):
             yield from self.say_hi()
             self.game.set_skill_state('SAID_HI')
             print(f"Changing state from {self.game.get_skill_state()} to SAID_HI")
@@ -34,7 +34,7 @@ class AliceChess(object):
             yield from self.say_help()
 
         # expend confirmation
-        if self.game.get_skill_state() in ['INITIATED', 'SAID_HI', 'WAITING_CONFIRM']:
+        if self.game.get_skill_state() in ['SAID_HI', 'WAITING_CONFIRM']:
             if not self.is_request_yes():
                 print(f"Changing state from {self.game.get_skill_state()} to WAITING_CONFIRM")
                 self.game.set_skill_state('WAITING_CONFIRM')

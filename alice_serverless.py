@@ -25,7 +25,7 @@ def handler(event, context):
     :param context: information about current execution context.
     :return: response to be serialized as JSON.
     """
-    
+
     print("Incoming event:", event)
     
     if 'state' in event and 'session' in event['state']:
@@ -33,7 +33,10 @@ def handler(event, context):
     elif 'state' in event and 'application' in event['state']:
         state = event['state']['application']
     else:
-        state = {}
+        state = {'board_state': '', 
+                 'skill_state': 'INITIATED', 
+                 'user_color': '', 
+                 'attempts': 0}
 
     req = RequestAdapter(event)
     alice_chess = AliceChess(Game.parse_and_build_game(state), req)
