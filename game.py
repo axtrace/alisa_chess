@@ -132,10 +132,15 @@ class Game(object):
             board = chess_game.board()
         else:
             board = chess.Board()
+        print(f"board: {board}")
         game = Game(board)
+        print(f"Game created")
         game.set_skill_state(state.get('skill_state', ''))
+        print(f"skill_state: {game.get_skill_state()}")
         game.set_user_color(state.get('user_color', ''))
+        print(f"user_color: {game.get_user_color()}")
         game.attempts = state.get('attempts', 0)
+        print(f"attempts: {game.get_attempts()}")
         return game
 
     def serialize_state(self):
