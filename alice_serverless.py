@@ -25,6 +25,7 @@ def handler(event, context):
     :param context: information about current execution context.
     :return: response to be serialized as JSON.
     """
+    
     print("Incoming event:", event)
     
     if 'state' in event and 'session' in event['state']:
