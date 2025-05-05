@@ -15,12 +15,15 @@ class AliceChess(object):
         self.game = game
         self.request = request
         print(f"AliceChess initialized with game: {self.game} and request: {self.request}")
-
+    
+    
     def get_session_state(self):
         return self.game.serialize_state()
 
     def processRequest(self):
-        print(f"Processing request: {self.request}, command: {self.request.get('request', {}).get('command')}")
+        print(f"Processing request: {self.request}, 
+              command: {self.request.get('request', {}).get('command')},
+              state: {self.game.get_skill_state()}")
         # Проверяем, есть ли команда в запросе
         if (not self.request.get('request', {}).get('command')) or (self.game.get_skill_state() in ['INITIATED', '']):
             yield from self.say_hi()
@@ -54,14 +57,12 @@ class AliceChess(object):
             if not is_color_defined:
                 yield from self.say_not_get_turn()
             else:
-                print(f"Changing state from {self.game.get_skill_state()} to SAID_COLOR")
                 self.game.set_user_color(user_color)
                 self.game.set_skill_state('SAID_COLOR')
-                print(f"Changing state from {self.game.get_skill_state()} to WAITING_MOVE")
-                self.game.set_skill_state('WAITING_MOVE')
+                print(f"Changing state from {self.game.get_skill_state()} to SAID_COLOR")
 
-        game = self.game
-        comp_move, prev_turn = '', ''
+                self.game.set_skill_state('WAITING_MOVE')
+                print(f"Changing state from {self.game.get_skill_state()} to WAITING_MOVE")
 
         # if user plays black, comp does first move
         if self.game.get_user_color() == 'BLACK' and self.game.get_attempts() == 0:
@@ -92,19 +93,19 @@ class AliceChess(object):
 
             # make user move
             prev_turn = game.who()
-            game.user_move(user_move)
+            self.game.user_move(user_move)
             print(f"Changing state from {self.game.get_skill_state()} to SAID_MOVE (user)")
             self.game.set_skill_state('SAID_MOVE')
 
-            if not game.is_game_over():
+            if not self.game.is_game_over():
                 # check that game is not over and make comp move
-                prev_turn = game.who()
-                comp_move = game.comp_move()
+                prev_turn = self.game.who()
+                comp_move = self.game.comp_move()
 
         # form result text
         move_tts = self.speaker.say_move(comp_move)
-        reason = game.gameover_reason()
-        board_printed = game.get_board()
+        reason = self.game.gameover_reason()
+        board_printed = self.game.get_board()
         text, text_tts = TextPreparer.say_result(comp_move, move_tts, reason,
                                                  self.speaker.say_reason(reason, 'ru'),
                                                  self.speaker.say_turn(prev_turn, 'ru'))
@@ -183,12 +184,40 @@ class AliceChess(object):
             yield from self.say_help()
 
     def is_request_yes(self):
-        # define if user confirm flow
-        return 'request' in self.request and 'command' in self.request['request'] and self.request['request']['command'].lower() in ['да', 'yes', 'ок', 'ok']
+        """Проверяет, является ли запрос пользователя подтверждением.
+        
+        Проверяет два условия:
+        1. Наличие интента YANDEX.CONFIRM
+        2. Текстовое совпадение с подтверждающими словами
+        
+        Returns:
+            bool: True если запрос является подтверждением, False иначе
+        """
+        if self._has_intent('YANDEX.CONFIRM'):
+            return True
+        confirm_words = ['да', 'yes', 'ок', 'ok', 'давай']
+        return self._has_text(confirm_words)
 
     def is_request_unmake(self):
-        return 'request' in self.request and 'command' in self.request['request'] and self.request['request']['command'].lower() in ['отмена', 'cancel', 'назад', 'back']
-
+        if self._has_intent('YANDEX.UNMAKE'):
+            return True
+        unmake_words = ['отмена', 'cancel', 'назад', 'back']
+        return self._has_text(unmake_words)
+    
     def is_request_help(self):
-        # define if user asked help
-        return 'request' in self.request and 'command' in self.request['request'] and self.request['request']['command'].lower() in ['помощь', 'help', 'что ты умеешь', 'what can you do']
+        if self._has_intent('YANDEX.HELP'):
+            return True
+        help_words = ['помощь', 'help', 'что ты умеешь', 'what can you do']
+        return self._has_text(help_words)
+  
+    def _has_intent(self, intent_name):
+        """Проверяет наличие интента в запросе."""
+        if not all(key in self.request.get('request', {}) for key in ['nlu', 'intents']):
+            return False
+        return intent_name in self.request['request']['nlu']['intents']
+        
+    def _has_text(self, list_of_words):
+        """Проверяет текстовое совпадение с словами"""
+        command = self.request.get('request', {}).get('command', '').lower()
+        return command in list_of_words
+
