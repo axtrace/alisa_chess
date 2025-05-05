@@ -111,10 +111,18 @@ class AliceChess(object):
             return comp_move, prev_turn
         return None
 
-    def prep_text_to_say(self, comp_move, prev_turn, text_to_show, text_to_say,
-                         lang='ru'):
-        move_to_say = self.speaker.say_move(comp_move, lang)
-        prev_turn_tts = self.speaker.say_turn(prev_turn, lang)
+    def prep_text_to_say(self, comp_move, prev_turn, text_to_show, text_to_say, lang='ru'):
+        """Подготавливает текст для озвучивания хода.
+        
+        Args:
+            comp_move: ход компьютера или None
+            prev_turn: предыдущий ход
+            text_to_show: текст для отображения
+            text_to_say: текст для озвучивания
+            lang: язык (по умолчанию 'ru')
+        """
+        move_to_say = self.speaker.say_move(comp_move, lang) if comp_move else ''
+        prev_turn_tts = self.speaker.say_turn(prev_turn, lang) if prev_turn else ''
         text, text_tts = TextPreparer.say_your_move(comp_move, move_to_say, prev_turn, prev_turn_tts, text_to_show,
                                                     text_to_say)
         return text, text_tts
