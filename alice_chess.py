@@ -21,9 +21,7 @@ class AliceChess(object):
         return self.game.serialize_state()
 
     def processRequest(self):
-        print(f"Processing request: {self.request}, 
-              command: {self.request.get('request', {}).get('command')},
-              state: {self.game.get_skill_state()}")
+        print(f"Processing request: {self.request}, command: {self.request.get('request', {}).get('command')}, state: {self.game.get_skill_state()}")
         # Проверяем, есть ли команда в запросе
         if (not self.request.get('request', {}).get('command')) or (self.game.get_skill_state() in ['INITIATED', '']):
             yield from self.say_hi()
