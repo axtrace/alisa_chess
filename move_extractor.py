@@ -85,35 +85,22 @@ class MoveExtractor(object):
         return False, ''
 
     def extract_move(self, request):
-        # extracting move in SAN from user speech
+        """Извлекает ход из запроса пользователя."""
+        # Проверяем рокировку
+        if 'request' in request and 'command' in request['request']:
+            command = request['request']['command'].lower()
+            if 'рокировка' in command or 'castling' in command:
+                if 'короткая' in command or 'короткая' in command or 'kingside' in command:
+                    return 'O-O'
+                if 'длинная' in command or 'длинная' in command or 'queenside' in command:
+                    return 'O-O-O'
 
-        castling = request.get_castling()
-        if castling is not None:
-            # castling detected, return it
-            return castling
+        # Извлекаем ход из текста
+        move = self._extract_move_from_text(request)
+        if move:
+            return move
 
-        # get piece from request
-        piece = self._get_piece_(request)
-
-        # get square (file and rank) from request
-        square_rex = re.compile(r'\w+\s*[1-8]', flags=re.IGNORECASE)
-        command_text = request.request.command
-        squares = re.findall(square_rex, command_text)
-
-        if not squares:
-            return None
-
-        file_to, rank_to = self._get_square(squares[-1])
-        file_from, rank_from = '', ''
-        if len(squares) > 1:
-            file_from, rank_from = self._get_square(squares[0])
-
-        if not (len(file_to) and len(rank_to)):
-            return None
-
-        # a5, Bc3, Nf3g5
-        return ''.join(
-            filter(None, [piece, file_from, rank_from, file_to, rank_to]))
+        return None
 
     def _get_key_(self, request, dict_of_sets):
         # try to get key of dict with has at least one elem in request.lemma
@@ -165,3 +152,31 @@ class MoveExtractor(object):
         rank = match[0] if match else ''
         return rank
         # return self._get_key_(request, self.rank_map)
+
+    def _extract_move_from_text(self, request):
+        """Извлекает ход из текста запроса."""
+        if 'request' not in request or 'command' not in request['request']:
+            return None
+
+        command_text = request['request']['command']
+        
+        # Получаем фигуру
+        piece = self._get_piece_(request)
+        
+        # Получаем клетки (файл и ранг)
+        square_rex = re.compile(r'\w+\s*[1-8]', flags=re.IGNORECASE)
+        squares = re.findall(square_rex, command_text)
+        
+        if not squares:
+            return None
+            
+        file_to, rank_to = self._get_square(squares[-1])
+        file_from, rank_from = '', ''
+        if len(squares) > 1:
+            file_from, rank_from = self._get_square(squares[0])
+            
+        if not (len(file_to) and len(rank_to)):
+            return None
+            
+        # Формируем ход: a5, Bc3, Nf3g5
+        return ''.join(filter(None, [piece, file_from, rank_from, file_to, rank_to]))
