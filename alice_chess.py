@@ -15,7 +15,7 @@ class AliceChess(object):
         self.game = game
         self.request = request
         self.game.set_skill_state('INITIATED')
-        print(f"Changing state from {self.game.get_skill_state()} to INITIATED")
+        print(f"State is INITIATED")
             
 
     def get_session_state(self):
@@ -23,7 +23,7 @@ class AliceChess(object):
 
     def processRequest(self):
         # Проверяем, есть ли команда в запросе
-        if not self.request.get('request', {}).get('command'):
+        if not self.request.get('request', {}).get('command') or self.game.get_skill_state() == '':
             yield from self.say_hi()
             self.game.set_skill_state('SAID_HI')
             print(f"Changing state from {self.game.get_skill_state()} to SAID_HI")
@@ -31,14 +31,6 @@ class AliceChess(object):
 
         if self.is_request_help():
             yield from self.say_help()
-
-        if self.game.get_skill_state() == '':
-            # say hi, do you want to play chess? say yes/
-            print(f"Changing state from {self.game.get_skill_state()} to INITIATED")
-            self.game.set_skill_state('INITIATED')
-            yield from self.say_hi()
-            print(f"Changing state from {self.game.get_skill_state()} to SAID_HI")
-            self.game.set_skill_state('SAID_HI')
 
         # expend confirmation
         if self.game.get_skill_state() in ['INITIATED', 'SAID_HI']:
@@ -52,6 +44,8 @@ class AliceChess(object):
                 print(f"Changing state from {self.game.get_skill_state()} to WAITING_COLOR")
                 self.game.set_skill_state('WAITING_COLOR')
                 yield from self.say_choose_color()
+            print(f"expend confirmation was not done. Request: {self.request}, self.is_request_yes: {self.is_request_yes()}")
+            return
 
         # define user color
         if self.game.get_skill_state() == 'WAITING_COLOR':
