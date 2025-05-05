@@ -21,8 +21,11 @@ class AliceChess(object):
     def processRequest(self):
         # Проверяем, есть ли команда в запросе
         if not self.request.get('request', {}).get('command'):
-            self.game.set_skill_state('SAY_YES')
+            print(f"Changing state from {self.game.get_skill_state()} to INITIATED")
+            self.game.set_skill_state('INITIATED')
             yield from self.say_hi()
+            print(f"Changing state from {self.game.get_skill_state()} to SAID_HI")
+            self.game.set_skill_state('SAID_HI')
             return
 
         if self.is_request_help():
@@ -30,25 +33,36 @@ class AliceChess(object):
 
         if self.game.get_skill_state() == '':
             # say hi, do you want to play chess? say yes/
-            self.game.set_skill_state('SAY_YES')
+            print(f"Changing state from {self.game.get_skill_state()} to INITIATED")
+            self.game.set_skill_state('INITIATED')
             yield from self.say_hi()
+            print(f"Changing state from {self.game.get_skill_state()} to SAID_HI")
+            self.game.set_skill_state('SAID_HI')
 
         # expend confirmation
-        if self.game.get_skill_state() == 'SAY_YES':
+        if self.game.get_skill_state() == 'SAID_HI':
             if not self.is_request_yes():
+                print(f"Changing state from {self.game.get_skill_state()} to WAITING_CONFIRM")
+                self.game.set_skill_state('WAITING_CONFIRM')
                 yield from self.say_not_get_yes()
             else:
-                self.game.set_skill_state('SAY_CHOOSE_COLOR')
+                print(f"Changing state from {self.game.get_skill_state()} to SAID_CONFIRM")
+                self.game.set_skill_state('SAID_CONFIRM')
+                print(f"Changing state from {self.game.get_skill_state()} to WAITING_COLOR")
+                self.game.set_skill_state('WAITING_COLOR')
                 yield from self.say_choose_color()
 
         # define user color
-        if self.game.get_skill_state() == 'CHOOSE_COLOR':
+        if self.game.get_skill_state() == 'WAITING_COLOR':
             is_color_defined, user_color = self.move_ext.extract_color(self.request)
-            while not is_color_defined:
+            if not is_color_defined:
                 yield from self.say_not_get_turn()
-                is_color_defined, user_color = self.move_ext.extract_color(self.request)
-            self.game.set_user_color(user_color)
-            self.game.set_skill_state('NOTIFY_STEP')
+            else:
+                print(f"Changing state from {self.game.get_skill_state()} to SAID_COLOR")
+                self.game.set_user_color(user_color)
+                self.game.set_skill_state('SAID_COLOR')
+                print(f"Changing state from {self.game.get_skill_state()} to WAITING_MOVE")
+                self.game.set_skill_state('WAITING_MOVE')
 
         game = self.game
         comp_move, prev_turn = '', ''
@@ -58,10 +72,16 @@ class AliceChess(object):
             # user plays black
             prev_turn = game.who()
             comp_move = game.comp_move()
+            print(f"Changing state from {self.game.get_skill_state()} to SAID_MOVE (computer)")
+            self.game.set_skill_state('SAID_MOVE')
 
         # game circle
         while not game.is_game_over():
             # get user move
+            if self.game.get_skill_state() == 'SAID_MOVE':
+                print(f"Changing state from {self.game.get_skill_state()} to WAITING_MOVE")
+                self.game.set_skill_state('WAITING_MOVE')
+
             user_move = yield from self.get_move(comp_move, prev_turn, text_to_show=game.get_board())
             if user_move == -1:
                 # move undo
@@ -77,6 +97,8 @@ class AliceChess(object):
             # make user move
             prev_turn = game.who()
             game.user_move(user_move)
+            print(f"Changing state from {self.game.get_skill_state()} to SAID_MOVE (user)")
+            self.game.set_skill_state('SAID_MOVE')
 
             if not game.is_game_over():
                 # check that game is not over and make comp move
@@ -113,8 +135,9 @@ class AliceChess(object):
     def get_move(self, comp_move='', prev_turn='', text_to_show='', text_to_say=''):
         # say the comp move and try extract valid move from user answer
         text, text_tts = self.prep_text_to_say(comp_move, prev_turn, text_to_show, text_to_say, 'ru')
-        if self.game.get_skill_state() == 'NOTIFY_STEP':
-            self.game.set_skill_state('MAKE_STEP')
+        if self.game.get_skill_state() == 'WAITING_MOVE':
+            print(f"Changing state from {self.game.get_skill_state()} to SAID_MOVE")
+            self.game.set_skill_state('SAID_MOVE')
             yield from self.say_text(text, text_tts)
 
         if self.is_request_unmake():
@@ -130,7 +153,8 @@ class AliceChess(object):
             yield from self.say_text(not_get, not_get_tts)
             move = self.move_ext.extract_move(self.request)
 
-        self.game.set_skill_state('NOTIFY_STEP')
+        print(f"Changing state from {self.game.get_skill_state()} to WAITING_MOVE")
+        self.game.set_skill_state('WAITING_MOVE')
         return str(move)
 
     def say_choose_color(self):

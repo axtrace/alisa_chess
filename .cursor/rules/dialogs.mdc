@@ -1,0 +1,10 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+When analyzing, reviewing, or suggesting changes to code related to Yandex Alice skills or Yandex Dialogs, always refer to the official documentation at https://yandex.ru/dev/dialogs/alice/doc/ru/about and related sections.  
+- All code suggestions, explanations, and reviews must be consistent with the current requirements and best practices described in this documentation.  
+- If you are unsure about any aspect or API usage, check the documentation before making a suggestion.  
+- When possible, include references to relevant sections or examples from the documentation in your comments or suggestions.  
+- Do not suggest deprecated or undocumented features.
