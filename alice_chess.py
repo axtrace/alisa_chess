@@ -20,30 +20,29 @@ class AliceChess(object):
 
     def processRequest(self):
         if self.is_request_help():
-            yield from self.say_help()
+            return self.say_help()
 
         if self.game.get_skill_state() == '':
             # say hi, do you want to play chess? say yes/
             self.game.set_skill_state('SAY_YES')
-            yield from self.say_hi()
+            return self.say_hi()
 
         # expend confirmation
         while not self.is_request_yes() and self.game.get_skill_state() == 'SAY_YES':
-            yield from self.say_not_get_yes()
+            return self.say_not_get_yes()
         if self.game.get_skill_state() == 'SAY_YES':
             self.game.set_skill_state('SAY_CHOOSE_COLOR')
 
         # say "please choose color"
         if self.game.get_skill_state() == 'SAY_CHOOSE_COLOR':
             self.game.set_skill_state('CHOOSE_COLOR')
-            yield from self.say_choose_color()
+            return self.say_choose_color()
 
         # define user color
         if self.game.get_skill_state() == 'CHOOSE_COLOR':
             is_color_defined, user_color = self.move_ext.extract_color(self.request)
             while not is_color_defined:
-                yield from self.say_not_get_turn()
-                is_color_defined, user_color = self.move_ext.extract_color(self.request)
+                return self.say_not_get_turn()
             self.game.set_user_color(user_color)
             self.game.set_skill_state('NOTIFY_STEP')
 
@@ -59,20 +58,17 @@ class AliceChess(object):
         # game circle
         while not game.is_game_over():
             # get user move
-            user_move = yield from self.get_move(comp_move, prev_turn,
-                                                 text_to_show=game.get_board())
+            user_move = self.get_move(comp_move, prev_turn, text_to_show=game.get_board())
             if user_move == -1:
                 # move undo
-                yield from self.say_undo_unavailable()
+                return self.say_undo_unavailable()
 
             while not game.is_move_legal(user_move):
                 text, text_tts = TextPreparer.say_not_legal_move(user_move,
                                                                  self.speaker.say_move(
                                                                      user_move))
                 text += game.get_board()
-                user_move = yield from self.get_move(comp_move, prev_turn,
-                                                     text,
-                                                     text_tts)
+                user_move = self.get_move(comp_move, prev_turn, text, text_tts)
 
             # make user move
             prev_turn = game.who()
@@ -92,8 +88,7 @@ class AliceChess(object):
                                                  self.speaker.say_turn(prev_turn, 'ru'))
 
         # say results
-        yield from self.say_text(board_printed + text, text_tts, True)
-        game.quit()
+        return self.say_text(board_printed + text, text_tts, True)
 
     def make_comp_move(self):
         if not self.game.is_game_over():
@@ -111,14 +106,12 @@ class AliceChess(object):
                                                     text_to_say)
         return text, text_tts
 
-    def get_move(self, comp_move='', prev_turn='', text_to_show='',
-                 text_to_say=''):
+    def get_move(self, comp_move='', prev_turn='', text_to_show='', text_to_say=''):
         # say the comp move and try extract valid move from user answer
-
         text, text_tts = self.prep_text_to_say(comp_move, prev_turn, text_to_show, text_to_say, 'ru')
         if self.game.get_skill_state() == 'NOTIFY_STEP':
             self.game.set_skill_state('MAKE_STEP')
-            yield from self.say_text(text, text_tts)
+            return self.say_text(text, text_tts)
 
         if self.is_request_unmake():
             # user request undo his move
@@ -127,43 +120,42 @@ class AliceChess(object):
         move = self.move_ext.extract_move(self.request)
 
         while move is None:
-            # self.attempts += 1
             not_get, not_get_tts = TextPreparer.say_do_not_get(
                 self.request['request']['command'],
                 self.game.get_attempts())
-            yield from self.say_text(not_get, not_get_tts)
-            move = self.move_ext.extract_move(self.request)
+            return self.say_text(not_get, not_get_tts)
 
         self.game.set_skill_state('NOTIFY_STEP')
         return str(move)
 
     def say_choose_color(self):
         text, text_tts = TextPreparer.say_choose_color()
-        yield from self.say_text(text, text_tts)
+        return self.say_text(text, text_tts)
 
     def say_undo_unavailable(self):
         text, text_tts = TextPreparer.say_undo_unavailable()
-        yield from self.say_text(text, text_tts)
+        return self.say_text(text, text_tts)
 
     def say_help(self):
         text, text_tts = TextPreparer.say_help_text()
-        yield from self.say_text(text, text_tts)
+        return self.say_text(text, text_tts)
 
     def say_hi(self):
-        yield from self.say_text(texts.hi_text)
+        return self.say_text(texts.hi_text, texts.hi_text)
 
     def say_not_get_yes(self):
-        yield from self.say_text(texts.dng_start_text)
+        return self.say_text(texts.dng_start_text)
 
     def say_not_get_turn(self):
-        yield from self.say_text(texts.not_get_turn_text)
+        return self.say_text(texts.not_get_turn_text)
 
     def say_text(self, text, text_tts='', end_session=False):
         # say text and check answer for help
         tts = text_tts if text_tts else text
-        yield say(text, tts=tts, end_session=end_session)
+        response = say(text, tts=tts, end_session=end_session)
         if self.is_request_help():
-            yield from self.say_help()
+            return self.say_help()
+        return response
 
     def is_request_yes(self):
         # define if user confirm flow
