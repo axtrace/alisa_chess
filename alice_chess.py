@@ -40,7 +40,7 @@ class AliceChess(object):
             self.game.set_skill_state('SAID_HI')
 
         # expend confirmation
-        if self.game.get_skill_state() == 'SAID_HI':
+        if self.game.get_skill_state() in ['INITIATED', 'SAID_HI']:
             if not self.is_request_yes():
                 print(f"Changing state from {self.game.get_skill_state()} to WAITING_CONFIRM")
                 self.game.set_skill_state('WAITING_CONFIRM')
