@@ -72,7 +72,7 @@ class MoveExtractor(object):
         # try to get color from intents
         intent_color = self._color_by_intents_(request)
         if intent_color[0]:
-            return intent_color
+        return intent_color
 
         # try to get color from tokens
         if 'request' in request and 'command' in request['request']:

@@ -29,7 +29,7 @@ def handler(event, context):
 
     req = RequestAdapter(event)
     alice_chess = AliceChess(Game.parse_and_build_game(state), req)
-    response = alice_chess.processRequest()
+    response = next(alice_chess.processRequest())
     return {
         'version': event['version'],
         'session': event['session'],
