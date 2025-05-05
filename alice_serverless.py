@@ -12,6 +12,11 @@ class RequestAdapter:
             return self.request
         return self.request.get(key, '')
 
+    def get(self, key, default=None):
+        if key == 'request':
+            return self.request
+        return self.request.get(key, default)
+
 
 def handler(event, context):
     """
