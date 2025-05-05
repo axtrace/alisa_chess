@@ -1,7 +1,7 @@
 ```mermaid
 stateDiagram-v2
     [*] --> INITIATED
-    INITIATED --> SAID_HI: Отправлено приветствие
+    INITIATED --> SAID_HI: Приветствие отправлено
     SAID_HI --> WAITING_CONFIRM: Ожидание согласия
     WAITING_CONFIRM --> SAID_CONFIRM: Пользователь согласился
     SAID_CONFIRM --> WAITING_COLOR: Запрос цвета

@@ -14,6 +14,9 @@ class AliceChess(object):
     def __init__(self, game: Game, request):
         self.game = game
         self.request = request
+        self.game.set_skill_state('INITIATED')
+        print(f"Changing state from {self.game.get_skill_state()} to INITIATED")
+            
 
     def get_session_state(self):
         return self.game.serialize_state()
@@ -21,11 +24,9 @@ class AliceChess(object):
     def processRequest(self):
         # Проверяем, есть ли команда в запросе
         if not self.request.get('request', {}).get('command'):
-            print(f"Changing state from {self.game.get_skill_state()} to INITIATED")
-            self.game.set_skill_state('INITIATED')
             yield from self.say_hi()
-            print(f"Changing state from {self.game.get_skill_state()} to SAID_HI")
             self.game.set_skill_state('SAID_HI')
+            print(f"Changing state from {self.game.get_skill_state()} to SAID_HI")
             return
 
         if self.is_request_help():
@@ -171,6 +172,7 @@ class AliceChess(object):
 
     def say_hi(self):
         yield from self.say_text(texts.hi_text, texts.hi_text)
+        print(f"'ve just SAID HI")
 
     def say_not_get_yes(self):
         yield from self.say_text(texts.dng_start_text)
