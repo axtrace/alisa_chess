@@ -22,94 +22,74 @@ class AliceChess(object):
 
     def processRequest(self):
         print(f"Processing request: {self.request}, command: {self.request.get('request', {}).get('command')}, state: {self.game.get_skill_state()}")
-        # Проверяем, есть ли команда в запросе
-        if (not self.request.get('request', {}).get('command')) or (self.game.get_skill_state() in ['INITIATED', '']):
+        
+        # Если это первый запрос или состояние INITIATED
+        if self.game.get_skill_state() in ['INITIATED', '']:
             yield from self.say_hi()
             self.game.set_skill_state('SAID_HI')
-            print(f"Changing state from {self.game.get_skill_state()} to SAID_HI")
             self.game.set_skill_state('WAITING_CONFIRM')
-            print(f"Changing state from {self.game.get_skill_state()} to WAITING_CONFIRM")
             return
 
-        if self.is_request_help():
-            yield from self.say_help()
-
-        # expend confirmation
-        if self.game.get_skill_state() in ['SAID_HI', 'WAITING_CONFIRM']:
+        # Обработка подтверждения
+        if self.game.get_skill_state() == 'WAITING_CONFIRM':
             if not self.is_request_yes():
-                print(f"Changing state from {self.game.get_skill_state()} to WAITING_CONFIRM")
-                self.game.set_skill_state('WAITING_CONFIRM')
                 yield from self.say_not_get_yes()
-            else:
-                print(f"Changing state from {self.game.get_skill_state()} to SAID_CONFIRM")
-                self.game.set_skill_state('SAID_CONFIRM')
-                print(f"Changing state from {self.game.get_skill_state()} to WAITING_COLOR")
-                self.game.set_skill_state('WAITING_COLOR')
-                yield from self.say_choose_color()
-            print(f"expend confirmation was not done. Request: {self.request}, self.is_request_yes: {self.is_request_yes()}")
+                return
+            self.game.set_skill_state('SAID_CONFIRM')
+            self.game.set_skill_state('WAITING_COLOR')
+            yield from self.say_choose_color()
             return
 
-        # define user color
+        # Обработка выбора цвета
         if self.game.get_skill_state() == 'WAITING_COLOR':
             is_color_defined, user_color = self.move_ext.extract_color(self.request)
             if not is_color_defined:
                 yield from self.say_not_get_turn()
-            else:
-                self.game.set_user_color(user_color)
-                self.game.set_skill_state('SAID_COLOR')
-                print(f"Changing state from {self.game.get_skill_state()} to SAID_COLOR")
+                return
+            self.game.set_user_color(user_color)
+            self.game.set_skill_state('SAID_COLOR')
+            self.game.set_skill_state('WAITING_MOVE')
+            return
 
-                self.game.set_skill_state('WAITING_MOVE')
-                print(f"Changing state from {self.game.get_skill_state()} to WAITING_MOVE")
-
-        # if user plays black, comp does first move
+        # Если пользователь играет черными, делаем первый ход
         if self.game.get_user_color() == 'BLACK' and self.game.get_attempts() == 0:
-            # user plays black
             prev_turn = self.game.who()
             comp_move = self.game.comp_move()
-            print(f"Changing state from {self.game.get_skill_state()} to SAID_MOVE (computer)")
             self.game.set_skill_state('SAID_MOVE')
 
-        # game circle
+        # Основной игровой цикл
         while not self.game.is_game_over():
-            # get user move
             print(f"CIRCLE while not self.game.is_game_over(). command: {self.request.get('request', {}).get('command')}, state: {self.game.get_skill_state()}")
+            
             if self.game.get_skill_state() == 'SAID_MOVE':
-                print(f"Changing state from {self.game.get_skill_state()} to WAITING_MOVE")
                 self.game.set_skill_state('WAITING_MOVE')
 
-            user_move = yield from self.get_move(comp_move, prev_turn, text_to_show=game.get_board())
+            user_move = yield from self.get_move(comp_move, prev_turn, text_to_show=self.game.get_board())
             if user_move == -1:
-                # move undo
                 yield from self.say_undo_unavailable()
+                continue
 
             while not self.game.is_move_legal(user_move):
-                text, text_tts = TextPreparer.say_not_legal_move(user_move,
-                                                                 self.speaker.say_move(
-                                                                     user_move))
+                text, text_tts = TextPreparer.say_not_legal_move(user_move, self.speaker.say_move(user_move))
                 text += self.game.get_board()
                 user_move = yield from self.get_move(comp_move, prev_turn, text, text_tts)
 
-            # make user move
             prev_turn = self.game.who()
             self.game.user_move(user_move)
-            print(f"Changing state from {self.game.get_skill_state()} to SAID_MOVE (user)")
             self.game.set_skill_state('SAID_MOVE')
 
             if not self.game.is_game_over():
-                # check that game is not over and make comp move
                 prev_turn = self.game.who()
                 comp_move = self.game.comp_move()
 
-        # form result text
+        # Формируем итоговый текст
         move_tts = self.speaker.say_move(comp_move)
         reason = self.game.gameover_reason()
         board_printed = self.game.get_board()
         text, text_tts = TextPreparer.say_result(comp_move, move_tts, reason,
-                                                 self.speaker.say_reason(reason, 'ru'),
-                                                 self.speaker.say_turn(prev_turn, 'ru'))
+                                               self.speaker.say_reason(reason, 'ru'),
+                                               self.speaker.say_turn(prev_turn, 'ru'))
 
-        # say results
         yield from self.say_text(board_printed + text, text_tts, True)
 
     def make_comp_move(self):
