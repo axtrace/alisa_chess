@@ -1,0 +1,3 @@
+[submodule "alice_scripts"]
+	path = alice_scripts
+	url = https://github.com/borzunov/alice_scripts
