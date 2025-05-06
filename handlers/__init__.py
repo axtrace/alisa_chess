@@ -7,6 +7,7 @@ from .waiting_promotion_handler import WaitingPromotionHandler
 from .waiting_draw_confirm_handler import WaitingDrawConfirmHandler
 from .waiting_resign_confirm_handler import WaitingResignConfirmHandler
 from .game_over_handler import GameOverHandler
+from .state_indeferent_handler import StateIndeferentHandler
 
 __all__ = [
     'BaseHandler',
@@ -17,5 +18,6 @@ __all__ = [
     'WaitingPromotionHandler',
     'WaitingDrawConfirmHandler',
     'WaitingResignConfirmHandler',
-    'GameOverHandler'
+    'GameOverHandler',
+    'StateIndeferentHandler'
 ] 

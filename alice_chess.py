@@ -9,7 +9,7 @@ from handlers.waiting_promotion_handler import WaitingPromotionHandler
 from handlers.waiting_draw_confirm_handler import WaitingDrawConfirmHandler
 from handlers.waiting_resign_confirm_handler import WaitingResignConfirmHandler
 from handlers.game_over_handler import GameOverHandler
-
+from handlers.special_intent_handler import SpecialIntentHandler
 
 
 class AliceChess:
@@ -31,10 +31,15 @@ class AliceChess:
         Args:
             request: Данные запроса
         """
+        # Сначала проверяем специальные интенты, не зависящие от состояния
+        handler = SpecialIntentHandler(self.game, request)
+        if handler.handle():
+            return handler.handle()
+            
+        # Затем обрабатываем запрос в зависимости от состояния игры
         state = self.game.get_skill_state()
         
-        # Выбираем обработчик в зависимости от состояния
-        if state in ['INITIATED', '']:
+        if state == 'INITIATED':
             handler = InitiatedHandler(self.game, request)
         elif state == 'WAITING_CONFIRM':
             handler = WaitingConfirmHandler(self.game, request)
@@ -51,6 +56,6 @@ class AliceChess:
         elif state == 'GAME_OVER':
             handler = GameOverHandler(self.game, request)
         else:
-            raise ValueError(f"Неизвестное состояние: {state}")
+            raise ValueError(f"Неизвестное состояние игры: {state}")
             
         return handler.handle()
