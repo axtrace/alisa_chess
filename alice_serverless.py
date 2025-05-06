@@ -6,9 +6,9 @@ from chess import Board
 def handler(event, context):
     """Обработчик запросов от Алисы."""
     try:
-        # Восстанавливаем состояние игры из session_state или создаем новую
-        if 'state' in event and 'session' in event['state'] and 'game_state' in event['state']['session']:
-            game = Game.parse_and_build_game(event['state']['session']['game_state'])
+        # Восстанавливаем состояние игры из user_state или создаем новую
+        if 'state' in event and 'user' in event['state'] and 'game_state' in event['state']['user']:
+            game = Game.parse_and_build_game(event['state']['user']['game_state'])
         else:
             game = Game(board=Board())
         
@@ -19,12 +19,8 @@ def handler(event, context):
         return {
             'version': '1.0',
             'session': event['session'],
-            'response': {
-                'tts': response,
-                'end_session': False,
-                'text': response
-            },
-            'session_state': {
+            'response': response,
+            'user_state_update': {
                 'game_state': game.serialize_state()
             }
         }
@@ -35,7 +31,6 @@ def handler(event, context):
             'session': event['session'],
             'response': {
                 'tts': 'Произошла ошибка при обработке запроса',
-                'end_session': True,
-                'text': 'Произошла ошибка при обработке запроса'
+                'end_session': True
             }
         }
