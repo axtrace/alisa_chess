@@ -12,14 +12,17 @@ from handlers.waiting_resign_confirm_handler import WaitingResignConfirmHandler
 from handlers.game_over_handler import GameOverHandler
 
 
-app = Flask(__name__)
-
 
 class AliceChess:
     """Основной класс для обработки запросов к навыку шахмат."""
     
-    def __init__(self):
-        self.game = Game()
+    def __init__(self, game: Game):
+        """Инициализирует обработчик запросов.
+        
+        Args:
+            game: Экземпляр игры
+        """
+        self.game = game
         self.speaker = Speaker()
         self.text_preparer = TextPreparer()
         
@@ -28,7 +31,7 @@ class AliceChess:
         state = self.game.get_skill_state()
         
         # Выбираем обработчик в зависимости от состояния
-        if state == 'INITIATED':
+        if state in ['INITIATED', '']:
             handler = InitiatedHandler(self.game, request)
         elif state == 'WAITING_CONFIRM':
             handler = WaitingConfirmHandler(self.game, request)
@@ -48,17 +51,3 @@ class AliceChess:
             raise ValueError(f"Неизвестное состояние: {state}")
             
         return handler.handle()
-
-
-@app.route('/alice', methods=['POST'])
-def alice():
-    """Обработчик POST-запросов от Алисы."""
-    request_json = request.get_json()
-    alice_chess = AliceChess()
-    response = alice_chess.handle_request(request_json)
-    return response
-
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
-
