@@ -46,7 +46,7 @@ class TextPreparer(object):
 
         if prev_turn:
             # if previous turn was given
-            tts += f'\n{prev_turn_tts} пошли '
+            tts += f'{prev_turn_tts} пошли '
             text += f'\n{prev_turn_tts} пошли '
         if comp_move:
             # if comp move was given
