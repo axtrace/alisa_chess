@@ -21,4 +21,4 @@ class BaseValidator(ABC):
     def _has_text(self, list_of_words):
         """Проверяет текстовое совпадение с словами."""
         command = self.request.get('request', {}).get('command', '').lower()
-        return command in list_of_words 
+        return any(word.lower() in command for word in list_of_words) 

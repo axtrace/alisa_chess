@@ -50,7 +50,7 @@ class IntentValidator(BaseValidator):
         """Проверяет, является ли запрос отменой хода."""
         if self._has_intent('UNMAKE'):
             return True
-        unmake_words = ['отмена', 'cancel', 'назад', 'back']
+        unmake_words = ['отменить ход', 'отмена хода', 'вернуть ход', 'взять ход назад']
         return self._has_text(unmake_words)
 
     def validate_repeat_last_move(self) -> bool:

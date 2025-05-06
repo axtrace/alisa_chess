@@ -90,21 +90,21 @@ class MoveExtractor(object):
             command = request['request']['command'].lower()
             if 'рокировка' in command or 'castling' in command:
                 if 'короткая' in command or 'короткая' in command or 'kingside' in command:
-                    return 'O-O'
+                    return True, 'O-O'
                 if 'длинная' in command or 'длинная' in command or 'queenside' in command:
-                    return 'O-O-O'
+                    return True, 'O-O-O'
 
         # Пробуем извлечь ход из интентов
         move = self._extract_move_from_intents(request)
         if move:
-            return move
+            return True, move
 
         # Если интенты не помогли, пробуем извлечь из текста
         move = self._extract_move_from_text(request)
         if move:
-            return move
+            return True, move
 
-        return None
+        return False, None
 
     def _extract_move_from_intents(self, request):
         """Извлекает ход из интентов."""
@@ -219,3 +219,24 @@ class MoveExtractor(object):
             
         # Формируем ход: a5, Bc3, Nf3g5
         return ''.join(filter(None, [piece, file_from, rank_from, file_to, rank_to]))
+
+    def extract_promotion(self, request):
+        """Извлекает тип превращения пешки из запроса."""
+        if 'request' not in request or 'command' not in request['request']:
+            return False, None
+
+        command = request['request']['command'].lower()
+        
+        # Проверяем интенты
+        intents = self._get_intents_(request)
+        if intents and 'PROMOTION' in intents:
+            piece = self._get_piece_from_intent(intents['PROMOTION']['slots']['piece']['value'])
+            if piece:
+                return True, piece
+
+        # Проверяем текст
+        for piece, values in self.piece_map.items():
+            if any(value in command for value in values):
+                return True, piece
+
+        return False, None

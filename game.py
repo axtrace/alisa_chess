@@ -244,3 +244,27 @@ class Game(object):
             return None
         last_move = self.board.move_stack[-1]
         return self.board.san(last_move)
+
+    def is_valid_move(self, move_san):
+        """Проверяет, является ли ход допустимым."""
+        try:
+            move = self.board.parse_san(move_san)
+            return move in self.board.legal_moves
+        except ValueError:
+            return False
+
+    def is_checkmate(self):
+        """Проверяет, является ли текущая позиция матом."""
+        return self.board.is_checkmate()
+
+    def is_stalemate(self):
+        """Проверяет, является ли текущая позиция патом."""
+        return self.board.is_stalemate()
+
+    def is_check(self):
+        """Проверяет, находится ли текущая сторона под шахом."""
+        return self.board.is_check()
+
+    def is_promotion(self):
+        """Проверяет, требуется ли превращение пешки."""
+        return self.check_promotion()
