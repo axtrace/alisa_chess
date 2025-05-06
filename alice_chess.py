@@ -1,4 +1,3 @@
-from flask import Flask, request
 from game import Game
 from speaker import Speaker
 from text_preparer import TextPreparer
