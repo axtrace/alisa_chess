@@ -215,7 +215,7 @@ class AliceChess:
 
     def is_request_unmake(self):
         """Проверяет, является ли запрос отменой хода."""
-        if self._has_intent('YANDEX.UNMAKE'):
+        if self._has_intent('UNMAKE'):
             return True
         unmake_words = ['отмена', 'cancel', 'назад', 'back']
         return self._has_text(unmake_words)
@@ -229,28 +229,28 @@ class AliceChess:
 
     def is_request_draw(self):
         """Проверяет, является ли запрос предложением ничьей."""
-        if self._has_intent('YANDEX.OFFER_DRAW'):
+        if self._has_intent('OFFER_DRAW'):
             return True
         draw_words = ['ничья', 'draw', 'предлагаю ничью', 'offer draw']
         return self._has_text(draw_words)
 
     def is_request_resign(self):
         """Проверяет, является ли запрос предложением сдачи."""
-        if self._has_intent('YANDEX.RESIGN'):
+        if self._has_intent('RESIGN'):
             return True
         resign_words = ['сдаюсь', 'resign', 'сдаюсь', 'give up']
         return self._has_text(resign_words)
 
     def is_request_new_game(self):
         """Проверяет, является ли запрос предложением новой игры."""
-        if self._has_intent('YANDEX.NEW_GAME'):
+        if self._has_intent('NEW_GAME'):
             return True
         new_game_words = ['новая игра', 'new game', 'начать заново', 'start over']
         return self._has_text(new_game_words)
 
     def is_request_no(self):
         """Проверяет, является ли запрос отказом."""
-        if self._has_intent('YANDEX.REJECT'):
+        if self._has_intent('REJECT'):
             return True
         no_words = ['нет', 'no', 'не', 'отмена', 'cancel']
         return self._has_text(no_words)
