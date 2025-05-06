@@ -17,17 +17,25 @@ class AliceChess:
         self.speaker = Speaker()
         print(f"AliceChess initialized with game: {self.game} and request: {self.request}")
 
+    def say(self, text, tts=None, end_session=False):
+        """Формирует ответ в формате Яндекс Диалогов."""
+        return {
+            'text': text,
+            'tts': tts or text,
+            'end_session': end_session
+        }
+
     def process_request(self):
         """Обрабатывает входящий запрос и возвращает ответ."""
         print(f"Processing request. Command: {self.request.get('request', {}).get('command')}, state: {self.game.get_skill_state()}")
         
         # Проверяем запрос на помощь
         if self.is_request_help():
-            return say(texts.help_text, tts=texts.help_text)
+            return self.say(texts.help_text, tts=texts.help_text)
             
         # Проверяем запрос на новую игру
         if self.is_request_new_game():
-            return say(texts.new_game_text, tts=texts.new_game_text)
+            return self.say(texts.new_game_text, tts=texts.new_game_text)
         
         # Получаем текущее состояние
         state = self.game.get_skill_state()
@@ -56,22 +64,22 @@ class AliceChess:
     def _handle_initiated(self):
         """Обработка начального состояния."""
         self.game.set_skill_state('WAITING_CONFIRM')
-        return say(texts.hi_text, tts=texts.hi_text)
+        return self.say(texts.hi_text, tts=texts.hi_text)
 
     def _handle_waiting_confirm(self):
         """Обработка ожидания подтверждения начала игры."""
         if not self.is_request_yes():
-            return say(texts.dng_start_text)
+            return self.say(texts.dng_start_text)
             
         self.game.set_skill_state('WAITING_COLOR')
         text, text_tts = TextPreparer.say_choose_color()
-        return say(text, tts=text_tts)
+        return self.say(text, tts=text_tts)
 
     def _handle_waiting_color(self):
         """Обработка ожидания выбора цвета."""
         is_color_defined, user_color = self.move_ext.extract_color(self.request)
         if not is_color_defined:
-            return say(texts.not_get_turn_text)
+            return self.say(texts.not_get_turn_text)
             
         self.game.set_user_color(user_color)
         self.game.set_skill_state('WAITING_MOVE')
@@ -81,38 +89,38 @@ class AliceChess:
             prev_turn = self.game.who()
             comp_move = self.game.comp_move()
             text, text_tts = self.prep_text_to_say(comp_move, prev_turn, self.game.get_board(), '')
-            return say(text, tts=text_tts)
+            return self.say(text, tts=text_tts)
             
         # Если белыми, ждем ход пользователя
         text, text_tts = TextPreparer.say_your_move('', '', 'WHITE', '', self.game.get_board(), '')
-        return say(text, tts=text_tts)
+        return self.say(text, tts=text_tts)
 
     def _handle_waiting_move(self):
         """Обработка ожидания хода пользователя."""
         # Проверяем предложение ничьей
         if self.is_request_draw():
             self.game.set_skill_state('WAITING_DRAW_CONFIRM')
-            return say(texts.draw_offer_text, tts=texts.draw_offer_text)
+            return self.say(texts.draw_offer_text, tts=texts.draw_offer_text)
             
         # Проверяем предложение сдачи
         if self.is_request_resign():
             self.game.set_skill_state('WAITING_RESIGN_CONFIRM')
-            return say(texts.resign_offer_text, tts=texts.resign_offer_text)
+            return self.say(texts.resign_offer_text, tts=texts.resign_offer_text)
             
         # Проверяем, не просит ли пользователь отменить ход
         if self.is_request_unmake():
-            return say(texts.undo_unavailable_text)
+            return self.say(texts.undo_unavailable_text)
             
         # Извлекаем ход из запроса
         move = self.move_ext.extract_move(self.request)
         if not move:
-            return say(texts.not_get_move_text)
+            return self.say(texts.not_get_move_text)
             
         # Проверяем легальность хода
         if not self.game.is_move_legal(move):
             text, text_tts = TextPreparer.say_not_legal_move(move, self.speaker.say_move(move))
             text += self.game.get_board()
-            return say(text, tts=text_tts)
+            return self.say(text, tts=text_tts)
             
         # Делаем ход пользователя
         prev_turn = self.game.who()
@@ -122,7 +130,7 @@ class AliceChess:
         if self.game.needs_promotion():
             self.game.set_skill_state('WAITING_PROMOTION')
             text, text_tts = TextPreparer.say_choose_promotion()
-            return say(text, tts=text_tts)
+            return self.say(text, tts=text_tts)
             
         # Проверяем, не закончилась ли игра
         if self.game.is_game_over():
@@ -135,13 +143,13 @@ class AliceChess:
         
         # Формируем ответ
         text, text_tts = self.prep_text_to_say(comp_move, prev_turn, self.game.get_board(), '')
-        return say(text, tts=text_tts)
+        return self.say(text, tts=text_tts)
 
     def _handle_waiting_promotion(self):
         """Обработка ожидания выбора фигуры для превращения пешки."""
         piece = self.move_ext._get_piece_(self.request)
         if not piece or piece not in ['Q', 'R', 'B', 'N']:
-            return say(texts.not_get_promotion_text)
+            return self.say(texts.not_get_promotion_text)
             
         self.game.promote_pawn(piece)
         self.game.set_skill_state('WAITING_MOVE')
@@ -157,7 +165,7 @@ class AliceChess:
         
         # Формируем ответ
         text, text_tts = self.prep_text_to_say(comp_move, prev_turn, self.game.get_board(), '')
-        return say(text, tts=text_tts)
+        return self.say(text, tts=text_tts)
 
     def _handle_game_over(self):
         """Обработка завершенной игры."""
@@ -166,29 +174,29 @@ class AliceChess:
         text, text_tts = TextPreparer.say_result('', '', reason,
                                                self.speaker.say_reason(reason, 'ru'),
                                                '')
-        return say(board_printed + text, tts=text_tts, end_session=True)
+        return self.say(board_printed + text, tts=text_tts, end_session=True)
 
     def _handle_waiting_draw_confirm(self):
         """Обработка подтверждения предложения ничьей."""
         if self.is_request_yes():
             self.game.set_skill_state('GAME_OVER')
-            return say(texts.draw_accepted_text, tts=texts.draw_accepted_text, end_session=True)
+            return self.say(texts.draw_accepted_text, tts=texts.draw_accepted_text, end_session=True)
         elif self.is_request_no():
             self.game.restore_prev_state()
-            return say(texts.draw_declined_text, tts=texts.draw_declined_text)
+            return self.say(texts.draw_declined_text, tts=texts.draw_declined_text)
         else:
-            return say(texts.draw_offer_text, tts=texts.draw_offer_text)
+            return self.say(texts.draw_offer_text, tts=texts.draw_offer_text)
 
     def _handle_waiting_resign_confirm(self):
         """Обработка подтверждения сдачи."""
         if self.is_request_yes():
             self.game.set_skill_state('GAME_OVER')
-            return say(texts.resign_accepted_text, tts=texts.resign_accepted_text, end_session=True)
+            return self.say(texts.resign_accepted_text, tts=texts.resign_accepted_text, end_session=True)
         elif self.is_request_no():
             self.game.restore_prev_state()
-            return say(texts.resign_declined_text, tts=texts.resign_declined_text)
+            return self.say(texts.resign_declined_text, tts=texts.resign_declined_text)
         else:
-            return say(texts.resign_offer_text, tts=texts.resign_offer_text)
+            return self.say(texts.resign_offer_text, tts=texts.resign_offer_text)
 
     def prep_text_to_say(self, comp_move, prev_turn, text_to_show, text_to_say, lang='ru'):
         """Подготавливает текст для озвучивания хода."""

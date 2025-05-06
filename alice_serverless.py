@@ -24,18 +24,25 @@ def handler(event, context):
     print(f"Received event: {event}")
     
     # Инициализируем игру
-    game = Game(board=Board())
+    game = Game()
     
     # Восстанавливаем состояние из сессии
-    if 'state' in event.get('session', {}):
+    if 'state' in event['session']:
         game.restore_state(event['session']['state'])
     
     # Обрабатываем запрос
-    alice = AliceChess(game, event)
-    response = alice.process_request()
+    response = game.process_request(event['request'])
     
     # Сохраняем состояние в сессию
-    if 'session' in event:
-        event['session']['state'] = game.serialize_state()
+    event['session']['state'] = game.serialize_state()
     
-    return response
+    # Формируем ответ в формате Яндекс Диалогов
+    return {
+        'version': '1.0',
+        'session': event['session'],
+        'response': {
+            'text': response['text'],
+            'tts': response['tts'],
+            'end_session': response['end_session']
+        }
+    }
