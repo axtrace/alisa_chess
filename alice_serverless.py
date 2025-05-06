@@ -20,10 +20,9 @@ def handler(event, context):
             'version': '1.0',
             'session': event['session'],
             'response': {
-                'text': response,
                 'tts': response,
-                'type': 'SimpleUtterance',
-                'end_session': False
+                'end_session': False,
+                'text': response
             },
             'session_state': {
                 'game_state': game.serialize_state()
@@ -35,9 +34,8 @@ def handler(event, context):
             'version': '1.0',
             'session': event['session'],
             'response': {
-                'text': 'Произошла ошибка при обработке запроса',
                 'tts': 'Произошла ошибка при обработке запроса',
-                'type': 'SimpleUtterance',
-                'end_session': True
+                'end_session': True,
+                'text': 'Произошла ошибка при обработке запроса'
             }
         }
