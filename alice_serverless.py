@@ -21,6 +21,7 @@ def handler(event, context):
             'session': event['session'],
             'response': {
                 'text': response,
+                'type': 'SimpleUtterance',
                 'end_session': False
             },
             'session_state': {
@@ -34,6 +35,7 @@ def handler(event, context):
             'session': event['session'],
             'response': {
                 'text': 'Произошла ошибка при обработке запроса',
+                'type': 'SimpleUtterance',
                 'tts': 'Произошла ошибка при обработке запроса',
                 'end_session': True
             }
