@@ -14,22 +14,7 @@ class WaitingMoveHandler(BaseHandler):
 
     def handle(self):
         """Обрабатывает запрос в состоянии ожидания хода."""
-        # Проверяем специальные намерения
-        if self.intent_validator.validate_help():
-            return self.say(texts.help_text)
-            
-        if self.intent_validator.validate_new_game():
-            self.game.set_skill_state('INITIATED')
-            return self.say(texts.hi_text)
-            
-        if self.intent_validator.validate_draw():
-            self.game.set_skill_state('WAITING_DRAW_CONFIRM')
-            return self.say(texts.draw_offer_text)
-            
-        if self.intent_validator.validate_resign():
-            self.game.set_skill_state('WAITING_RESIGN_CONFIRM')
-            return self.say(texts.resign_offer_text)
-            
+        # Проверяем специальные команды
         if self.intent_validator.validate_unmake():
             if self.game.unmake_move():
                 text, text_tts = self.text_preparer.say_your_move('', '', '', '', self.game.get_board(), '')
@@ -45,73 +30,89 @@ class WaitingMoveHandler(BaseHandler):
                 return self.say(board_printed + text, tts=text_tts)
             return self.say("Пока не было сделано ни одного хода.")
 
-        # Проверяем ход
-        is_move_defined, user_move = self.move_ext.extract_move(self.request)
-        if not is_move_defined:
-            return self.say(texts.not_get_turn_text)
+        # Обработка хода пользователя
+        user_move = self._handle_user_move()
+        if not user_move:
+            return self.say(texts.not_get_move)
             
-        # Проверяем корректность хода
-        if not self.game.is_valid_move(user_move):
-            return self.say(texts.wrong_turn_text)
+        # Проверяем состояние после хода пользователя
+        game_state = self._check_game_state(user_move)
+        if game_state:
+            return game_state
             
-        # Делаем ход
-        self.game.user_move(user_move)
-        
-        # Проверяем на шах и мат
-        if self.game.is_checkmate():
-            self.game.set_skill_state('GAME_OVER')
-            text, text_tts = self.text_preparer.say_your_move(user_move, '', '', '', self.game.get_board(), '')
-            return self.say(text + texts.checkmate_text, tts=text_tts)
-            
-        # Проверяем на пат
-        if self.game.is_stalemate():
-            self.game.set_skill_state('GAME_OVER')
-            text, text_tts = self.text_preparer.say_your_move(user_move, '', '', '', self.game.get_board(), '')
-            return self.say(text + texts.stalemate_text, tts=text_tts)
-            
-        # Проверяем на шах
-        if self.game.is_check():
-            text, text_tts = self.text_preparer.say_your_move(user_move, '', '', '', self.game.get_board(), '')
-            return self.say(text + texts.check_text, tts=text_tts)
-            
-        # Проверяем на превращение пешки
-        if self.game.is_promotion():
-            self.game.set_skill_state('WAITING_PROMOTION')
-            return self.say(texts.promotion_text)
-            
-        # Делаем ход компьютера
+        # Ход компьютера
         comp_move = self.game.comp_move()
         
-        # Проверяем на шах и мат после хода компьютера
-        if self.game.is_checkmate():
-            self.game.set_skill_state('GAME_OVER')
-            text, text_tts = self.prep_text_to_say(comp_move, user_move, self.game.get_board(), '')
-            return self.say(text + texts.checkmate_text, tts=text_tts)
-            
-        # Проверяем на пат после хода компьютера
-        if self.game.is_stalemate():
-            self.game.set_skill_state('GAME_OVER')
-            text, text_tts = self.prep_text_to_say(comp_move, user_move, self.game.get_board(), '')
-            return self.say(text + texts.stalemate_text, tts=text_tts)
-            
-        # Проверяем на шах после хода компьютера
-        if self.game.is_check():
-            text, text_tts = self.prep_text_to_say(comp_move, user_move, self.game.get_board(), '')
-            return self.say(text + texts.check_text, tts=text_tts)
-            
-        # Проверяем на превращение пешки после хода компьютера
-        if self.game.is_promotion():
-            self.game.set_skill_state('WAITING_PROMOTION')
-            text, text_tts = self.prep_text_to_say(comp_move, user_move, self.game.get_board(), '')
-            return self.say(text + texts.promotion_text, tts=text_tts)
+        # Проверяем состояние после хода компьютера
+        game_state = self._check_game_state(comp_move, user_move)
+        if game_state:
+            return game_state
             
         # Обычный ход
         text, text_tts = self.prep_text_to_say(comp_move, user_move, self.game.get_board(), '')
         return self.say(text, tts=text_tts)
 
-    def prep_text_to_say(self, comp_move, prev_turn, text_to_show, text_to_say, lang='ru'):
-        """Подготавливает текст для озвучивания хода."""
-        move_to_say = self.speaker.say_move(comp_move, lang) if comp_move else ''
-        prev_turn_tts = self.speaker.say_turn(prev_turn, lang) if prev_turn else ''
-        text, text_tts = self.text_preparer.say_your_move(comp_move, move_to_say, prev_turn, prev_turn_tts, text_to_show, text_to_say)
+    def _handle_user_move(self):
+        """Обрабатывает ход пользователя.
+        
+        Returns:
+            str: Ход пользователя или None, если ход некорректен
+        """
+        is_move_defined, user_move = self.move_ext.extract_move(self.request)
+        if not is_move_defined or not self.game.is_valid_move(user_move):
+            return None
+            
+        self.game.user_move(user_move)
+        return user_move
+
+    def _check_game_state(self, current_move, previous_move=None):
+        """Проверяет состояние игры после хода.
+        
+        Args:
+            current_move: Текущий ход
+            previous_move: Предыдущий ход (опционально)
+            
+        Returns:
+            str: Ответ с описанием состояния или None, если игра продолжается
+        """
+        # Проверяем на шах и мат
+        if self.game.is_checkmate():
+            self.game.set_skill_state('GAME_OVER')
+            text, text_tts = self.prep_text_to_say(current_move, previous_move, self.game.get_board(), '')
+            return self.say(text + texts.checkmate_text, tts=text_tts)
+            
+        # Проверяем на пат
+        if self.game.is_stalemate():
+            self.game.set_skill_state('GAME_OVER')
+            text, text_tts = self.prep_text_to_say(current_move, previous_move, self.game.get_board(), '')
+            return self.say(text + texts.stalemate_text, tts=text_tts)
+            
+        # Проверяем на шах
+        if self.game.is_check():
+            text, text_tts = self.prep_text_to_say(current_move, previous_move, self.game.get_board(), '')
+            return self.say(text + texts.check_text, tts=text_tts)
+            
+        # Проверяем на превращение пешки
+        if self.game.is_promotion():
+            self.game.set_skill_state('WAITING_PROMOTION')
+            if previous_move:  # Если это ход компьютера
+                text, text_tts = self.prep_text_to_say(current_move, previous_move, self.game.get_board(), '')
+                return self.say(text + texts.promotion_text, tts=text_tts)
+            return self.say(texts.promotion_text)
+            
+        return None
+
+    def prep_text_to_say(self, current_move, previous_move, text_to_show, text_to_say, lang='ru'):
+        """Подготавливает текст для озвучивания хода.
+        
+        Args:
+            current_move: Текущий ход
+            previous_move: Предыдущий ход
+            text_to_show: Текст для отображения
+            text_to_say: Текст для озвучивания
+            lang: Язык озвучивания
+        """
+        move_to_say = self.speaker.say_move(current_move, lang) if current_move else ''
+        prev_turn_tts = self.speaker.say_turn(previous_move, lang) if previous_move else ''
+        text, text_tts = self.text_preparer.say_your_move(current_move, move_to_say, previous_move, prev_turn_tts, text_to_show, text_to_say)
         return text, text_tts 
