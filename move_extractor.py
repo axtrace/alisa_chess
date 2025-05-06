@@ -1,5 +1,4 @@
 import re
-from request_parser import RequestParser as rp
 
 
 class MoveExtractor(object):
