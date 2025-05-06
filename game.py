@@ -142,14 +142,28 @@ class Game(object):
 
     @staticmethod
     def parse_and_build_game(state):
+        """Восстанавливает игру из сохраненного состояния.
+        
+        Args:
+            state: Словарь с сохраненным состоянием игры
+            
+        Returns:
+            Game: Восстановленная игра
+        """
         if state.get('board_state', ''):
             pgn = io.StringIO(base64.b64decode(state['board_state']).decode('utf-8'))
             chess_game = chess.pgn.read_game(pgn)
             board = chess_game.board()
+            
+            # Восстанавливаем все ходы
+            for move in chess_game.mainline_moves():
+                board.push(move)
         else:
             board = chess.Board()
+            
         print(f"parse_and_build_game. state: {state}")
         print(f"board: {board}")
+        
         game = Game(board)
         game.set_skill_state(state.get('skill_state', ''))
         game.set_user_color(state.get('user_color', ''))
@@ -158,15 +172,25 @@ class Game(object):
 
     def serialize_state(self):
         """Serialize game state to string."""
+        # Создаем новую игру
         game = chess.pgn.Game()
+        
+        # Добавляем все ходы из текущей доски
+        for move in self.board.move_stack:
+            game.add_variation(move)
+            
+        # Устанавливаем текущую позицию
         game.setup(self.board)
+        
+        # Экспортируем в PGN
         exporter = chess.pgn.StringExporter(headers=False, variations=False, comments=False)
         pgn_string = game.accept(exporter)
         encoded_pgn = base64.b64encode(pgn_string.encode('utf-8')).decode('utf-8')
+        
         return {
             'board_state': encoded_pgn,
             'skill_state': self.skill_state,
-            'prev_skill_state': self.prev_skill_state,  # Сохраняем предыдущее состояние
+            'prev_skill_state': self.prev_skill_state,
             'user_color': self.user_color,
             'comp_color': self.comp_color,
             'attempts': self.attempts,
