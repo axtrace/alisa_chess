@@ -90,8 +90,7 @@ class AliceChess:
             text, text_tts = self.prep_text_to_say(comp_move, prev_turn, self.game.get_board(), '')
             return self.say(text, tts=text_tts)
             
-        # Если белыми, ждем ход пользователя
-        text, text_tts = TextPreparer.say_your_move('', '', 'WHITE', '', self.game.get_board(), '')
+        text, text_tts = TextPreparer.say_your_move('', '', '', '', self.game.get_board(), '')
         return self.say(text, tts=text_tts)
 
     def _handle_waiting_move(self):
