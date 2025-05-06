@@ -83,8 +83,9 @@ class Game(object):
         best_move = self.engine.get_best_move(self.board.fen(), self.skill_level)
         if best_move:
             move = chess.Move.from_uci(best_move)
+            san = self.board.san(move)  # Получаем SAN до push
             self.board.push(move)
-            return self.board.san(move)
+            return san
         else:
             return None
 
