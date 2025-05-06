@@ -1,22 +1,26 @@
 ```mermaid
 stateDiagram-v2
-    [*] --> WAITING_HI
-    WAITING_HI --> SAID_HI: Приветствие
-    SAID_HI --> WAITING_CONFIRM: Пользователь отвечает
-    WAITING_CONFIRM --> SAID_CONFIRM: Пользователь согласился
-    SAID_CONFIRM --> WAITING_COLOR: Запрос цвета
-    WAITING_COLOR --> SAID_COLOR: Цвет выбран
-    SAID_COLOR --> WAITING_MOVE: Ожидание хода
-    WAITING_MOVE --> SAID_MOVE: Ход сделан
-    SAID_MOVE --> WAITING_MOVE: Ход компьютера
-    WAITING_MOVE --> [*]: Игра окончена
+    [*] --> INITIATED
+    INITIATED --> WAITING_CONFIRM: Приветствие
+    WAITING_CONFIRM --> WAITING_COLOR: Пользователь согласился
+    WAITING_COLOR --> WAITING_MOVE: Цвет выбран
+    WAITING_MOVE --> WAITING_PROMOTION: Ход сделан, требуется превращение пешки
+    WAITING_PROMOTION --> WAITING_MOVE: Пешка превращена
+    WAITING_MOVE --> WAITING_DRAW_CONFIRM: Предложение ничьей
+    WAITING_DRAW_CONFIRM --> WAITING_MOVE: Ничья отклонена
+    WAITING_DRAW_CONFIRM --> GAME_OVER: Ничья принята
+    WAITING_MOVE --> WAITING_RESIGN_CONFIRM: Предложение сдачи
+    WAITING_RESIGN_CONFIRM --> WAITING_MOVE: Сдача отклонена
+    WAITING_RESIGN_CONFIRM --> GAME_OVER: Сдача принята
+    WAITING_MOVE --> GAME_OVER: Игра окончена
+    GAME_OVER --> INITIATED: Новая игра
 
-    note right of WAITING_HI: Начальное состояние
-    note right of SAID_HI: Приветствие отправлено
+    note right of INITIATED: Начальное состояние
     note right of WAITING_CONFIRM: Ожидание согласия
-    note right of SAID_CONFIRM: Пользователь согласился
     note right of WAITING_COLOR: Ожидание выбора цвета
-    note right of SAID_COLOR: Цвет выбран
     note right of WAITING_MOVE: Ожидание хода
-    note right of SAID_MOVE: Ход сделан
+    note right of WAITING_PROMOTION: Ожидание превращения пешки
+    note right of WAITING_DRAW_CONFIRM: Ожидание подтверждения ничьей
+    note right of WAITING_RESIGN_CONFIRM: Ожидание подтверждения сдачи
+    note right of GAME_OVER: Игра завершена
 ``` 

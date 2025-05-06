@@ -40,14 +40,14 @@ class TextPreparer(object):
         # form speech for your move
 
         print(f"say_your_move received: {comp_move}, {move_to_say}, {prev_turn}, {prev_turn_tts}, {text_to_show}, {text_to_say}")  # Отладочный вывод
-        
+
         text = text_to_show if text_to_show else ''
         tts = text_to_say if text_to_say else ''
 
         if prev_turn:
             # if previous turn was given
             tts += f'\n{prev_turn_tts} пошли '
-            text += f'\n{prev_turn} пошли '
+            text += f'\n{prev_turn_tts} пошли '
         if comp_move:
             # if comp move was given
             text += f'{comp_move}. '
