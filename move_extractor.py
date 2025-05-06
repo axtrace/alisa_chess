@@ -155,14 +155,15 @@ class MoveExtractor(object):
 
     @staticmethod
     def _has_lemma_(request, lemma):
-        # decorator for str
+        """Проверяет наличие леммы в запросе."""
         if isinstance(request, str):
-            # elem looks like 'эф', request looks like 'эф 5'
-            parts = request.split()
-            return len(parts) > 0 and lemma == parts[0]
-        else:
-            # suggest it is request from user
-            return request.has_lemmas(lemma)
+            # Если request - строка, просто проверяем вхождение
+            return lemma.lower() in request.lower()
+        elif isinstance(request, dict):
+            # Если request - словарь (запрос от Алисы), проверяем в nlu.tokens
+            if 'request' in request and 'nlu' in request['request'] and 'tokens' in request['request']['nlu']:
+                return lemma.lower() in [token.lower() for token in request['request']['nlu']['tokens']]
+        return False
 
     def _get_piece_(self, request):
         return self._get_key_(request, self.piece_map)

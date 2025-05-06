@@ -45,6 +45,7 @@ class Game(object):
         self.prev_skill_state = ''  # Предыдущее состояние
         self.user_color = ''
         self.comp_color = ''  # Цвет компьютера
+        self.needs_promotion = False  # Флаг необходимости превращения пешки
 
     def get_user_color(self):
         return self.user_color
@@ -189,3 +190,44 @@ class Game(object):
                 self.board.turn = chess.BLACK
             else:
                 self.board.turn = chess.WHITE
+
+    def needs_promotion(self):
+        """Проверяет, требуется ли превращение пешки."""
+        if not self.board.move_stack:
+            return False
+            
+        last_move = self.board.move_stack[-1]
+        if not last_move:
+            return False
+            
+        # Проверяем, является ли последний ход ходом пешки
+        piece = self.board.piece_at(last_move.to_square)
+        if not piece or piece.piece_type != chess.PAWN:
+            return False
+            
+        # Проверяем, достигла ли пешка последней горизонтали
+        rank = chess.square_rank(last_move.to_square)
+        return (piece.color == chess.WHITE and rank == 7) or (piece.color == chess.BLACK and rank == 0)
+
+    def promote_pawn(self, promotion_piece):
+        """Превращает пешку в указанную фигуру."""
+        if not self.needs_promotion():
+            return False
+            
+        last_move = self.board.move_stack[-1]
+        if not last_move:
+            return False
+            
+        # Создаем новый ход с превращением
+        promotion_move = chess.Move(
+            from_square=last_move.from_square,
+            to_square=last_move.to_square,
+            promotion=promotion_piece
+        )
+        
+        # Отменяем последний ход
+        self.board.pop()
+        
+        # Делаем ход с превращением
+        self.board.push(promotion_move)
+        return True
