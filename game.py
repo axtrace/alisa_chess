@@ -142,52 +142,33 @@ class Game(object):
 
     @staticmethod
     def parse_and_build_game(state):
-        """Восстанавливает игру из сохраненного состояния.
-        
-        Args:
-            state: Словарь с сохраненным состоянием игры
-            
-        Returns:
-            Game: Восстановленная игра
-        """
+        """Восстанавливает игру из сохраненного состояния."""
+        print(f"parse_and_build_game. Входное состояние: {state}")
         if state.get('board_state', ''):
             pgn = io.StringIO(base64.b64decode(state['board_state']).decode('utf-8'))
             chess_game = chess.pgn.read_game(pgn)
             board = chess_game.board()
-            
-            # Восстанавливаем все ходы
-            for move in chess_game.mainline_moves():
-                board.push(move)
+            print(f"Восстановлена доска: {board}")
         else:
             board = chess.Board()
+            print("Создана новая доска")
             
-        print(f"parse_and_build_game. state: {state}")
-        print(f"board: {board}")
-        
         game = Game(board)
         game.set_skill_state(state.get('skill_state', ''))
         game.set_user_color(state.get('user_color', ''))
         game.attempts = state.get('attempts', 0)
+        print(f"Восстановлена игра: {game.serialize_state()}")
         return game
 
     def serialize_state(self):
-        """Serialize game state to string."""
-        # Создаем новую игру
+        """Сериализует состояние игры в строку."""
+        print("Сериализация состояния игры")
         game = chess.pgn.Game()
-        
-        # Добавляем все ходы из текущей доски
-        for move in self.board.move_stack:
-            game.add_variation(move)
-            
-        # Устанавливаем текущую позицию
         game.setup(self.board)
-        
-        # Экспортируем в PGN
         exporter = chess.pgn.StringExporter(headers=False, variations=False, comments=False)
         pgn_string = game.accept(exporter)
         encoded_pgn = base64.b64encode(pgn_string.encode('utf-8')).decode('utf-8')
-        
-        return {
+        state = {
             'board_state': encoded_pgn,
             'skill_state': self.skill_state,
             'prev_skill_state': self.prev_skill_state,
@@ -196,6 +177,8 @@ class Game(object):
             'attempts': self.attempts,
             'current_turn': 'White' if self.board.turn == chess.WHITE else 'Black'
         }
+        print(f"Сериализованное состояние: {state}")
+        return state
 
     def restore_state(self, state):
         """Восстанавливает состояние игры."""
