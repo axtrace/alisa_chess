@@ -173,13 +173,15 @@ class AliceChess:
         text, text_tts = TextPreparer.say_result('', '', reason,
                                                self.speaker.say_reason(reason, 'ru'),
                                                '')
-        return self.say(board_printed + text, tts=text_tts, end_session=True)
+        self.game.set_skill_state('INITIATED')
+        return self.say(board_printed + text, tts=text_tts, end_session=False)
 
     def _handle_waiting_draw_confirm(self):
         """Обработка подтверждения предложения ничьей."""
         if self.is_request_yes():
             self.game.set_skill_state('GAME_OVER')
-            return self.say(texts.draw_accepted_text, tts=texts.draw_accepted_text, end_session=True)
+            self.game.set_skill_state('INITIATED')
+            return self.say(texts.draw_accepted_text, tts=texts.draw_accepted_text, end_session=False)
         elif self.is_request_no():
             self.game.restore_prev_state()
             return self.say(texts.draw_declined_text, tts=texts.draw_declined_text)
@@ -190,7 +192,8 @@ class AliceChess:
         """Обработка подтверждения сдачи."""
         if self.is_request_yes():
             self.game.set_skill_state('GAME_OVER')
-            return self.say(texts.resign_accepted_text, tts=texts.resign_accepted_text, end_session=True)
+            self.game.set_skill_state('INITIATED')
+            return self.say(texts.resign_accepted_text, tts=texts.resign_accepted_text, end_session=False)
         elif self.is_request_no():
             self.game.restore_prev_state()
             return self.say(texts.resign_declined_text, tts=texts.resign_declined_text)
@@ -201,8 +204,7 @@ class AliceChess:
         """Подготавливает текст для озвучивания хода."""
         move_to_say = self.speaker.say_move(comp_move, lang) if comp_move else ''
         prev_turn_tts = self.speaker.say_turn(prev_turn, lang) if prev_turn else ''
-        text, text_tts = TextPreparer.say_your_move(comp_move, move_to_say, prev_turn, prev_turn_tts, text_to_show,
-                                                    text_to_say)
+        text, text_tts = TextPreparer.say_your_move(comp_move, move_to_say, prev_turn, prev_turn_tts, text_to_show, text_to_say)
         return text, text_tts
 
     def is_request_yes(self):

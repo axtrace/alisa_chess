@@ -118,10 +118,12 @@ class Speaker(object):
         return ' '.join(speak_list)
 
     def say_turn(self, who, lang='ru'):
+        print(f"say_turn received: {who}, {lang}")  # Отладочный вывод
         res = ''
-        turn_names = self.white_black_names.get(who.upper(), None)
-        if turn_names is not None:
-            res = turn_names.get(lang, '')
+        if who:  # Проверка на пустую строку или None
+            turn_names = self.white_black_names.get(who.upper(), None)
+            if turn_names is not None:
+                res = turn_names.get(lang, '')
         return res
 
     def say_reason(self, reason, lang='ru'):

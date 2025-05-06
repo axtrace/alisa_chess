@@ -44,8 +44,8 @@ class TextPreparer(object):
 
         if prev_turn:
             # if previous turn was given
-            tts += f'\n{prev_turn_tts} пошли. '
-            text += f'\n{prev_turn} пошли. '
+            tts += f'\n{prev_turn_tts} пошли '
+            text += f'\n{prev_turn} пошли '
         if comp_move:
             # if comp move was given
             text += f'{comp_move}. '
@@ -109,8 +109,5 @@ class TextPreparer(object):
 
         text += texts.engine_info
         text_tts += texts.engine_info
-
-        # text += texts.current_level_text.format(level)
-        # text_tts += texts.current_level_text.format(level)
 
         return text, text_tts
