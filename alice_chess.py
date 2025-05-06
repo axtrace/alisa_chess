@@ -108,6 +108,16 @@ class AliceChess:
         # Проверяем, не просит ли пользователь отменить ход
         if self.is_request_unmake():
             return self.say(texts.undo_unavailable_text)
+
+        # Проверяем, не просит ли пользователь повторить последний ход
+        if self.is_request_repeat_last_move():
+            last_move = self.game.get_last_move()
+            if last_move:
+                text = f"Последний ход: {last_move}\n{self.game.get_board()}"
+                tts = f"Последний ход: {self.speaker.say_move(last_move)}"
+                return self.say(text, tts=tts)
+            else:
+                return self.say("Пока не было сделано ни одного хода.")
             
         # Извлекаем ход из запроса
         move = self.move_ext.extract_move(self.request)
@@ -254,6 +264,13 @@ class AliceChess:
             return True
         no_words = ['нет', 'no', 'не', 'отмена', 'cancel']
         return self._has_text(no_words)
+
+    def is_request_repeat_last_move(self):
+        """Проверяет, является ли запрос просьбой повторить последний ход."""
+        if self._has_intent('REPEAT_LAST_MOVE'):
+            return True
+        repeat_words = ['повтори', 'repeat', 'еще раз', 'again']
+        return self._has_text(repeat_words)
 
     def _has_intent(self, intent_name):
         """Проверяет наличие интента в запросе."""

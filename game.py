@@ -237,3 +237,10 @@ class Game(object):
         self.board.push(promotion_move)
         self._needs_promotion = False
         return True
+
+    def get_last_move(self):
+        """Возвращает последний ход в формате SAN."""
+        if not self.board.move_stack:
+            return None
+        last_move = self.board.move_stack[-1]
+        return self.board.san(last_move)
