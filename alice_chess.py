@@ -85,6 +85,7 @@ class AliceChess:
         # Если пользователь играет черными, делаем первый ход
         if user_color == 'BLACK':
             prev_turn = self.game.who()
+            prev_turn = ''
             comp_move = self.game.comp_move()
             text, text_tts = self.prep_text_to_say(comp_move, prev_turn, self.game.get_board(), '')
             return self.say(text, tts=text_tts)
@@ -125,7 +126,7 @@ class AliceChess:
         self.game.user_move(move)
         
         # Проверяем, не нужно ли превращение пешки
-        if self.game.needs_promotion():
+        if self.game.check_promotion():
             self.game.set_skill_state('WAITING_PROMOTION')
             text, text_tts = TextPreparer.say_choose_promotion()
             return self.say(text, tts=text_tts)
