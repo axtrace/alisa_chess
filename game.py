@@ -42,7 +42,9 @@ class Game(object):
         self.time_level = time_level
         self.winner = ''
         self.skill_state = ''
+        self.prev_skill_state = ''  # Предыдущее состояние
         self.user_color = ''
+        self.comp_color = ''  # Цвет компьютера
 
     def get_user_color(self):
         return self.user_color
@@ -54,7 +56,18 @@ class Game(object):
         return self.skill_state
 
     def set_skill_state(self, skill_state):
+        """Устанавливает новое состояние, сохраняя предыдущее."""
+        self.prev_skill_state = self.skill_state
         self.skill_state = skill_state
+
+    def get_prev_skill_state(self):
+        """Возвращает предыдущее состояние."""
+        return self.prev_skill_state
+
+    def restore_prev_state(self):
+        """Восстанавливает предыдущее состояние."""
+        self.skill_state = self.prev_skill_state
+        self.prev_skill_state = ''
 
     def get_attempts(self):
         return self.attempts
@@ -148,6 +161,31 @@ class Game(object):
         return {
             'board_state': encoded_pgn,
             'skill_state': self.skill_state,
+            'prev_skill_state': self.prev_skill_state,  # Сохраняем предыдущее состояние
             'user_color': self.user_color,
+            'comp_color': self.comp_color,
             'attempts': self.attempts,
+            'current_turn': 'White' if self.board.turn == chess.WHITE else 'Black'
         }
+
+    def restore_state(self, state):
+        """Восстанавливает состояние игры."""
+        if state.get("board_state", ""):
+            pgn = io.StringIO(base64.b64decode(state['board_state']).decode('utf-8'))
+            chess_game = chess.pgn.read_game(pgn)
+            self.board = chess_game.board()
+        else:
+            self.board = chess.Board()
+            
+        self.skill_state = state.get('skill_state', '')
+        self.prev_skill_state = state.get('prev_skill_state', '')  # Восстанавливаем предыдущее состояние
+        self.user_color = state.get('user_color', '')
+        self.comp_color = state.get('comp_color', '')
+        self.attempts = state.get('attempts', 0)
+        
+        # Восстанавливаем очередность хода
+        if state.get('current_turn'):
+            if state['current_turn'] == 'Black':
+                self.board.turn = chess.BLACK
+            else:
+                self.board.turn = chess.WHITE

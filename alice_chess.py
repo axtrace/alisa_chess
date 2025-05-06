@@ -24,6 +24,10 @@ class AliceChess:
         # Проверяем запрос на помощь
         if self.is_request_help():
             return say(texts.help_text, tts=texts.help_text)
+            
+        # Проверяем запрос на новую игру
+        if self.is_request_new_game():
+            return say(texts.new_game_text, tts=texts.new_game_text)
         
         # Получаем текущее состояние
         state = self.game.get_skill_state()
@@ -39,6 +43,10 @@ class AliceChess:
             return self._handle_waiting_move()
         elif state == 'WAITING_PROMOTION':
             return self._handle_waiting_promotion()
+        elif state == 'WAITING_DRAW_CONFIRM':
+            return self._handle_waiting_draw_confirm()
+        elif state == 'WAITING_RESIGN_CONFIRM':
+            return self._handle_waiting_resign_confirm()
         elif state == 'GAME_OVER':
             return self._handle_game_over()
             
@@ -81,6 +89,16 @@ class AliceChess:
 
     def _handle_waiting_move(self):
         """Обработка ожидания хода пользователя."""
+        # Проверяем предложение ничьей
+        if self.is_request_draw():
+            self.game.set_skill_state('WAITING_DRAW_CONFIRM')
+            return say(texts.draw_offer_text, tts=texts.draw_offer_text)
+            
+        # Проверяем предложение сдачи
+        if self.is_request_resign():
+            self.game.set_skill_state('WAITING_RESIGN_CONFIRM')
+            return say(texts.resign_offer_text, tts=texts.resign_offer_text)
+            
         # Проверяем, не просит ли пользователь отменить ход
         if self.is_request_unmake():
             return say(texts.undo_unavailable_text)
@@ -150,6 +168,28 @@ class AliceChess:
                                                '')
         return say(board_printed + text, tts=text_tts, end_session=True)
 
+    def _handle_waiting_draw_confirm(self):
+        """Обработка подтверждения предложения ничьей."""
+        if self.is_request_yes():
+            self.game.set_skill_state('GAME_OVER')
+            return say(texts.draw_accepted_text, tts=texts.draw_accepted_text, end_session=True)
+        elif self.is_request_no():
+            self.game.restore_prev_state()
+            return say(texts.draw_declined_text, tts=texts.draw_declined_text)
+        else:
+            return say(texts.draw_offer_text, tts=texts.draw_offer_text)
+
+    def _handle_waiting_resign_confirm(self):
+        """Обработка подтверждения сдачи."""
+        if self.is_request_yes():
+            self.game.set_skill_state('GAME_OVER')
+            return say(texts.resign_accepted_text, tts=texts.resign_accepted_text, end_session=True)
+        elif self.is_request_no():
+            self.game.restore_prev_state()
+            return say(texts.resign_declined_text, tts=texts.resign_declined_text)
+        else:
+            return say(texts.resign_offer_text, tts=texts.resign_offer_text)
+
     def prep_text_to_say(self, comp_move, prev_turn, text_to_show, text_to_say, lang='ru'):
         """Подготавливает текст для озвучивания хода."""
         move_to_say = self.speaker.say_move(comp_move, lang) if comp_move else ''
@@ -178,6 +218,34 @@ class AliceChess:
             return True
         help_words = ['помощь', 'help', 'что ты умеешь', 'what can you do']
         return self._has_text(help_words)
+
+    def is_request_draw(self):
+        """Проверяет, является ли запрос предложением ничьей."""
+        if self._has_intent('YANDEX.OFFER_DRAW'):
+            return True
+        draw_words = ['ничья', 'draw', 'предлагаю ничью', 'offer draw']
+        return self._has_text(draw_words)
+
+    def is_request_resign(self):
+        """Проверяет, является ли запрос предложением сдачи."""
+        if self._has_intent('YANDEX.RESIGN'):
+            return True
+        resign_words = ['сдаюсь', 'resign', 'сдаюсь', 'give up']
+        return self._has_text(resign_words)
+
+    def is_request_new_game(self):
+        """Проверяет, является ли запрос предложением новой игры."""
+        if self._has_intent('YANDEX.NEW_GAME'):
+            return True
+        new_game_words = ['новая игра', 'new game', 'начать заново', 'start over']
+        return self._has_text(new_game_words)
+
+    def is_request_no(self):
+        """Проверяет, является ли запрос отказом."""
+        if self._has_intent('YANDEX.REJECT'):
+            return True
+        no_words = ['нет', 'no', 'не', 'отмена', 'cancel']
+        return self._has_text(no_words)
 
     def _has_intent(self, intent_name):
         """Проверяет наличие интента в запросе."""
