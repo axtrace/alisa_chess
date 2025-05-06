@@ -19,33 +19,26 @@ class RequestAdapter:
 
 
 def handler(event, context):
-    """
-    Entry-point for Serverless Function.
-    :param event: request payload.
-    :param context: information about current execution context.
-    :return: response to be serialized as JSON.
-    """
-
-    print("Incoming event:", event)
+    """Обработчик запросов к навыку."""
+    # Инициализируем игру
+    game = Game()
     
+    # Восстанавливаем состояние из сессии
     if 'state' in event and 'session' in event['state']:
-        state = event['state']['session']
-    elif 'state' in event and 'application' in event['state']:
-        state = event['state']['application']
-    else:
-        state = {'board_state': '', 
-                 'skill_state': 'INITIATED', 
-                 'user_color': '', 
-                 'attempts': 0}
-
-    req = RequestAdapter(event)
-    alice_chess = AliceChess(Game.parse_and_build_game(state), req)
-    response = next(alice_chess.processRequest())
-    result = {
+        game.deserialize_state(event['state']['session'])
+    
+    # Создаем обработчик
+    alice_chess = AliceChess(game, event)
+    
+    # Обрабатываем запрос
+    response = alice_chess.process_request()
+    
+    # Сохраняем состояние в сессию
+    session_state = game.serialize_state()
+    
+    return {
         'version': event['version'],
         'session': event['session'],
         'response': response,
-        'session_state': alice_chess.get_session_state(),
+        'session_state': session_state
     }
-    print("Outgoing response:", result)
-    return result
