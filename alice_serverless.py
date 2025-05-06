@@ -7,8 +7,8 @@ def handler(event, context):
     """Обработчик запросов от Алисы."""
     try:
         # Восстанавливаем состояние игры из user_state или создаем новую
-        if 'state' in event and 'user' in event['state'] and 'game_state' in event['state']['user']:
-            game = Game.parse_and_build_game(event['state']['user']['game_state'])
+        if 'state' in event and 'user' in event['state']:
+            game = Game.parse_and_build_game(event['state']['user'])
         else:
             game = Game(board=Board())
         
