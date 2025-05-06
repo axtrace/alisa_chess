@@ -27,7 +27,11 @@ class AliceChess:
         self.text_preparer = TextPreparer()
         
     def handle_request(self, request):
-        """Обрабатывает входящий запрос."""
+        """Обрабатывает входящий запрос.
+        
+        Args:
+            request: Данные запроса
+        """
         state = self.game.get_skill_state()
         
         # Выбираем обработчик в зависимости от состояния

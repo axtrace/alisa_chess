@@ -4,40 +4,26 @@ from chess import Board
 
 
 def handler(event, context):
-    """Обработчик запросов к навыку."""
+    """Обработчик запросов от Алисы."""
     try:
         # Инициализируем игру
         game = Game(board=Board())
         
-        # Восстанавливаем состояние из user_state
-        if 'state' in event and 'user' in event['state']:
-            game.restore_state(event['state']['user'])
-        
         # Обрабатываем запрос
-        alice = AliceChess(game, event)
-        response = alice.process_request()
+        alice = AliceChess(game)
+        response = alice.handle_request(event)
         
-        # Сохраняем состояние в user_state_update
         return {
-            'version': event.get('version', '1.0'),
-            'session': event['session'],
-            'response': {
-                'text': response['text'],
-                'tts': response['tts'],
-                'end_session': response['end_session']
-            },
-            'user_state_update': game.serialize_state()
+            'statusCode': 200,
+            'body': response
         }
-        
     except Exception as e:
         print(f"Error in handler: {str(e)}")
         return {
-            'version': event.get('version', '1.0'),
-            'session': event['session'],
-            'response': {
-                'text': 'Произошла ошибка. Попробуйте еще раз.',
-                'tts': 'Произошла ошибка. Попробуйте еще раз.',
-                'end_session': False
-            },
-            'user_state_update': None
+            'statusCode': 500,
+            'body': {
+                'text': 'Произошла ошибка при обработке запроса',
+                'tts': 'Произошла ошибка при обработке запроса',
+                'end_session': True
+            }
         }
