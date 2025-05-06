@@ -1,5 +1,6 @@
 from alice_chess import AliceChess
 from game import Game
+from chess import Board
 
 
 class RequestAdapter:
@@ -20,25 +21,21 @@ class RequestAdapter:
 
 def handler(event, context):
     """Обработчик запросов к навыку."""
+    print(f"Received event: {event}")
+    
     # Инициализируем игру
-    game = Game()
+    game = Game(board=Board())
     
     # Восстанавливаем состояние из сессии
-    if 'state' in event and 'session' in event['state']:
-        game.deserialize_state(event['state']['session'])
-    
-    # Создаем обработчик
-    alice_chess = AliceChess(game, event)
+    if 'state' in event.get('session', {}):
+        game.restore_state(event['session']['state'])
     
     # Обрабатываем запрос
-    response = alice_chess.process_request()
+    alice = AliceChess(game, event)
+    response = alice.process_request()
     
     # Сохраняем состояние в сессию
-    session_state = game.serialize_state()
+    if 'session' in event:
+        event['session']['state'] = game.save_state()
     
-    return {
-        'version': event['version'],
-        'session': event['session'],
-        'response': response,
-        'session_state': session_state
-    }
+    return response
