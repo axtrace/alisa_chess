@@ -24,14 +24,15 @@ def handler(event, context):
     print(f"Received event: {event}")
     
     # Инициализируем игру
-    game = Game()
+    game = Game(board=Board())
     
     # Восстанавливаем состояние из сессии
     if 'state' in event['session']:
         game.restore_state(event['session']['state'])
     
     # Обрабатываем запрос
-    response = game.process_request(event['request'])
+    alice = AliceChess(game, event)
+    response = alice.process_request()
     
     # Сохраняем состояние в сессию
     event['session']['state'] = game.serialize_state()
