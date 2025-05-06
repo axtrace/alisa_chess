@@ -39,6 +39,8 @@ class TextPreparer(object):
                       prev_turn_tts='', text_to_show='', text_to_say=''):
         # form speech for your move
 
+        print(f"say_your_move received: {comp_move}, {move_to_say}, {prev_turn}, {prev_turn_tts}, {text_to_show}, {text_to_say}")  # Отладочный вывод
+        
         text = text_to_show if text_to_show else ''
         tts = text_to_say if text_to_say else ''
 
