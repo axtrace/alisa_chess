@@ -21,6 +21,10 @@ class AliceChess:
         """Обрабатывает входящий запрос и возвращает ответ."""
         print(f"Processing request. Command: {self.request.get('request', {}).get('command')}, state: {self.game.get_skill_state()}")
         
+        # Проверяем запрос на помощь
+        if self.is_request_help():
+            return say(texts.help_text, tts=texts.help_text)
+        
         # Получаем текущее состояние
         state = self.game.get_skill_state()
         
@@ -167,6 +171,13 @@ class AliceChess:
             return True
         unmake_words = ['отмена', 'cancel', 'назад', 'back']
         return self._has_text(unmake_words)
+
+    def is_request_help(self):
+        """Проверяет, является ли запрос просьбой о помощи."""
+        if self._has_intent('YANDEX.HELP'):
+            return True
+        help_words = ['помощь', 'help', 'что ты умеешь', 'what can you do']
+        return self._has_text(help_words)
 
     def _has_intent(self, intent_name):
         """Проверяет наличие интента в запросе."""
