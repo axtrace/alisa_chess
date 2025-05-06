@@ -1,4 +1,3 @@
-alice_scripts
 chess
 requests
 python-chess
