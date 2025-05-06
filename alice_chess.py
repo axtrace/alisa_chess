@@ -1,5 +1,3 @@
-from alice_scripts_adapter import say
-
 import texts
 from game import Game
 from move_extractor import MoveExtractor
