@@ -37,8 +37,8 @@ class Speaker(object):
     }
 
     white_black_names = {
-        'White': {'ru': 'Белые', 'en': 'White'},
-        'Black': {'ru': 'Черные', 'en': 'Black'}
+        'WHITE': {'ru': 'Белые', 'en': 'White'},
+        'BLACK': {'ru': 'Черные', 'en': 'Black'}
     }
 
     gameover_reasons = {
@@ -119,7 +119,7 @@ class Speaker(object):
 
     def say_turn(self, who, lang='ru'):
         res = ''
-        turn_names = self.white_black_names.get(who, None)
+        turn_names = self.white_black_names.get(who.upper(), None)
         if turn_names is not None:
             res = turn_names.get(lang, '')
         return res

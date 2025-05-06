@@ -41,13 +41,13 @@ class TextPreparer(object):
 
         text = text_to_show if text_to_show else ''
         tts = text_to_say if text_to_say else ''
+
         if prev_turn:
             # if previous turn was given
-            tts += f'{prev_turn_tts} пошли '
-            text += f'{prev_turn_tts} пошли '
+            tts += f'\n{prev_turn_tts} пошли. '
+            text += f'\n{prev_turn} пошли. '
         if comp_move:
             # if comp move was given
-            # move_to_say = speaker.say_move(comp_move, 'ru')
             text += f'{comp_move}. '
             tts += f'{move_to_say}. '
 
