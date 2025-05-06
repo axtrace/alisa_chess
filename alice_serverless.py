@@ -3,22 +3,6 @@ from game import Game
 from chess import Board
 
 
-class RequestAdapter:
-    def __init__(self, event):
-        self.event = event
-        self.request = event.get('request', {})
-
-    def __getitem__(self, key):
-        if key == 'request':
-            return self.request
-        return self.request.get(key, '')
-
-    def get(self, key, default=None):
-        if key == 'request':
-            return self.request
-        return self.request.get(key, default)
-
-
 def handler(event, context):
     """Обработчик запросов к навыку."""
     print(f"Received event: {event}")
