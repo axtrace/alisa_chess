@@ -41,6 +41,7 @@ class WaitingMoveHandler(BaseHandler):
             return game_state
             
         # Ход компьютера
+        prev_turn = self.game.who()
         comp_move = self.game.comp_move()
         
         # Проверяем состояние после хода компьютера
@@ -49,7 +50,7 @@ class WaitingMoveHandler(BaseHandler):
             return game_state
             
         # Обычный ход
-        text, text_tts = self.prep_text_to_say(comp_move, user_move, self.game.get_board(), '')
+        text, text_tts = self.prep_text_to_say(comp_move, prev_turn, self.game.get_board(), '')
         return self.say(text, tts=text_tts)
 
     def _handle_user_move(self):
@@ -102,7 +103,7 @@ class WaitingMoveHandler(BaseHandler):
             
         return None
 
-    def prep_text_to_say(self, current_move, previous_move, text_to_show, text_to_say, lang='ru'):
+    def prep_text_to_say(self, current_move, prev_turn, text_to_show, text_to_say, lang='ru'):
         """Подготавливает текст для озвучивания хода.
         
         Args:
@@ -113,6 +114,6 @@ class WaitingMoveHandler(BaseHandler):
             lang: Язык озвучивания
         """
         move_to_say = self.speaker.say_move(current_move, lang) if current_move else ''
-        prev_turn_tts = self.speaker.say_turn(previous_move, lang) if previous_move else ''
-        text, text_tts = self.text_preparer.say_your_move(current_move, move_to_say, previous_move, prev_turn_tts, text_to_show, text_to_say)
+        prev_turn_tts = self.speaker.say_turn(prev_turn, lang) if prev_turn else ''
+        text, text_tts = self.text_preparer.say_your_move(current_move, move_to_say, prev_turn, prev_turn_tts, text_to_show, text_to_say)
         return text, text_tts 
