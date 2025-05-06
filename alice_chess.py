@@ -24,7 +24,10 @@ class AliceChess:
         self.game = game
         self.speaker = Speaker()
         self.text_preparer = TextPreparer()
-        
+
+    def get_game_state(self):
+        return self.game.serialize_state()
+    
     def handle_request(self, request):
         """Обрабатывает входящий запрос.
         
@@ -39,7 +42,7 @@ class AliceChess:
         # Затем обрабатываем запрос в зависимости от состояния игры
         state = self.game.get_skill_state()
         
-        if state in ['INITIATED', '']:  # Обрабатываем пустое состояние как INITIATED
+        if state in ['INITIATED', '']: 
             handler = InitiatedHandler(self.game, request)
         elif state == 'WAITING_CONFIRM':
             handler = WaitingConfirmHandler(self.game, request)
