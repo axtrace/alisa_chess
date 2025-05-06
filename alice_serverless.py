@@ -36,6 +36,6 @@ def handler(event, context):
     
     # Сохраняем состояние в сессию
     if 'session' in event:
-        event['session']['state'] = game.save_state()
+        event['session']['state'] = game.serialize_state()
     
     return response
