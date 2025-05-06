@@ -7,14 +7,15 @@ def handler(event, context):
     """Обработчик запросов к навыку."""
     try:
         # Инициализируем игру
-        game = Game()
+        game = Game(board=Board())
         
         # Восстанавливаем состояние из user_state
         if 'state' in event and 'user' in event['state']:
             game.restore_state(event['state']['user'])
         
         # Обрабатываем запрос
-        response = game.process_request(event)
+        alice = AliceChess(game, event)
+        response = alice.process_request()
         
         # Сохраняем состояние в user_state_update
         return {
