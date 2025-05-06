@@ -22,7 +22,7 @@ def handler(event, context):
         response = alice.handle_request(event)
         
         # Сохраняем состояние
-        game_state = game.serialize_state()
+        game_state = alice.get_game_state()
         print(f"Сохраняем состояние: {game_state}")
         
         return {

@@ -25,6 +25,9 @@ class AliceChess:
         self.speaker = Speaker()
         self.text_preparer = TextPreparer()
         
+    def get_game_state(self):
+        return self.game.serialize_state()
+    
     def handle_request(self, request):
         """Обрабатывает входящий запрос.
         

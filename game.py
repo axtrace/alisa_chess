@@ -146,11 +146,9 @@ class Game(object):
         print(f"parse_and_build_game. Входное состояние: {state}")
         if state.get('board_state', ''):
             try:
-                pgn = io.StringIO(base64.b64decode(state['board_state']).decode('utf-8'))
-                chess_game = chess.pgn.read_game(pgn)
-                board = chess_game.board()
+                board = chess.Board(state['board_state'])
                 print(f"Восстановлена доска: {board}")
-                print(f"История ходов: {[move.uci() for move in board.move_stack]}")
+                print(f"FEN: {board.fen()}")
             except Exception as e:
                 print(f"Ошибка при восстановлении доски: {e}")
                 board = chess.Board()
@@ -168,13 +166,8 @@ class Game(object):
     def serialize_state(self):
         """Сериализует состояние игры в строку."""
         print("Сериализация состояния игры")
-        # Создаем новую игру из текущей доски с сохранением истории ходов
-        game = chess.pgn.Game.from_board(self.board)
-        exporter = chess.pgn.StringExporter(headers=False, variations=False, comments=False)
-        pgn_string = game.accept(exporter)
-        encoded_pgn = base64.b64encode(pgn_string.encode('utf-8')).decode('utf-8')
         state = {
-            'board_state': encoded_pgn,
+            'board_state': self.board.fen(),
             'skill_state': self.skill_state,
             'prev_skill_state': self.prev_skill_state,
             'user_color': self.user_color,
