@@ -121,8 +121,9 @@ class Game(object):
 
     def who(self):
         # who's turn now
-        player = self.board.turn
-        return 'White' if player == chess.WHITE else 'Black'
+        if self.board.turn == chess.WHITE:
+            return 'White' 
+        return 'Black'
 
     def get_board(self):
         return self.board.unicode() + '\n'
@@ -141,12 +142,14 @@ class Game(object):
 
     @staticmethod
     def parse_and_build_game(state):
-        if state.get("board_state", ""):
+        if state.get('board_state', ''):
             pgn = io.StringIO(base64.b64decode(state['board_state']).decode('utf-8'))
             chess_game = chess.pgn.read_game(pgn)
             board = chess_game.board()
         else:
             board = chess.Board()
+        print(f"parse_and_build_game. state: {state}")
+        print(f"board: {board}")
         game = Game(board)
         game.set_skill_state(state.get('skill_state', ''))
         game.set_user_color(state.get('user_color', ''))

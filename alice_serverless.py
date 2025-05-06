@@ -9,9 +9,10 @@ def handler(event, context):
         # Восстанавливаем состояние игры из user_state или создаем новую
         if 'state' in event and 'user' in event['state'] and 'game_state' in event['state']['user']:
             game = Game.parse_and_build_game(event['state']['user']['game_state'])
+            print(f"event['state']['user']['game_state']: {event['state']['user']['game_state']}")
         else:
             game = Game(board=Board())
-        
+            print(f"game: {game}")
         # Обрабатываем запрос
         alice = AliceChess(game)
         response = alice.handle_request(event)
