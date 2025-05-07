@@ -36,3 +36,9 @@ class BaseHandler(ABC):
         """Проверяет текстовое совпадение с словами."""
         command = self.request.get('request', {}).get('command', '').lower()
         return command in list_of_words 
+    
+    def restore_prev_state(self):
+        """Восстанавливает предыдущее состояние игры."""
+        prev_state = self.request['state']['user']['game_state']['prev_state']
+        self.game.set_skill_state(prev_state)
+        return None

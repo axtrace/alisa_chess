@@ -17,7 +17,8 @@ class WaitingDrawConfirmHandler(BaseHandler):
             return self.say(texts.draw_accepted_text)
             
         if self.intent_validator.validate_no():
-            self.game.set_skill_state('WAITING_MOVE')
+            # self.game.set_skill_state('WAITING_MOVE')
+            self.restore_prev_state()
             return self.say(texts.draw_declined_text)
             
         return self.say(texts.draw_offer_text) 
