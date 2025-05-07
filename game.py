@@ -34,12 +34,9 @@ class Game(object):
     """
     Class for chess game
     """
-    def __init__(self, board: chess.Board, skill_level: int = 1, time_level: float = 0.1):
+    def __init__(self, board: chess.Board = chess.Board(), skill_level: int = 1, time_level: float = 0.1):
         self.engine = ChessEngineAPI()
-        if board is None:
-            self.board = chess.Board()
-        else:
-            self.board = board
+        self.board = board
         self.attempts = 0
         self.skill_level = skill_level
         self.time_level = time_level
