@@ -45,6 +45,6 @@ class BaseHandler(ABC):
     
     def reset_game(self):
         """Сбрасывает игру."""
-        self.game.board.reset()
+        self.game = Game()
         self.game.set_skill_state('INITIATED')
         return None
