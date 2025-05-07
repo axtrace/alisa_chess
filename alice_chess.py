@@ -1,4 +1,5 @@
 from game import Game
+from chess import Board
 from speaker import Speaker
 from text_preparer import TextPreparer
 from handlers.initiated_handler import InitiatedHandler
@@ -15,19 +16,31 @@ from handlers.special_intent_handler import SpecialIntentHandler
 class AliceChess:
     """Основной класс для обработки запросов к навыку шахмат."""
     
-    def __init__(self, game: Game):
-        """Инициализирует обработчик запросов.
-        
-        Args:
-            game: Экземпляр игры
-        """
-        self.game = game
+    def __init__(self, event):
+        # Инициализируем игру по состоянию из event или создаем новую
+        self._build_game(event)
         self.speaker = Speaker()
         self.text_preparer = TextPreparer()
+
+    def _build_game(self, event):
+        """Инициализирует игру по состоянию из event или создает новую.
         
-    def get_game_state(self):
-        return self.game.serialize_state()
+        Args:
+            event: Данные запроса
+        """
+        if 'state' in event and 'user' in event['state'] and 'game_state' in event['state']['user']:
+            print(f"Восстанавливаем состояние из: {event['state']['user']['game_state']}")
+            self.game = Game.parse_and_build_game(event['state']['user']['game_state'])
+            print(f"Состояние восстановлено: {self.game.serialize_state()}")
+        else:
+            print("Создаем новую игру")
+            self.game = Game(board=Board())
     
+    def get_game_state(self):
+        if self.game is None:
+            return ""
+        return self.game.serialize_state()
+        
     def handle_request(self, request):
         """Обрабатывает входящий запрос.
         

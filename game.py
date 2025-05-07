@@ -41,7 +41,7 @@ class Game(object):
         self.skill_level = skill_level
         self.time_level = time_level
         self.winner = ''
-        self.skill_state = ''
+        self.skill_state = 'INITIATED'
         self.prev_skill_state = ''  # Предыдущее состояние
         self.user_color = ''
         self.comp_color = ''  # Цвет компьютера
@@ -157,7 +157,7 @@ class Game(object):
             print("Создана новая доска")
             
         game = Game(board)
-        game.set_skill_state(state.get('skill_state', ''))
+        game.set_skill_state(state.get('skill_state', 'INITIATED'))
         game.set_user_color(state.get('user_color', ''))
         game.attempts = state.get('attempts', 0)
         print(f"Восстановлена игра: {game.serialize_state()}")
@@ -187,7 +187,7 @@ class Game(object):
         else:
             self.board = chess.Board()
             
-        self.skill_state = state.get('skill_state', '')
+        self.skill_state = state.get('skill_state', 'INITIATED')
         self.prev_skill_state = state.get('prev_skill_state', '')  # Восстанавливаем предыдущее состояние
         self.user_color = state.get('user_color', '')
         self.comp_color = state.get('comp_color', '')
