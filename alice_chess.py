@@ -11,7 +11,7 @@ from handlers.waiting_draw_confirm_handler import WaitingDrawConfirmHandler
 from handlers.waiting_resign_confirm_handler import WaitingResignConfirmHandler
 from handlers.game_over_handler import GameOverHandler
 from handlers.special_intent_handler import SpecialIntentHandler
-
+from handlers.waiting_newgame_confirm_handler import WaitingNewgameConfirmHandler
 
 class AliceChess:
     """Основной класс для обработки запросов к навыку шахмат."""
@@ -69,6 +69,8 @@ class AliceChess:
             handler = WaitingDrawConfirmHandler(self.game, request)
         elif state == 'WAITING_RESIGN_CONFIRM':
             handler = WaitingResignConfirmHandler(self.game, request)
+        elif state == 'WAITING_NEWGAME_CONFIRM':
+            handler = WaitingNewgameConfirmHandler(self.game, request)
         elif state == 'GAME_OVER':
             handler = GameOverHandler(self.game, request)
         else:

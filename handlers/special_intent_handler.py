@@ -18,8 +18,8 @@ class SpecialIntentHandler(BaseHandler):
             return self.say(texts.help_text)
             
         if self.intent_validator.validate_new_game():
-            self.game.set_skill_state('INITIATED')
-            return self.say(texts.hi_text)
+            self.game.set_skill_state('WAITING_NEWGAME_CONFIRM')
+            return self.say(texts.newgame_offer_text)
             
         if self.intent_validator.validate_draw():
             self.game.set_skill_state('WAITING_DRAW_CONFIRM')

@@ -8,7 +8,7 @@ from .waiting_draw_confirm_handler import WaitingDrawConfirmHandler
 from .waiting_resign_confirm_handler import WaitingResignConfirmHandler
 from .game_over_handler import GameOverHandler
 from .special_intent_handler import SpecialIntentHandler
-
+from .waiting_newgame_confirm_handler import WaitingNewgameConfirmHandler
 __all__ = [
     'BaseHandler',
     'InitiatedHandler',
@@ -19,5 +19,6 @@ __all__ = [
     'WaitingDrawConfirmHandler',
     'WaitingResignConfirmHandler',
     'GameOverHandler',
-    'SpecialIntentHandler'
+    'SpecialIntentHandler',
+    'WaitingNewgameConfirmHandler'
 ] 
