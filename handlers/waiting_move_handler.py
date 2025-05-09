@@ -2,6 +2,7 @@ import texts
 from .base_handler import BaseHandler
 from move_extractor import MoveExtractor
 from request_validators.intent_validator import IntentValidator
+from text_preparer import TextPreparer
 
 
 class WaitingMoveHandler(BaseHandler):
@@ -11,6 +12,8 @@ class WaitingMoveHandler(BaseHandler):
         super().__init__(game, request)
         self.move_ext = MoveExtractor()
         self.intent_validator = IntentValidator(request)
+        self.text_preparer = TextPreparer()
+
 
     def handle(self):
         """Обрабатывает запрос в состоянии ожидания хода."""
@@ -34,7 +37,8 @@ class WaitingMoveHandler(BaseHandler):
         # Обработка хода пользователя
         user_move = self._handle_user_move()
         if not user_move:
-            return self.say(texts.not_get_move)
+            command_text = self.request.get('request', {}).get('command', '')
+            return self.say(self.text_preparer.say_not_get_move(command_text))
             
         # Проверяем состояние после хода пользователя
         game_state = self._check_game_state(user_move)
