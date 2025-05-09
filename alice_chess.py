@@ -18,7 +18,7 @@ class AliceChess:
     
     def __init__(self, event):
         # Инициализируем игру по состоянию из event или создаем новую
-        self.game = Game(game_state=event.get('state',{}).get('user',{}).get('game_state', ''))
+        self.game = Game(game_state=event.get('state',{}).get('user',{}).get('game_state', {}))
         self.speaker = Speaker()
         self.text_preparer = TextPreparer()
     
