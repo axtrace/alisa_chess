@@ -3,8 +3,6 @@ import chess.pgn
 import requests
 import os
 from typing import Optional
-import io
-import base64
 
 class ChessEngineAPI:
     def __init__(self, api_key: str = None):
@@ -34,9 +32,12 @@ class Game(object):
     """
     Class for chess game
     """
-    def __init__(self, board: chess.Board = chess.Board(), skill_level: int = 1, time_level: float = 0.1, game_state: dict = {}):
+    def __init__(self, skill_level: int = 1, time_level: float = 0.1, game_state: dict = {}):
         self.engine = ChessEngineAPI()
-        self.board = game_state.get('board_state', chess.Board())
+        if 'board_state' in game_state:
+            self.board = chess.Board(game_state['board_state'])
+        else:
+            self.board = chess.Board()
         self.attempts = game_state.get('attempts', 0)
         self.skill_level = game_state.get('skill_level', skill_level)
         self.time_level = game_state.get('time_level', time_level)

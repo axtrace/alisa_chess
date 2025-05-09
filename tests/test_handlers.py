@@ -17,7 +17,7 @@ class TestHandlers(unittest.TestCase):
     
     def setUp(self):
         """Подготовка окружения для тестов."""
-        self.game = Game(board=Board())
+        self.game = Game()
         
     def test_initiated_handler(self):
         """Тест обработчика начального состояния."""
