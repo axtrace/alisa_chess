@@ -13,9 +13,9 @@ class WaitingConfirmHandler(BaseHandler):
     def handle(self):
         """Обрабатывает запрос в состоянии ожидания подтверждения."""
         print(f"WaitingConfirmHandler. handle. Запрос: {self.request}")
-        if not self.validator.validate_yes():
+        if self.validator.validate_yes():    
+            self.game.set_skill_state('WAITING_COLOR')
+            text, text_tts = self.text_preparer.say_choose_color()
+            return self.say(text, tts=text_tts) 
+        else:
             return self.say(texts.dng_start_text)
-            
-        self.game.set_skill_state('WAITING_COLOR')
-        text, text_tts = self.text_preparer.say_choose_color()
-        return self.say(text, tts=text_tts) 
