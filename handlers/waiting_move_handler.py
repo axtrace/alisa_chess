@@ -38,7 +38,7 @@ class WaitingMoveHandler(BaseHandler):
         user_move = self._handle_user_move()
         if not user_move:
             command_text = self.request.get('request', {}).get('command', '')
-            return self.say(self.text_preparer.say_not_get_move(command_text))
+            return self.say(self.text_preparer.say_do_not_get(command_text))
             
         # Проверяем состояние после хода пользователя
         game_state = self._check_game_state(user_move)
