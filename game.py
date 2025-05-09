@@ -34,18 +34,18 @@ class Game(object):
     """
     Class for chess game
     """
-    def __init__(self, board: chess.Board = chess.Board(), skill_level: int = 1, time_level: float = 0.1):
+    def __init__(self, board: chess.Board = chess.Board(), skill_level: int = 1, time_level: float = 0.1, game_state: dict = {}):
         self.engine = ChessEngineAPI()
-        self.board = board
-        self.attempts = 0
-        self.skill_level = skill_level
-        self.time_level = time_level
-        self.winner = ''
-        self.skill_state = 'INITIATED'
-        self.prev_skill_state = ''  # Предыдущее состояние
-        self.user_color = ''
-        self.comp_color = ''  # Цвет компьютера
-        self._needs_promotion = False  # Флаг необходимости превращения пешки
+        self.board = game_state.get('board', chess.Board())
+        self.attempts = game_state.get('attempts', 0)
+        self.skill_level = game_state.get('skill_level', skill_level)
+        self.time_level = game_state.get('time_level', time_level)
+        self.winner = game_state.get('winner', '')
+        self.skill_state = game_state.get('skill_state', 'INITIATED')
+        self.prev_skill_state = game_state.get('prev_skill_state', '')
+        self.user_color = game_state.get('user_color', '')
+        self._needs_promotion = game_state.get('needs_promotion', False)
+ 
 
     def get_user_color(self):
         return self.user_color
@@ -145,32 +145,6 @@ class Game(object):
     def reset_board(self):
         self.board = chess.Board()
 
-    @staticmethod
-    def parse_and_build_game(state):
-        """Восстанавливает игру из сохраненного состояния."""
-        print(f"parse_and_build_game. Входное состояние: {state}")
-        if state.get('board_state', ''):
-            try:
-                board = chess.Board(state['board_state'])
-                print(f"Parse_and_build_game. FEN: {board.fen()}")
-            except Exception as e:
-                print(f"Ошибка при восстановлении доски: {e}")
-                board = chess.Board()
-        else:
-            board = chess.Board()
-            print("Parse_and_build_game. Создана новая доска")
-        skill_state =state.get('skill_state', 'INITIATED')
-        if skill_state in ['INITIATED', '']:
-            game = Game()
-        else:
-            game = Game(board)
-        game.set_skill_state(skill_state)
-        game.set_user_color(state.get('user_color', ''))
-        game.attempts = state.get('attempts', 0)
-        
-        print(f"Parse_and_build_game. Восстановлена игра: {game.serialize_state()}")
-        return game
-
     def serialize_state(self):
         """Сериализует состояние игры в строку."""
         state = {
@@ -178,9 +152,11 @@ class Game(object):
             'skill_state': self.skill_state,
             'prev_skill_state': self.prev_skill_state,
             'user_color': self.user_color,
-            'comp_color': self.comp_color,
             'attempts': self.attempts,
-            'current_turn': 'White' if self.board.turn == chess.WHITE else 'Black'
+            'current_turn': 'White' if self.board.turn == chess.WHITE else 'Black',
+            'level': self.skill_level,
+            'time_level': self.time_level,
+            'needs_promotion': self._needs_promotion
         }
         return state
 

@@ -18,23 +18,9 @@ class AliceChess:
     
     def __init__(self, event):
         # Инициализируем игру по состоянию из event или создаем новую
-        self._build_game(event)
+        self.game = Game(game_state=event.get('state','').get('user','').get('game_state', ''))
         self.speaker = Speaker()
         self.text_preparer = TextPreparer()
-
-    def _build_game(self, event):
-        """Инициализирует игру по состоянию из event или создает новую.
-        
-        Args:
-            event: Данные запроса
-        """
-        if 'state' in event and 'user' in event['state'] and 'game_state' in event['state']['user']:
-            print(f"Восстанавливаем состояние из: {event['state']['user']['game_state']}")
-            self.game = Game.parse_and_build_game(event['state']['user']['game_state'])
-            print(f"Состояние восстановлено: {self.game.serialize_state()}")
-        else:
-            print("Создаем новую игру")
-            self.game = Game(board=Board())
     
     def get_game_state(self):
         if self.game is None:
