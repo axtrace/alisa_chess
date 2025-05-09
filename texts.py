@@ -154,3 +154,8 @@ skill_level_invalid_text = """
 skill_level_changed_text = """
 Уровень сложности установлен на {level}.
 """
+
+set_skill_level_text = """
+Вы хотите изменить уровень сложности?
+Скажите число от 1 до 20.
+"""
