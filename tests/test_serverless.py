@@ -87,8 +87,8 @@ class TestServerless(unittest.TestCase):
             self.assertIn('user_state_update', response)
             self.assertIn('game_state', response['user_state_update'])
             
-            # Проверяем, что AliceChess был вызван с правильными параметрами
-            mock_alice.assert_called_once_with(self.base_event)
+            # Проверяем, что AliceChess был вызван без параметров
+            mock_alice.assert_called_once_with()
             mock_instance.handle_request.assert_called_once_with(self.base_event)
 
     def test_existing_session(self):
@@ -111,8 +111,8 @@ class TestServerless(unittest.TestCase):
             # Настраиваем мок
             mock_instance = mock_alice.return_value
             mock_instance.handle_request.return_value = {
-                'text': '\nПростите, я не смогла понять ваш ход из фразы \'{}\'.\nПовторите, пожалуйста.\nСкажите \'Помощь\', если возникают проблемы с распознаванием.\n',
-                'tts': '\nПростите, я не смогла понять ваш ход из фразы \'{}\'.\nПовторите, пожалуйста.\nСкажите \'Помощь\', если возникают проблемы с распознаванием.\n',
+                'text': '\nПростите, я не смогла понять ваш ход из фразы: \'{}\'.\nПовторите, пожалуйста.\nСкажите \'Помощь\', если возникают проблемы с распознаванием.\n',
+                'tts': '\nПростите, я не смогла понять ваш ход из фразы: \'{}\'.\nПовторите, пожалуйста.\nСкажите \'Помощь\', если возникают проблемы с распознаванием.\n',
                 'end_session': False
             }
             mock_instance.get_game_state.return_value = {
@@ -132,15 +132,15 @@ class TestServerless(unittest.TestCase):
             self.assertEqual(response['version'], '1.0')
             self.assertEqual(response['session'], event['session'])
             self.assertEqual(response['response'], {
-                'text': '\nПростите, я не смогла понять ваш ход из фразы \'{}\'.\nПовторите, пожалуйста.\nСкажите \'Помощь\', если возникают проблемы с распознаванием.\n',
-                'tts': '\nПростите, я не смогла понять ваш ход из фразы \'{}\'.\nПовторите, пожалуйста.\nСкажите \'Помощь\', если возникают проблемы с распознаванием.\n',
+                'text': '\nПростите, я не смогла понять ваш ход из фразы: \'{}\'.\nПовторите, пожалуйста.\nСкажите \'Помощь\', если возникают проблемы с распознаванием.\n',
+                'tts': '\nПростите, я не смогла понять ваш ход из фразы: \'{}\'.\nПовторите, пожалуйста.\nСкажите \'Помощь\', если возникают проблемы с распознаванием.\n',
                 'end_session': False
             })
             self.assertIn('user_state_update', response)
             self.assertIn('game_state', response['user_state_update'])
             
-            # Проверяем, что AliceChess был вызван с правильными параметрами
-            mock_alice.assert_called_once_with(event)
+            # Проверяем, что AliceChess был вызван без параметров
+            mock_alice.assert_called_once_with()
             mock_instance.handle_request.assert_called_once_with(event)
 
     def test_error_handling(self):
@@ -183,8 +183,8 @@ class TestServerless(unittest.TestCase):
             # Настраиваем мок
             mock_instance = mock_alice.return_value
             mock_instance.handle_request.return_value = {
-                'text': '\nПростите, я не смогла понять ваш ход из фразы \'e2e4\'.\nПовторите, пожалуйста.\nСкажите \'Помощь\', если возникают проблемы с распознаванием.\n',
-                'tts': '\nПростите, я не смогла понять ваш ход из фразы \'e2e4\'.\nПовторите, пожалуйста.\nСкажите \'Помощь\', если возникают проблемы с распознаванием.\n',
+                'text': '\nПростите, я не смогла понять ваш ход из фразы: \'e2e4\'.\nПовторите, пожалуйста.\nСкажите \'Помощь\', если возникают проблемы с распознаванием.\n',
+                'tts': '\nПростите, я не смогла понять ваш ход из фразы: \'e2e4\'.\nПовторите, пожалуйста.\nСкажите \'Помощь\', если возникают проблемы с распознаванием.\n',
                 'end_session': False
             }
             mock_instance.get_game_state.return_value = {
@@ -204,8 +204,8 @@ class TestServerless(unittest.TestCase):
             self.assertEqual(response['version'], '1.0')
             self.assertEqual(response['session'], event['session'])
             self.assertEqual(response['response'], {
-                'text': '\nПростите, я не смогла понять ваш ход из фразы \'e2e4\'.\nПовторите, пожалуйста.\nСкажите \'Помощь\', если возникают проблемы с распознаванием.\n',
-                'tts': '\nПростите, я не смогла понять ваш ход из фразы \'e2e4\'.\nПовторите, пожалуйста.\nСкажите \'Помощь\', если возникают проблемы с распознаванием.\n',
+                'text': '\nПростите, я не смогла понять ваш ход из фразы: \'e2e4\'.\nПовторите, пожалуйста.\nСкажите \'Помощь\', если возникают проблемы с распознаванием.\n',
+                'tts': '\nПростите, я не смогла понять ваш ход из фразы: \'e2e4\'.\nПовторите, пожалуйста.\nСкажите \'Помощь\', если возникают проблемы с распознаванием.\n',
                 'end_session': False
             })
             self.assertIn('user_state_update', response)

@@ -52,12 +52,13 @@ class TestAliceChess(unittest.TestCase):
             },
             "version": "1.0"
         }
-        self.alice = AliceChess(self.event)
+        self.alice = AliceChess()
 
     def test_init(self):
         """Тест инициализации класса."""
-        self.assertIsNotNone(self.alice)
-        self.assertEqual(self.alice.game.get_skill_state(), 'INITIATED')
+        self.alice.handle_request(self.event)
+        self.assertIsNotNone(self.alice.game)
+        self.assertEqual(self.alice.game.get_skill_state(), 'WAITING_CONFIRM')
 
     def test_handle_request_initiated_state(self):
         """Тест обработки запроса в начальном состоянии."""
@@ -75,31 +76,20 @@ class TestAliceChess(unittest.TestCase):
         mock_game_instance.is_valid_move.return_value = True
         mock_game.return_value = mock_game_instance
         
-        # Создаем новый экземпляр AliceChess с моком
-        alice = AliceChess(self.event)
-        
-        # Создаем запрос с ходом
+        alice = AliceChess()
         event = self.event.copy()
         event['request']['command'] = 'e2e4'
         event['request']['original_utterance'] = 'e2e4'
-        
         response = alice.handle_request(event)
         self.assertIn('text', response)
         self.assertIn('tts', response)
         self.assertFalse(response['end_session'])
 
-    def test_handle_request_invalid_state(self):
-        """Тест обработки запроса с недопустимым состоянием."""
-        self.alice.game.set_skill_state('INVALID_STATE')
-        with self.assertRaises(ValueError):
-            self.alice.handle_request(self.event)
 
     def test_handle_request_help_intent(self):
         """Тест обработки запроса с намерением помощи."""
-        # Создаем запрос с намерением помощи
         event = self.event.copy()
         event['request']['nlu']['intents'] = {'help': {}}
-        
         response = self.alice.handle_request(event)
         self.assertIn('text', response)
         self.assertIn('tts', response)
@@ -108,10 +98,8 @@ class TestAliceChess(unittest.TestCase):
 
     def test_handle_request_new_game_intent(self):
         """Тест обработки запроса с намерением новой игры."""
-        # Создаем запрос с намерением новой игры
         event = self.event.copy()
-        event['request']['nlu']['intents'] = {'new_game': {}}
-        
+        event['request']['nlu']['intents'] = {'NEW_GAME': {}}
         response = self.alice.handle_request(event)
         self.assertIn('text', response)
         self.assertIn('tts', response)

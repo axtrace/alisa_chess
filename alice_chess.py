@@ -16,11 +16,16 @@ from handlers.waiting_newgame_confirm_handler import WaitingNewgameConfirmHandle
 class AliceChess:
     """Основной класс для обработки запросов к навыку шахмат."""
     
-    def __init__(self, event):
+    def __init__(self):
         # Инициализируем игру по состоянию из event или создаем новую
-        self.game = Game(game_state=event.get('state',{}).get('user',{}).get('game_state', {}))
+        self.game = None
         self.speaker = Speaker()
         self.text_preparer = TextPreparer()
+
+    def set_skill_state(self, skill_state):
+        if self.game is not None:
+            self.game.set_skill_state(skill_state)
+        return None
     
     def get_game_state(self):
         if self.game is None:
@@ -35,7 +40,12 @@ class AliceChess:
         """
 
         print(f"handle_request. Запрос: {request}")
-
+        state = request.get('state',{}).get('user',{}).get('game_state', {})
+        
+        self.game = Game(game_state=state)
+        if self.game is None:
+            raise ValueError(f"Неизвестное состояние игры: {state}")
+        
         # Сначала проверяем специальные интенты, не зависящие от состояния
         handler = SpecialIntentHandler(self.game, request)
         result = handler.handle()

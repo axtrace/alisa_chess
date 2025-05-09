@@ -11,8 +11,9 @@ def handler(event, context):
     try:
         print(f"Входящий запрос: {event}")
             
-        # Обрабатываем запрос
-        alice = AliceChess(event)
+        # Инициализируем класс для обработки запросов
+        alice = AliceChess()
+        # Обрабатываем запрос, внутри восстанавливается состояние игры
         response = alice.handle_request(event)
         
         # Сохраняем состояние игры в контекст пользователя, 
