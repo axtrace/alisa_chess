@@ -12,6 +12,7 @@ class WaitingConfirmHandler(BaseHandler):
 
     def handle(self):
         """Обрабатывает запрос в состоянии ожидания подтверждения."""
+        print(f"WaitingConfirmHandler. handle. Запрос: {self.request}")
         if not self.validator.validate_yes():
             return self.say(texts.dng_start_text)
             

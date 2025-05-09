@@ -12,5 +12,6 @@ class InitiatedHandler(BaseHandler):
 
     def handle(self):
         """Обрабатывает запрос в начальном состоянии."""
+        print(f"InitiatedHandler. handle. Запрос: {self.request}")
         self.game.set_skill_state('WAITING_CONFIRM')
         return self.say(texts.hi_text, tts=texts.hi_text) 

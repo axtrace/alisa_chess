@@ -12,6 +12,7 @@ class WaitingColorHandler(BaseHandler):
 
     def handle(self):
         """Обрабатывает запрос в состоянии ожидания выбора цвета."""
+        print(f"WaitingColorHandler. handle. Запрос: {self.request}")
         is_color_defined, user_color = self.move_ext.extract_color(self.request)
         if not is_color_defined:
             return self.say(texts.not_get_turn_text)

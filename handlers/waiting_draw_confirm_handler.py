@@ -12,6 +12,7 @@ class WaitingDrawConfirmHandler(BaseHandler):
 
     def handle(self):
         """Обрабатывает запрос в состоянии ожидания подтверждения ничьей."""
+        print(f"WaitingDrawConfirmHandler. handle. Запрос: {self.request}")
         if self.intent_validator.validate_yes():
             self.game.set_skill_state('INITIATED')
             return self.say(texts.draw_accepted_text)

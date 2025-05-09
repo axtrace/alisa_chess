@@ -47,6 +47,9 @@ class AliceChess:
         Args:
             request: Данные запроса
         """
+
+        print(f"handle_request. Запрос: {request}")
+
         # Сначала проверяем специальные интенты, не зависящие от состояния
         handler = SpecialIntentHandler(self.game, request)
         if handler.handle():

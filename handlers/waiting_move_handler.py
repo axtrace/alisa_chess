@@ -14,6 +14,7 @@ class WaitingMoveHandler(BaseHandler):
 
     def handle(self):
         """Обрабатывает запрос в состоянии ожидания хода."""
+        print(f"WaitingMoveHandler. handle. Запрос: {self.request}")
         # Проверяем специальные команды
         if self.intent_validator.validate_unmake():
             if self.game.unmake_move():

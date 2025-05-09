@@ -12,6 +12,7 @@ class WaitingNewgameConfirmHandler(BaseHandler):
 
     def handle(self):
         """Обрабатывает запрос в состоянии ожидания подтверждения новой игры."""
+        print(f"WaitingNewgameConfirmHandler. handle. Запрос: {self.request}")
         if self.intent_validator.validate_yes():
             self.reset_game()
             self.game.set_skill_state('WAITING_CONFIRM')

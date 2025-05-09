@@ -11,7 +11,8 @@ class WaitingResignConfirmHandler(BaseHandler):
         self.intent_validator = IntentValidator(request)
 
     def handle(self):
-        """Обрабатывает запрос в состоянии ожидания подтверждения сдачи."""
+        """Обрабатывает запрос в состоянии ожидания подтверждения сдачи.""" 
+        print(f"WaitingResignConfirmHandler. handle. Запрос: {self.request}")
         if self.intent_validator.validate_yes():
             self.game.set_skill_state('INITIATED')
             return self.say(texts.resign_accepted_text)

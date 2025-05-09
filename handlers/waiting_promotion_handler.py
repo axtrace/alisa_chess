@@ -12,6 +12,7 @@ class WaitingPromotionHandler(BaseHandler):
 
     def handle(self):
         """Обрабатывает запрос в состоянии ожидания превращения пешки."""
+        print(f"WaitingPromotionHandler. handle. Запрос: {self.request}")
         is_promotion_defined, promotion = self.move_ext.extract_promotion(self.request)
         if not is_promotion_defined:
             return self.say(texts.not_get_turn_text)

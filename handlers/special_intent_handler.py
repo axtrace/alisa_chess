@@ -15,17 +15,21 @@ class SpecialIntentHandler(BaseHandler):
     def handle(self):
         # Проверяем специальные намерения, которые не зависят от состояния игры
         if self.intent_validator.validate_help():
+            print(f"SpecialIntentHandler. validate_help. Запрос: {self.request}")
             return self.say(texts.help_text)
             
         if self.intent_validator.validate_new_game():
+            print(f"SpecialIntentHandler. validate_new_game. Запрос: {self.request}")
             self.game.set_skill_state('WAITING_NEWGAME_CONFIRM')
             return self.say(texts.newgame_offer_text)
             
         if self.intent_validator.validate_draw():
+            print(f"SpecialIntentHandler. validate_draw. Запрос: {self.request}")
             self.game.set_skill_state('WAITING_DRAW_CONFIRM')
             return self.say(texts.draw_offer_text)
             
         if self.intent_validator.validate_resign():
+            print(f"SpecialIntentHandler. validate_resign. Запрос: {self.request}")
             self.game.set_skill_state('WAITING_RESIGN_CONFIRM')
             return self.say(texts.resign_offer_text)
         
