@@ -40,7 +40,8 @@ class SpecialIntentHandler(BaseHandler):
         if self.intent_validator.validate_set_skill_level():
             print(f"SpecialIntentHandler. validate_set_skill_level. Запрос: {self.request}")
             self.game.set_skill_state('WAITING_SKILL_LEVEL')
-            return self.say(texts.set_skill_level_text)
+            current_level = self.game.get_skill_level()
+            return self.say(texts.set_skill_level_text.format(level=current_level))
         
         
         

@@ -36,6 +36,7 @@ class WaitingMoveHandler(BaseHandler):
 
         # Обработка хода пользователя
         user_move = self._handle_user_move()
+
         if not user_move:
             command_text = self.request.get('request', {}).get('command', '')
             text, text_tts = self.text_preparer.say_do_not_get(command_text)
@@ -68,8 +69,10 @@ class WaitingMoveHandler(BaseHandler):
         is_move_defined, user_move = self.move_ext.extract_move(self.request)
         if not is_move_defined or not self.game.is_valid_move(user_move):
             return None
-            
+        
+        # Делаем ход
         self.game.user_move(user_move)
+        print(f"WaitingMoveHandler. _handle_user_move. Ход сделан: {user_move}")
         return user_move
 
     def _check_game_state(self, current_move, previous_move=None):
