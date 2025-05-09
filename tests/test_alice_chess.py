@@ -85,6 +85,31 @@ class TestAliceChess(unittest.TestCase):
         self.assertIn('tts', response)
         self.assertFalse(response['end_session'])
 
+    @patch('game.Game')
+    def test_handle_request_waiting_move_invalid(self, mock_game):
+        """Тест обработки запроса с некорректным ходом в состоянии ожидания хода."""
+        # Настраиваем мок для игры
+        mock_game_instance = MagicMock()
+        mock_game_instance.get_skill_state.return_value = 'WAITING_MOVE'
+        mock_game_instance.is_valid_move.return_value = False
+        mock_game.return_value = mock_game_instance
+        
+        alice = AliceChess()
+        # Устанавливаем состояние игры в WAITING_MOVE
+        alice.game = mock_game_instance
+        print(f"alice.game.get_skill_state(): {alice.game.get_skill_state()}")
+        
+        event = self.event.copy()
+        event['request']['command'] = 'e2e5'  # Некорректный ход
+        event['request']['original_utterance'] = 'e2e5'
+        event['state']['user']['game_state'] = {'skill_state': 'WAITING_MOVE'}
+        response = alice.handle_request(event)
+        
+        # Проверяем, что ответ содержит сообщение об ошибке
+        self.assertIn('text', response)
+        self.assertIn('tts', response)
+        self.assertFalse(response['end_session'])
+        self.assertIn('невозможен', response['text'].lower() or 'недопустимый ход', response['text'].lower())
 
     def test_handle_request_help_intent(self):
         """Тест обработки запроса с намерением помощи."""

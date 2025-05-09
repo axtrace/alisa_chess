@@ -18,12 +18,12 @@ class AliceChess:
     """Основной класс для обработки запросов к навыку шахмат."""
     
     def __init__(self):
-        # Инициализируем игру по состоянию из event или создаем новую
-        self.game = None
+        # Инициализируем игру
+        self.game = Game()
         self.speaker = Speaker()
         self.text_preparer = TextPreparer()
 
-    def set_skill_state(self, skill_state):
+    def set_game_state(self, skill_state):
         if self.game is not None:
             self.game.set_skill_state(skill_state)
         return None

@@ -43,10 +43,10 @@ class WaitingMoveHandler(BaseHandler):
                 command_text = self.request.get('request', {}).get('command', '')
                 text, text_tts = self.text_preparer.say_do_not_get(command_text)
                 return self.say(text, tts=text_tts)
-            elif reason_type == "INVALID":
-                user_move_tts = self.speaker.say_move(user_move)
-                text, text_tts = self.text_preparer.say_not_legal_move(user_move, user_move_tts)
-                return self.say(text, tts=text_tts)
+        if reason_type == "INVALID":
+            user_move_tts = self.speaker.say_move(user_move)
+            text, text_tts = self.text_preparer.say_not_legal_move(user_move, user_move_tts)
+            return self.say(text, tts=text_tts)
             
             
         # Проверяем состояние после хода пользователя
@@ -78,10 +78,14 @@ class WaitingMoveHandler(BaseHandler):
             return None, "NOT_DEFINED"
         
         if not self.game.is_valid_move(user_move):
-            return None, "INVALID"
+            return user_move, "INVALID"
         
         # Делаем ход
-        self.game.user_move(user_move)
+        try:
+            self.game.user_move(user_move)
+        except ValueError:
+            return None, "INVALID"
+        
         print(f"WaitingMoveHandler. _handle_user_move. Ход сделан: {user_move}")
         return user_move
 
