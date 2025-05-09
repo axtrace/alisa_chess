@@ -12,6 +12,7 @@ from handlers.waiting_resign_confirm_handler import WaitingResignConfirmHandler
 from handlers.game_over_handler import GameOverHandler
 from handlers.special_intent_handler import SpecialIntentHandler
 from handlers.waiting_newgame_confirm_handler import WaitingNewgameConfirmHandler
+from handlers.waiting_skill_level_handler import WaitingSkillLevelHandler
 
 class AliceChess:
     """Основной класс для обработки запросов к навыку шахмат."""
