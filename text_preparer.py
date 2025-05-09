@@ -10,7 +10,7 @@ class TextPreparer(object):
         pass
 
     @staticmethod
-    def say_do_not_get(command_text, attempt):
+    def say_do_not_get(command_text, attempt=0):
         not_get = texts.not_get_move.format(command_text)
         not_get_tts = not_get
         # if attempt % 3 == 1:
