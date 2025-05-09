@@ -36,7 +36,7 @@ class Game(object):
     """
     def __init__(self, board: chess.Board = chess.Board(), skill_level: int = 1, time_level: float = 0.1, game_state: dict = {}):
         self.engine = ChessEngineAPI()
-        self.board = game_state.get('board', chess.Board())
+        self.board = game_state.get('board_state', chess.Board())
         self.attempts = game_state.get('attempts', 0)
         self.skill_level = game_state.get('skill_level', skill_level)
         self.time_level = game_state.get('time_level', time_level)
