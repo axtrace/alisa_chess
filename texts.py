@@ -147,5 +147,10 @@ newgame_declined_text = """
 """
 
 
+skill_level_invalid_text = """
+Уровень сложности должен быть числом от 1 до 20.
+"""   
 
-
+skill_level_changed_text = """
+Уровень сложности установлен на {level}.
+"""

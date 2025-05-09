@@ -17,6 +17,10 @@ class SpecialIntentHandler(BaseHandler):
         if self.intent_validator.validate_help():
             print(f"SpecialIntentHandler. validate_help. Запрос: {self.request}")
             return self.say(texts.help_text)
+        
+        if self.intent_validator.validate_help():
+            print(f"SpecialIntentHandler. validate_help. Запрос: {self.request}")
+            return self.say(texts.help_text)
             
         if self.intent_validator.validate_new_game():
             print(f"SpecialIntentHandler. validate_new_game. Запрос: {self.request}")
@@ -32,5 +36,12 @@ class SpecialIntentHandler(BaseHandler):
             print(f"SpecialIntentHandler. validate_resign. Запрос: {self.request}")
             self.game.set_skill_state('WAITING_RESIGN_CONFIRM')
             return self.say(texts.resign_offer_text)
+        
+        if self.intent_validator.validate_set_skill_level():
+            print(f"SpecialIntentHandler. validate_set_skill_level. Запрос: {self.request}")
+            self.game.set_skill_state('WAITING_SKILL_LEVEL')
+            return self.say(texts.set_skill_level_text)
+        
+        
         
         return None

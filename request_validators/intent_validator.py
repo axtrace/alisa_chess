@@ -59,6 +59,28 @@ class IntentValidator(BaseValidator):
             return True
         repeat_words = ['повтори', 'repeat', 'еще раз', 'again', 'повторить', 'repeat', 'еще раз', 'again']
         return self._has_text(repeat_words)
+    
+    def validate_set_skill_level(self) -> bool:
+        """Проверяет, является ли запрос установкой уровня сложности."""
+        if self._has_intent('SET_SKILL_LEVEL'):
+            return True
+        set_skill_level_words = ['уровень', 'level', 'сложность', 'difficulty', 'уровень', 'level', 'сложность', 'difficulty']
+        return self._has_text(set_skill_level_words)
+    
+    def validate_set_time_level(self) -> bool:
+        """Проверяет, является ли запрос установкой времени на ход."""
+        if self._has_intent('SET_TIME_LEVEL'):
+            return True
+        set_time_level_words = ['время', 'time', 'время на ход', 'time per move', 'время', 'time', 'время на ход', 'time per move']
+        return self._has_text(set_time_level_words)
+    
+    def validate_get_skill_level(self) -> bool:
+        """Проверяет, является ли запрос получением уровня сложности."""
+        if self._has_intent('GET_SKILL_LEVEL'):
+            return True
+        get_skill_level_words = ['какой уровень', 'which level']
+        return self._has_text(get_skill_level_words)
+        
 
     def validate(self) -> bool:
         """Проверяет наличие любого из известных интентов."""
@@ -70,5 +92,8 @@ class IntentValidator(BaseValidator):
             self.validate_resign(),
             self.validate_new_game(),
             self.validate_unmake(),
-            self.validate_repeat_last_move()
+            self.validate_repeat_last_move(),
+            self.validate_set_skill_level(),
+            self.validate_set_time_level(),
+            self.validate_get_skill_level()
         ]) 

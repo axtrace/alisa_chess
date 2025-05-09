@@ -63,7 +63,7 @@ class TestGame(unittest.TestCase):
         self.assertEqual(state['user_color'], 'WHITE')
         self.assertEqual(state['attempts'], 3)
         self.assertEqual(state['current_turn'], 'White')
-        self.assertEqual(state['level'], 1)
+        self.assertEqual(state['skill_level'], 1)
         self.assertEqual(state['time_level'], 0.1)
         self.assertFalse(state['needs_promotion'])
 
@@ -214,6 +214,14 @@ class TestGame(unittest.TestCase):
         self.assertEqual(self.game.get_skill_state(), 'INITIATED')
         self.assertEqual(self.game.get_prev_skill_state(), '')
 
+    def test_set_and_serialize_skill_level(self):
+        """Тест изменения уровня сложности и сериализации этого значения."""
+        self.assertEqual(self.game.skill_level, 1)
+        self.game.set_skill_level(5)
+        self.assertEqual(self.game.skill_level, 5)
+        state = self.game.serialize_state()
+        print(f"test_set_and_serialize_skill_level state: {state}")
+        self.assertEqual(state['skill_level'], 5)
 
 if __name__ == '__main__':
     unittest.main() 

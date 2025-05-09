@@ -9,6 +9,7 @@ from .waiting_resign_confirm_handler import WaitingResignConfirmHandler
 from .game_over_handler import GameOverHandler
 from .special_intent_handler import SpecialIntentHandler
 from .waiting_newgame_confirm_handler import WaitingNewgameConfirmHandler
+from .waiting_skill_level_handler import WaitingSkillLevelHandler
 __all__ = [
     'BaseHandler',
     'InitiatedHandler',
@@ -20,5 +21,6 @@ __all__ = [
     'WaitingResignConfirmHandler',
     'GameOverHandler',
     'SpecialIntentHandler',
-    'WaitingNewgameConfirmHandler'
+    'WaitingNewgameConfirmHandler',
+    'WaitingSkillLevelHandler'
 ] 

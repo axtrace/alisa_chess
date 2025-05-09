@@ -155,8 +155,8 @@ class Game(object):
             'user_color': self.user_color,
             'attempts': self.attempts,
             'current_turn': 'White' if self.board.turn == chess.WHITE else 'Black',
-            'level': self.skill_level,
             'time_level': self.time_level,
+            'skill_level': self.skill_level,
             'needs_promotion': self._needs_promotion
         }
         return state

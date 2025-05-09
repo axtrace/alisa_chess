@@ -73,6 +73,8 @@ class AliceChess:
             handler = WaitingNewgameConfirmHandler(self.game, request)
         elif state == 'GAME_OVER':
             handler = GameOverHandler(self.game, request)
+        elif state == 'WAITING_SKILL_LEVEL':
+            handler = WaitingSkillLevelHandler(self.game, request)
         else:
             raise ValueError(f"Неизвестное состояние игры: {state}")
             
