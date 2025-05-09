@@ -3,7 +3,7 @@ from .base_handler import BaseHandler
 from move_extractor import MoveExtractor
 from request_validators.intent_validator import IntentValidator
 from text_preparer import TextPreparer
-
+from speaker import Speaker
 
 class WaitingMoveHandler(BaseHandler):
     """Обработчик состояния ожидания хода пользователя."""
@@ -13,6 +13,7 @@ class WaitingMoveHandler(BaseHandler):
         self.move_ext = MoveExtractor()
         self.intent_validator = IntentValidator(request)
         self.text_preparer = TextPreparer()
+        self.speaker = Speaker()
 
 
     def handle(self):
@@ -35,12 +36,18 @@ class WaitingMoveHandler(BaseHandler):
             return self.say("Пока не было сделано ни одного хода.")
 
         # Обработка хода пользователя
-        user_move = self._handle_user_move()
+        user_move, reason_type = self._handle_user_move()
 
         if not user_move:
-            command_text = self.request.get('request', {}).get('command', '')
-            text, text_tts = self.text_preparer.say_do_not_get(command_text)
-            return self.say(text, tts=text_tts)
+            if reason_type == "NOT_DEFINED":
+                command_text = self.request.get('request', {}).get('command', '')
+                text, text_tts = self.text_preparer.say_do_not_get(command_text)
+                return self.say(text, tts=text_tts)
+            elif reason_type == "INVALID":
+                user_move_tts = self.speaker.say_move(user_move)
+                text, text_tts = self.text_preparer.say_not_legal_move(user_move, user_move_tts)
+                return self.say(text, tts=text_tts)
+            
             
         # Проверяем состояние после хода пользователя
         game_state = self._check_game_state(user_move)
@@ -67,8 +74,11 @@ class WaitingMoveHandler(BaseHandler):
             str: Ход пользователя или None, если ход некорректен
         """
         is_move_defined, user_move = self.move_ext.extract_move(self.request)
-        if not is_move_defined or not self.game.is_valid_move(user_move):
-            return None
+        if not is_move_defined:
+            return None, "NOT_DEFINED"
+        
+        if not self.game.is_valid_move(user_move):
+            return None, "INVALID"
         
         # Делаем ход
         self.game.user_move(user_move)
@@ -85,7 +95,7 @@ class WaitingMoveHandler(BaseHandler):
         Returns:
             str: Ответ с описанием состояния или None, если игра продолжается
         """
-        # Проверяем на шах и мат
+        # Проверяем на мат
         if self.game.is_checkmate():
             self.game.set_skill_state('GAME_OVER')
             text, text_tts = self.prep_text_to_say(current_move, previous_move, self.game.get_board(), '')
