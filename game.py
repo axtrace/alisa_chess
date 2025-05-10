@@ -79,14 +79,10 @@ class Game(object):
         return self.attempts
 
     def user_move(self, move_san):
-        try:
-            print(f"Game.user_move. Запрос на ход: {move_san}, доска {self.board.fen()}")
-            self.attempts += 1
-            self.board.push_san(move_san)
-            print(f"Game.user_move. Ход сделан: {move_san}, доска {self.board.fen()}")
-        except Exception as e:
-            print(f"Game.user_move. Ошибка при ходе {move_san}: {e}")
-            return None
+        print(f"Game.user_move. Запрос на ход: {move_san}, доска {self.board.fen()}")
+        self.attempts += 1
+        self.board.push_san(move_san)
+        print(f"Game.user_move. Ход сделан: {move_san}, доска {self.board.fen()}")
 
     def comp_move(self):
         self.attempts += 1
