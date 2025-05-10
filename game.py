@@ -34,10 +34,7 @@ class Game(object):
     """
     def __init__(self, skill_level: int = 1, time_level: float = 0.1, game_state: dict = {}):
         self.engine = ChessEngineAPI()
-        if 'board_state' in game_state:
-            self.board = chess.Board(game_state['board_state'])
-        else:
-            self.board = chess.Board()
+        self.board = self._init_board(game_state)
         self.attempts = game_state.get('attempts', 0)
         self.skill_level = game_state.get('skill_level', skill_level)
         self.time_level = game_state.get('time_level', time_level)
@@ -47,6 +44,11 @@ class Game(object):
         self.user_color = game_state.get('user_color', '')
         self._needs_promotion = game_state.get('needs_promotion', False)
  
+    def _init_board(self, game_state):
+        if 'board_state' in game_state:
+            return chess.Board(game_state['board_state'])
+        else:
+            return chess.Board()
 
     def get_user_color(self):
         return self.user_color
