@@ -40,9 +40,9 @@ class MoveExtractor(object):
     }
 
     castling_map = {
-        'O-O': {'короткая рокировка', 'два нуля', '00', 'kingside castling',
+        'O-O': {'короткая рокировка', 'два нуля', 'два ноля', 'ноль ноль', '00', 'kingside castling',
                 'castling short', 'short castling', '0-0', 'O-O', 'О-О'},
-        'O-O-O': {'длинная рокировка', 'три нуля', '000', 'queenside castling',
+        'O-O-O': {'длинная рокировка', 'три нуля', 'три ноля', 'ноль ноль ноль', '000', 'queenside castling',
                   'castling long', 'long castling', '0-0-0', 'O-O-O', 'О-О-О',
                   'трио'}
     }
@@ -86,13 +86,9 @@ class MoveExtractor(object):
     def extract_move(self, request):
         """Извлекает ход из запроса пользователя."""
         # Проверяем рокировку
-        if 'request' in request and 'command' in request['request']:
-            command = request['request']['command'].lower()
-            if 'рокировка' in command or 'castling' in command:
-                if 'короткая' in command or 'короткая' in command or 'kingside' in command:
-                    return True, 'O-O'
-                if 'длинная' in command or 'длинная' in command or 'queenside' in command:
-                    return True, 'O-O-O'
+        castling_move, castling_type = self._extract_castling_move(request)
+        if castling_move:
+            return castling_move, castling_type
 
         # Пробуем извлечь ход из интентов
         move = self._extract_move_from_intents(request)
@@ -240,3 +236,24 @@ class MoveExtractor(object):
                 return True, piece
 
         return False, None
+
+    def _extract_castling_move(self, request):
+        """Извлекает рокировку из запроса."""
+        # Проверяем интенты
+        intents = self._get_intents_(request)
+        if intents:
+            if 'LONG_CASTLING' in intents:
+                return True, 'O-O-O'
+            if 'SHORT_CASTLING' in intents or 'CASTLING' in intents:
+                return True, 'O-O'
+
+        # Если интенты не помогли, проверяем текст
+        if 'request' in request and 'command' in request['request']:
+            command = request['request']['command'].lower()
+            for castle_type in self.castling_map:
+                for phrase in self.castling_map[castle_type]:
+                    if phrase in command:
+                        return True, castle_type
+
+        return False, None
+        

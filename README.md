@@ -56,9 +56,9 @@ pip install -r requirements.txt
 ```
 
 ## Технические детали
-- Шахматный движок: Stockfish 16
+- Шахматный движок Stockfish 16, поднят на отдельном сервере. Код сервера см. https://github.com/axtrace/chessapi.
 - Используется: https://github.com/niklasf/python-chess
-- Варианты развертывания: Serverless
+- Варианты развертывания: Serverless на Yandex Cloud
 
 ## Разработка
 - Запуск тестов: `python -m pytest tests/`
@@ -69,7 +69,27 @@ pip install -r requirements.txt
 Мы приветствуем участие в разработке! Вы можете отправить Pull Request.
 
 ## Лицензия
-[Укажите вашу лицензию здесь]
+MIT License
+
+Copyright (c) 2024 axtrace
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 
 ## Дополнительно
 [Диаграммы](https://github.com/axtrace/alisa_chess/blob/69ef50d4f7dad2d828f633468e4566c297f6b164/docs/reqs/hi_seq_diag.md)

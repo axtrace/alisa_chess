@@ -77,14 +77,14 @@ class WaitingMoveHandler(BaseHandler):
         if not is_move_defined:
             return None, "NOT_DEFINED"
         
-        if not self.game.is_valid_move(user_move):
-            return user_move, "INVALID"
+        # if not self.game.is_valid_move(user_move):
+        #     return user_move, "INVALID"
         
         # Делаем ход
         try:
             self.game.user_move(user_move)
         except ValueError:
-            return None, "INVALID"
+            return user_move, "INVALID"
         
         print(f"WaitingMoveHandler. _handle_user_move. Ход сделан: {user_move}")
         return user_move
