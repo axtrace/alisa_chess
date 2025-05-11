@@ -35,11 +35,6 @@ class WaitingPromotionHandler(BaseHandler):
             text, text_tts = self.prep_text_to_say(comp_move, '', self.game.get_board(), '')
             return self.say(text + texts.stalemate_text, tts=text_tts)
             
-        # Проверяем на шах после хода компьютера
-        if self.game.is_check():
-            text, text_tts = self.prep_text_to_say(comp_move, '', self.game.get_board(), '')
-            return self.say(text + texts.check_text, tts=text_tts)
-            
         # Проверяем на превращение пешки после хода компьютера
         if self.game.is_promotion():
             self.game.set_skill_state('WAITING_PROMOTION')

@@ -299,7 +299,7 @@ class MoveExtractor(object):
         for m in legal_moves:
             print(f"m: {m}")
             if re.sub(r'[+#=?!]+$', '', m)[-2:] == target_square:
-                if piece in 'KQRBN':
+                if piece and piece in 'KQRBN':
                     if piece in m:
                         matching_moves.append(m)
                         print(f"matching_moves if piece in m: {matching_moves}")

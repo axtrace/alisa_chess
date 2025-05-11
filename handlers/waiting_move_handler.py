@@ -119,18 +119,10 @@ class WaitingMoveHandler(BaseHandler):
             text, text_tts = self.prep_text_to_say(current_move, prev_turn, self.game.get_board(), '')
             return self.say(text + texts.stalemate_text, tts=text_tts)
         
-        # Проверяем на шах
-        if self.game.is_check():
-            text, text_tts = self.prep_text_to_say(current_move, prev_turn, self.game.get_board(), '')
-            return self.say(text + texts.check_text, tts=text_tts)
-            
         # Проверяем на превращение пешки
         if self.game.is_promotion():
             self.game.set_skill_state('WAITING_PROMOTION')
-            if prev_turn: 
-                text, text_tts = self.prep_text_to_say(current_move, prev_turn, self.game.get_board(), '')
-                return self.say(text + texts.promotion_text, tts=text_tts)
-            return self.say(texts.promotion_text)
+            return self.say(texts.waiting_promotion_text)
             
         return None
     
