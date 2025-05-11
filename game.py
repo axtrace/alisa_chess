@@ -35,7 +35,6 @@ class Game(object):
     def __init__(self, skill_level: int = 1, time_level: float = 0.1, game_state: dict = {}):
         self.engine = ChessEngineAPI()
         self.board = self._init_board(game_state)
-        self.attempts = game_state.get('attempts', 0)
         self.skill_level = game_state.get('skill_level', skill_level)
         self.time_level = game_state.get('time_level', time_level)
         self.winner = game_state.get('winner', '')
@@ -75,17 +74,14 @@ class Game(object):
         self.skill_state = self.prev_skill_state
         self.prev_skill_state = ''
 
-    def get_attempts(self):
-        return self.attempts
 
     def user_move(self, move_san):
         print(f"Game.user_move. Запрос на ход: {move_san}, доска {self.board.fen()}")
-        self.attempts += 1
+
         self.board.push_san(move_san)
         print(f"Game.user_move. Ход сделан: {move_san}, доска {self.board.fen()}")
 
     def comp_move(self):
-        self.attempts += 1
         # Get the best move from the API
         best_move = self.engine.get_best_move(self.board.fen(), self.skill_level)
         if best_move:
@@ -150,7 +146,6 @@ class Game(object):
             'skill_state': self.skill_state,
             'prev_skill_state': self.prev_skill_state,
             'user_color': self.user_color,
-            'attempts': self.attempts,
             'current_turn': 'White' if self.board.turn == chess.WHITE else 'Black',
             'time_level': self.time_level,
             'skill_level': self.skill_level,

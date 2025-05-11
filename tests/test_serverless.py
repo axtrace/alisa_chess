@@ -69,7 +69,6 @@ class TestServerless(unittest.TestCase):
                 'prev_skill_state': '',
                 'user_color': '',
                 'comp_color': '',
-                'attempts': 0,
                 'current_turn': 'White'
             }
             
@@ -102,7 +101,6 @@ class TestServerless(unittest.TestCase):
                 'prev_skill_state': '',
                 'user_color': '',
                 'comp_color': '',
-                'attempts': 0,
                 'current_turn': 'Black'
             }
         }
@@ -121,7 +119,6 @@ class TestServerless(unittest.TestCase):
                 'prev_skill_state': '',
                 'user_color': '',
                 'comp_color': '',
-                'attempts': 0,
                 'current_turn': 'Black'
             }
             
@@ -174,7 +171,6 @@ class TestServerless(unittest.TestCase):
                 'prev_skill_state': '',
                 'user_color': '',
                 'comp_color': '',
-                'attempts': 0,
                 'current_turn': 'White'
             }
         }
@@ -193,7 +189,6 @@ class TestServerless(unittest.TestCase):
                 'prev_skill_state': '',
                 'user_color': '',
                 'comp_color': '',
-                'attempts': 0,
                 'current_turn': 'White'
             }
             

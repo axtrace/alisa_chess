@@ -15,7 +15,6 @@ class TestGame(unittest.TestCase):
         """Тест инициализации с параметрами по умолчанию."""
         self.assertEqual(self.game.board.fen(), self.initial_fen)
         self.assertEqual(self.game.skill_state, 'INITIATED')
-        self.assertEqual(self.game.attempts, 0)
         self.assertEqual(self.game.skill_level, 1)
         self.assertEqual(self.game.time_level, 0.1)
         self.assertEqual(self.game.user_color, '')
@@ -30,7 +29,6 @@ class TestGame(unittest.TestCase):
             'skill_state': 'WAITING_MOVE',
             'prev_skill_state': 'WAITING_COLOR',
             'user_color': 'WHITE',
-            'attempts': 5,
             'skill_level': 2,
             'time_level': 0.3,
             'needs_promotion': False
@@ -42,7 +40,6 @@ class TestGame(unittest.TestCase):
         self.assertEqual(game.skill_state, 'WAITING_MOVE')
         self.assertEqual(game.prev_skill_state, 'WAITING_COLOR')
         self.assertEqual(game.user_color, 'WHITE')
-        self.assertEqual(game.attempts, 5)
         self.assertEqual(game.skill_level, 2)
         self.assertEqual(game.time_level, 0.3)
         self.assertFalse(game._needs_promotion)
@@ -53,7 +50,6 @@ class TestGame(unittest.TestCase):
         self.game.board = chess.Board(fen)
         self.game.set_skill_state('WAITING_MOVE')
         self.game.set_user_color('WHITE')
-        self.game.attempts = 3
 
         state = self.game.serialize_state()
         
@@ -61,7 +57,6 @@ class TestGame(unittest.TestCase):
         self.assertEqual(state['skill_state'], 'WAITING_MOVE')
         self.assertEqual(state['prev_skill_state'], 'INITIATED')
         self.assertEqual(state['user_color'], 'WHITE')
-        self.assertEqual(state['attempts'], 3)
         self.assertEqual(state['current_turn'], 'White')
         self.assertEqual(state['skill_level'], 1)
         self.assertEqual(state['time_level'], 0.1)
@@ -78,8 +73,6 @@ class TestGame(unittest.TestCase):
         self.assertEqual(self.game.board.piece_at(chess.parse_square('e4')).piece_type, chess.PAWN)
         # Теперь ход чёрных
         self.assertEqual(self.game.who(), 'Black')
-        # Счётчик ходов увеличился
-        self.assertEqual(self.game.attempts, 1)
 
     def test_make_illegal_move(self):
         """Тест проверки недопустимого хода."""
@@ -105,7 +98,6 @@ class TestGame(unittest.TestCase):
             'skill_state': 'WAITING_MOVE',
             'prev_skill_state': 'WAITING_COLOR',
             'user_color': 'WHITE',
-            'attempts': 5,
             'skill_level': 2,
             'time_level': 0.3,
             'needs_promotion': False

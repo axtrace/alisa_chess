@@ -10,7 +10,7 @@ class TextPreparer(object):
     def __init__(self):
         self.speaker = Speaker()
 
-    def say_do_not_get(self, command_text, attempt=0):
+    def say_do_not_get(self, command_text):
         not_get = texts.not_get_move.format(command_text)
         not_get_tts = not_get
         return not_get, not_get_tts
