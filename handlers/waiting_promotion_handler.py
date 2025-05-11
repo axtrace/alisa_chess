@@ -54,5 +54,5 @@ class WaitingPromotionHandler(BaseHandler):
         """Подготавливает текст для озвучивания хода."""
         move_to_say = self.speaker.say_move(comp_move, lang) if comp_move else ''
         prev_turn_tts = self.speaker.say_turn(prev_turn, lang) if prev_turn else ''
-        text, text_tts = self.text_preparer.say_your_move(comp_move, move_to_say, prev_turn, prev_turn_tts, text_to_show, text_to_say)
+        text, text_tts = self.text_preparer.say_your_move(comp_move=comp_move, prev_turn=prev_turn, text_to_show=text_to_show, text_to_say=text_to_say)
         return text, text_tts 

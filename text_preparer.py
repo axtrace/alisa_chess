@@ -1,4 +1,5 @@
 import texts
+from speaker import Speaker
 
 
 class TextPreparer(object):
@@ -6,63 +7,54 @@ class TextPreparer(object):
     Class for prepare text for show and text for speak from text.py
     """
 
-    def init(self):
-        pass
+    def __init__(self):
+        self.speaker = Speaker()
 
-    @staticmethod
-    def say_do_not_get(command_text, attempt=0):
+    def say_do_not_get(self, command_text, attempt=0):
         not_get = texts.not_get_move.format(command_text)
         not_get_tts = not_get
-        # if attempt % 3 == 1:
-        #     # every N case try to remember of
-        #     not_get += texts.names_for_files.format('', '', '', '', '', '', '')
-        #     not_get_tts += texts.names_for_files.format('sil <[60]>',
-        #                                                 'sil <[60]>',
-        #                                                 'sil <[60]>',
-        #                                                 'sil <[60]>',
-        #                                                 'sil <[60]>',
-        #                                                 'sil <[60]>',
-        #                                                 'sil <[60]>')
-        #     not_get += texts.names_for_pieces.format('', '', '', '', '')
-        #     not_get_tts += texts.names_for_pieces.format('sil <[70]>',
-        #                                                  'sil <[60]>',
-        #                                                  'sil <[60]>',
-        #                                                  'sil <[60]>',
-        #                                                  'sil <[60]>')
-        #
-        #     not_get += texts.coord_rules.format('Слон d3')
-        #     not_get_tts += texts.coord_rules.format('Слон дэ 3')
         return not_get, not_get_tts
 
-    @staticmethod
-    def say_your_move(comp_move='', move_to_say='', prev_turn='',
-                      prev_turn_tts='', text_to_show='', text_to_say=''):
+    def say_your_move(self, comp_move='', prev_turn='', text_to_show='', text_to_say='', lang='ru'):
         # form speech for your move
 
-        print(f"say_your_move received: {comp_move}, {move_to_say}, {prev_turn}, {prev_turn_tts}, {text_to_show}, {text_to_say}")  # Отладочный вывод
+        print(f"say_your_move received: comp_move={comp_move}, prev_turn={prev_turn}, text_to_show={text_to_show}, text_to_say={text_to_say}")  # Отладочный вывод
 
         text = text_to_show if text_to_show else ''
-        tts = text_to_say if text_to_say else ''
+        text_tts = text_to_say if text_to_say else ''
+
+        move_to_say = self.speaker.say_move(comp_move, lang) if comp_move else ''
+        prev_turn_tts = self.speaker.say_turn(prev_turn, lang) if prev_turn else ''
 
         if prev_turn:
             # if previous turn was given
-            tts += f'{prev_turn_tts} пошли '
+            text_tts += f'{prev_turn_tts} пошли '
             text += f'\n{prev_turn_tts} пошли '
         if comp_move:
             # if comp move was given
             text += f'{comp_move}. '
-            tts += f'{move_to_say}. '
+            text_tts += f'{move_to_say}. '
 
-        text += 'Ваш ход!'
-        tts += 'Ваш ход!'
+        text += '\nВаш ход!'
+        text_tts += 'Ваш ход!'
 
-        return text, tts
+        return text, text_tts
 
     @staticmethod
-    def say_not_legal_move(user_move, say_user_move):
-        text = texts.not_legal_move.format(user_move)
-        tts = texts.not_legal_move.format(say_user_move)
-        return text, tts
+    def say_repeat_last_move(self,last_move):
+        text = texts.repeat_last_move.format(last_move)
+        text_tts = self.speaker.say_move(last_move)
+        return text, text_tts
+
+    def say_not_legal_move(self, user_move='', text_to_show='', text_to_say=''):
+
+        text = text_to_show if text_to_show else ''
+        text_tts = text_to_say if text_to_say else ''
+        if user_move:
+            text += texts.not_legal_move.format(user_move)
+            user_move_tts = self.speaker.say_move(user_move)
+            text_tts += texts.not_legal_move.format(user_move_tts)
+        return text, text_tts
 
     @staticmethod
     def say_result(comp_move, comp_move_tts, reason, reason_tts,
@@ -112,4 +104,12 @@ class TextPreparer(object):
         text += texts.engine_info
         text_tts += texts.engine_info
 
+        return text, text_tts
+
+    def say_ambiguous_move(self, moves):
+        text = texts.ambiguous_move
+        text_tts = texts.ambiguous_move
+        for m in moves:
+            text += f'{m}\n'
+            text_tts += self.speaker.say_move(m)
         return text, text_tts

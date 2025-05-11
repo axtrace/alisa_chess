@@ -183,13 +183,11 @@ class TestGame(unittest.TestCase):
         self.assertIn('♙', board_text)  # должны быть символы фигур
         self.assertIn('♖', board_text)
 
-    def test_who_and_who_invert(self):
-        """Тест определения цвета хода и обратного цвета."""
+    def test_who(self):
+        """Тест определения цвета хода"""
         # Изначально ход белых
         # self.assertEqual(self.game.who(), 'White')
-        self.assertEqual(self.game.who_invert('White'), 'Black')
-        self.assertEqual(self.game.who_invert('Black'), 'White')
-        
+
         # После хода - ход черных
         self.game.user_move('e4')
         self.assertEqual(self.game.who(), 'Black')

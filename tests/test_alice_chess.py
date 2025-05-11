@@ -100,8 +100,8 @@ class TestAliceChess(unittest.TestCase):
         print(f"alice.game.get_skill_state(): {alice.game.get_skill_state()}")
         
         event = self.event.copy()
-        event['request']['command'] = 'e2e5'  # Некорректный ход
-        event['request']['original_utterance'] = 'e2e5'
+        event['request']['command'] = 'д2д5'  # Некорректный ход
+        event['request']['original_utterance'] = 'д2д5'
         event['state']['user']['game_state'] = {'skill_state': 'WAITING_MOVE'}
         response = alice.handle_request(event)
         

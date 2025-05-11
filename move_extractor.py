@@ -1,6 +1,5 @@
 import re
 
-
 class MoveExtractor(object):
     """
     Class for extract move from user speech
@@ -83,7 +82,7 @@ class MoveExtractor(object):
 
         return False, ''
 
-    def extract_move(self, request):
+    def extract_move(self, request, board):
         """Извлекает ход из запроса пользователя."""
         # Проверяем рокировку
         castling_move, castling_type = self._extract_castling_move(request)
@@ -91,22 +90,24 @@ class MoveExtractor(object):
             return castling_move, castling_type
 
         # Пробуем извлечь ход из интентов
-        move = self._extract_move_from_intents(request)
-        if move:
-            return True, move
+        extracted_move_structure = self._extract_move_from_intents(request)
 
-        # Если интенты не помогли, пробуем извлечь из текста
-        move = self._extract_move_from_text(request)
-        if move:
-            return True, move
+        if not extracted_move_structure:
+            # Если интенты не помогли, пробуем извлечь из текста
+            extracted_move_structure = self._extract_move_from_text(request)
 
-        return False, None
+        if not extracted_move_structure:
+            return None, None
+        extracted_move = extracted_move_structure.get('move', '')
+        matching_moves = self._find_matching_moves(board, extracted_move_structure)
+        return matching_moves, extracted_move
 
     def _extract_move_from_intents(self, request):
         """Извлекает ход из интентов."""
         intents = self._get_intents_(request)
+        move_structure = {}
         if not intents:
-            return None
+            return move_structure
 
         # Проверяем интент CHESS_MOVE
         if 'CHESS_MOVE' in intents:
@@ -118,15 +119,26 @@ class MoveExtractor(object):
             rank_to = slots.get('rank_to', {}).get('value', '')
             
             if file_to and rank_to:  # Минимум нужны координаты назначения
-                return ''.join(filter(None, [piece, file_from, rank_from, file_to, rank_to]))
-
+                move = ''.join(filter(None, [piece, file_from, rank_from, file_to, rank_to]))
+                move_structure = {
+                    'piece': piece,
+                    'file_from': file_from,
+                    'rank_from': rank_from,
+                    'file_to': file_to,
+                    'rank_to': rank_to,
+                    'move': move
+                }
+    
         # Проверяем интент PIECE
-        if 'PIECE' in intents:
+        elif 'PIECE' in intents:
             piece = self._get_piece_from_intent(intents['PIECE']['slots']['piece']['value'])
-            if piece:
-                return piece
-
-        return None
+            if piece: 
+                move_structure = {
+                    'piece': piece,
+                    'move': piece
+                }
+            
+        return move_structure
 
     def _get_piece_from_intent(self, piece_value):
         """Преобразует значение фигуры из интента в шахматную нотацию."""
@@ -165,10 +177,13 @@ class MoveExtractor(object):
         return self._get_key_(request, self.piece_map)
 
     def _get_square(self, request):
+        print(f"_get_square received: {request}")
         return self._get_file_(request), self._get_rank_(request)
 
     def _get_file_(self, request):
+        print(f"_get_file_ received: {request}")
         file_susp = self._get_key_(request, self.file_map)
+        print(f"file_susp: {file_susp}")
         if not file_susp:
             # hm, try extract by own way
             if isinstance(request, str):
@@ -178,20 +193,24 @@ class MoveExtractor(object):
                 # suggest it is request from user
                 text = request.command
             text_wo_digits = re.sub(r'[1-8]', '', text)
+            print(f"text_wo_digits: {text_wo_digits}")
             file_susp = self._get_key_(text_wo_digits, self.file_map)
+            print(f"file_susp: {file_susp}")
         return file_susp
 
     @staticmethod
     def _get_rank_(request):
         match = re.search(r'[1-8]', request)
         rank = match[0] if match else ''
+        print(f"_get_rank_ received: {request}, rank: {rank}")
         return rank
         # return self._get_key_(request, self.rank_map)
 
     def _extract_move_from_text(self, request):
         """Извлекает ход из текста запроса."""
+        move_structure = {}
         if 'request' not in request or 'command' not in request['request']:
-            return None
+            return move_structure
 
         command_text = request['request']['command']
         
@@ -199,11 +218,12 @@ class MoveExtractor(object):
         piece = self._get_piece_(request)
         
         # Получаем клетки (файл и ранг)
-        square_rex = re.compile(r'\w+\s*[1-8]', flags=re.IGNORECASE)
+        square_rex = re.compile(r'[a-zа-яё]+\s*[1-8]', flags=re.IGNORECASE)
         squares = re.findall(square_rex, command_text)
+        print(f"squares: {squares}")
         
         if not squares:
-            return None
+            return move_structure
             
         file_to, rank_to = self._get_square(squares[-1])
         file_from, rank_from = '', ''
@@ -211,10 +231,19 @@ class MoveExtractor(object):
             file_from, rank_from = self._get_square(squares[0])
             
         if not (len(file_to) and len(rank_to)):
-            return None
+            return move_structure
             
         # Формируем ход: a5, Bc3, Nf3g5
-        return ''.join(filter(None, [piece, file_from, rank_from, file_to, rank_to]))
+        move = ''.join(filter(None, [piece, file_from, rank_from, file_to, rank_to]))
+        move_structure = {
+            'piece': piece,
+            'file_from': file_from,
+            'rank_from': rank_from,
+            'file_to': file_to,
+            'rank_to': rank_to,
+            'move': move
+        }
+        return move_structure
 
     def extract_promotion(self, request):
         """Извлекает тип превращения пешки из запроса."""
@@ -257,3 +286,26 @@ class MoveExtractor(object):
 
         return False, None
         
+    def _find_matching_moves(self, board, move_structure):
+        legal_moves = [board.san(m) for m in board.legal_moves]
+        matching_moves = []
+        target_square = move_structure.get('file_to', '') + move_structure.get('rank_to', '')
+        piece = move_structure.get('piece', '')
+        print(f"_find_matching_moves received: {move_structure}")
+        if not target_square or len(target_square) != 2:
+            return matching_moves
+        print(f"legal_moves: {legal_moves}")
+        # Находим все ходы, которые содержат ту же клетку назначения как и наш ход
+        for m in legal_moves:
+            print(f"m: {m}")
+            if re.sub(r'[+#=?!]+$', '', m)[-2:] == target_square:
+                if piece in 'KQRBN':
+                    if piece in m:
+                        matching_moves.append(m)
+                        print(f"matching_moves if piece in m: {matching_moves}")
+                elif not piece or piece in 'Pp':
+                    if not m[0].isupper():
+                        matching_moves.append(m)
+                        print(f"matching_moves if not m[0].isupper(): {matching_moves}")
+        print(f"matching_moves: {matching_moves}")
+        return matching_moves

@@ -5,6 +5,9 @@ class Speaker(object):
     """
     Class for spelling moves and some texts
     """
+    def __init__(self):
+        pass
+
     piece_names = {
         'K': {'ru': 'Король', 'en': 'King'},
         'Q': {'ru': 'Ферзь', 'en': 'Queen'},
@@ -48,9 +51,6 @@ class Speaker(object):
         'insufficient': {'ru': 'ничья из-за недостаточности материала',
                          'en': 'draw due to insufficient material'}
     }
-
-    def __init__(self):
-        pass
 
     def _castling_pron_(self, move_san, lang='ru'):
         # returns castling pronunciation in specified language

@@ -119,13 +119,6 @@ class Game(object):
     def get_skill_level(self):
         return self.skill_level
 
-    def who_invert(self, turn):
-        if turn == 'Black':
-            return 'White'
-        elif turn == 'White':
-            return 'Black'
-        return ''
-
     def who(self):
         # who's turn now
         if self.board.turn == chess.WHITE:
@@ -242,3 +235,11 @@ class Game(object):
     def is_promotion(self):
         """Проверяет, требуется ли превращение пешки."""
         return self.check_promotion()
+
+    def is_insufficient_material(self):
+        """Проверяет недостаточность материала для продолжения игры."""
+        return self.board.is_insufficient_material()
+
+    def is_fivefold_repetition(self):
+        """Проверяет пятикратное повторение позиции."""
+        return self.board.is_fivefold_repetition()
