@@ -26,8 +26,9 @@ class WaitingMoveHandler(BaseHandler):
 
         # Обработка и выполнение хода пользователя
         user_moves, reason_type = self._handle_user_move()
+
         # Если вернулась какая-то причина, то обрабатываем её (ход некорректен)
-        if reason_type:
+        if reason_type != "OK":
             print(f"WaitingMoveHandler.handle. reason_type: {reason_type}")
             return self._reason_handler(reason_type, user_moves) 
         
@@ -82,7 +83,7 @@ class WaitingMoveHandler(BaseHandler):
             return user_move, "INVALID"
         
         print(f"WaitingMoveHandler._handle_user_move. Ход сделан: {user_move}")
-        return user_move
+        return user_move, "OK"
 
     def _check_game_state(self, current_move, prev_turn=''):
         """Проверяет состояние игры после хода.
