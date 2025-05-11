@@ -45,7 +45,7 @@ class SpecialIntentHandler(BaseHandler):
         
         if self.intent_validator.validate_show_board():
             print(f"SpecialIntentHandler. validate_show_board. Запрос: {self.request}")
-            text=self.game.get_board() + '\n' + self.game.board.fen()
+            text=self.game.get_board() + '\n'*2 + 'FEN: ' + self.game.board.fen()
             text_tts = 'Показала доску в чате.'
             return self.say(text, tts=text_tts)    
         
