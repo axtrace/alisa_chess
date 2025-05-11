@@ -43,6 +43,10 @@ class SpecialIntentHandler(BaseHandler):
             current_level = self.game.get_skill_level()
             return self.say(texts.set_skill_level_text.format(level=current_level))
         
-        
+        if self.intent_validator.validate_show_board():
+            print(f"SpecialIntentHandler. validate_show_board. Запрос: {self.request}")
+            text=self.game.get_board() + '\n' + self.game.board.fen()
+            text_tts = 'Показала доску в чате.'
+            return self.say(text, tts=text_tts)    
         
         return None

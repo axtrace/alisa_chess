@@ -81,6 +81,12 @@ class IntentValidator(BaseValidator):
         get_skill_level_words = ['какой уровень', 'which level']
         return self._has_text(get_skill_level_words)
         
+    def validate_show_board(self) -> bool:
+        """Проверяет, является ли запрос отображением доски."""
+        if self._has_intent('SHOW_BOARD'):
+            return True
+        show_board_words = ['доска', 'board', 'доска', 'board']
+        return self._has_text(show_board_words)
 
     def validate(self) -> bool:
         """Проверяет наличие любого из известных интентов."""

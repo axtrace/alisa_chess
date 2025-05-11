@@ -93,6 +93,7 @@ class Speaker(object):
         return self.captures_names.get(lang, '')
 
     def say_move(self, move_san, lang='ru'):
+        print(f"say_move received: {move_san}, {lang}")  # Отладочный вывод 
         speak_list = []
         regex_body = r'[a-h]|[1-8]|x|[KQRBN]|[+#]|0-0-0|0-0|O-O-O|O-O'
         move_regex = re.compile(regex_body)
@@ -115,6 +116,7 @@ class Speaker(object):
             elif sym[0] in '+#':
                 # check or mate
                 speak_list.append(self._checkmate_pron_(sym[0], lang))
+        print(f"say_move result: {speak_list}")  # Отладочный вывод
         return ' '.join(speak_list)
 
     def say_turn(self, who, lang='ru'):
@@ -124,6 +126,7 @@ class Speaker(object):
             turn_names = self.white_black_names.get(who.upper(), None)
             if turn_names is not None:
                 res = turn_names.get(lang, '')
+        print(f"say_turn result: {res}")  # Отладочный вывод
         return res
 
     def say_reason(self, reason, lang='ru'):
