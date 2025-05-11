@@ -49,10 +49,3 @@ class WaitingPromotionHandler(BaseHandler):
         # Обычный ход
         text, text_tts = self.prep_text_to_say(comp_move, '', self.game.get_board(), '')
         return self.say(text, tts=text_tts)
-
-    def prep_text_to_say(self, comp_move, prev_turn, text_to_show, text_to_say, lang='ru'):
-        """Подготавливает текст для озвучивания хода."""
-        move_to_say = self.speaker.say_move(comp_move, lang) if comp_move else ''
-        prev_turn_tts = self.speaker.say_turn(prev_turn, lang) if prev_turn else ''
-        text, text_tts = self.text_preparer.say_your_move(comp_move=comp_move, prev_turn=prev_turn, text_to_show=text_to_show, text_to_say=text_to_say)
-        return text, text_tts 

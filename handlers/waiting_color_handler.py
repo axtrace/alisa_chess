@@ -28,10 +28,5 @@ class WaitingColorHandler(BaseHandler):
             text, text_tts = self.prep_text_to_say(comp_move=comp_move, prev_turn=prev_turn, text_to_show=self.game.get_board(), text_to_say='')
             return self.say(text, tts=text_tts)
             
-        text, text_tts = self.text_preparer.say_your_move(comp_move='', prev_turn='', text_to_show=self.game.get_board(), text_to_say='')
+        text, text_tts = self.prep_text_to_say(comp_move='', prev_turn='', text_to_show=self.game.get_board(), text_to_say='')
         return self.say(text, tts=text_tts)
-
-    def prep_text_to_say(self, comp_move, prev_turn, text_to_show, text_to_say, lang='ru'):
-        """Подготавливает текст для озвучивания хода."""
-        text, text_tts = self.text_preparer.say_your_move(comp_move=comp_move, prev_turn=prev_turn, text_to_show=text_to_show, text_to_say=text_to_say)
-        return text, text_tts 

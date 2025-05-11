@@ -133,21 +133,6 @@ class WaitingMoveHandler(BaseHandler):
             return self.say(texts.promotion_text)
             
         return None
-
-    def prep_text_to_say(self, current_move, prev_turn, text_to_show, text_to_say, lang='ru'):
-        """Подготавливает текст для озвучивания хода.
-        
-        Args:
-            current_move: Текущий ход
-            previous_move: Предыдущий ход
-            text_to_show: Текст для отображения
-            text_to_say: Текст для озвучивания
-            lang: Язык озвучивания
-        """
-
-        
-        text, text_tts = self.text_preparer.say_your_move(current_move, prev_turn, text_to_show, text_to_say)
-        return text, text_tts 
     
     def _unmake_handler(self):
         """Обрабатывает отмену последнего хода."""

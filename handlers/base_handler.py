@@ -49,3 +49,8 @@ class BaseHandler(ABC):
         self.game.reset_board()
         self.game.set_skill_state('INITIATED')
         return None
+    
+    def prep_text_to_say(self, comp_move, prev_turn, text_to_show, text_to_say, lang='ru'):
+        """Подготавливает текст для возврата в навык Алисы, чтобы озвучить ход."""
+        text, text_tts = self.text_preparer.say_your_move(comp_move=comp_move, prev_turn=prev_turn, text_to_show=text_to_show, text_to_say=text_to_say)
+        return text, text_tts
