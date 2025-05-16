@@ -225,3 +225,7 @@ cant_skill_level_text = """
 get_skill_level_text = """
 Уровень сложности: {}
 """
+
+waiting_move_text = """
+Ожидаем вашего хода.
+"""
