@@ -18,7 +18,6 @@ class SpecialIntentHandler(BaseHandler):
             print(f"SpecialIntentHandler. validate_help. Запрос: {self.request}")
             return self.say(texts.help_text)
         
-            
         if self.intent_validator.validate_new_game():
             print(f"SpecialIntentHandler. validate_new_game. Запрос: {self.request}")
             self.game.set_skill_state('WAITING_NEWGAME_CONFIRM')

@@ -66,6 +66,12 @@ class IntentValidator(BaseValidator):
             return True
         return False
     
+    def validate_get_skill_level(self) -> bool:
+        """Проверяет, является ли запрос получением уровня сложности."""
+        if self._has_intent('GET_SKILL_LEVEL'):
+            return True
+        return False
+    
     def validate_set_time_level(self) -> bool:
         """Проверяет, является ли запрос установкой времени на ход."""
         if self._has_intent('SET_TIME_LEVEL'):
@@ -73,12 +79,6 @@ class IntentValidator(BaseValidator):
         set_time_level_words = ['время', 'time', 'время на ход', 'time per move', 'время', 'time', 'время на ход', 'time per move']
         return self._has_text(set_time_level_words)
     
-    def validate_get_skill_level(self) -> bool:
-        """Проверяет, является ли запрос получением уровня сложности."""
-        if self._has_intent('GET_SKILL_LEVEL'):
-            return True
-        return False
-        
     def validate_show_board(self) -> bool:
         """Проверяет, является ли запрос отображением доски."""
         if self._has_intent('SHOW_BOARD'):

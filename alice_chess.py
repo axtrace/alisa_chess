@@ -49,9 +49,11 @@ class AliceChess:
         
         # Сначала проверяем специальные интенты, не зависящие от состояния
         handler = SpecialIntentHandler(self.game, request)
-        result = handler.handle()
-        if result:
-            return result
+        special_intent_result = handler.handle()
+        if special_intent_result:
+            return special_intent_result
+        
+        print(f"handle_request. SpecialIntentHandler: {special_intent_result}")
             
         # Затем обрабатываем запрос в зависимости от состояния игры
         state = self.game.get_skill_state()
