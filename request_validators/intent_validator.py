@@ -78,14 +78,14 @@ class IntentValidator(BaseValidator):
         """Проверяет, является ли запрос получением уровня сложности."""
         if self._has_intent('GET_SKILL_LEVEL'):
             return True
-        get_skill_level_words = ['какой уровень', 'which level']
+        get_skill_level_words = ['какой уровень', 'which level', 'уровень', 'level']
         return self._has_text(get_skill_level_words)
         
     def validate_show_board(self) -> bool:
         """Проверяет, является ли запрос отображением доски."""
         if self._has_intent('SHOW_BOARD'):
             return True
-        show_board_words = ['доска', 'board', 'доска', 'board']
+        show_board_words = ['доска', 'board', 'доску']
         return self._has_text(show_board_words)
 
     def validate(self) -> bool:
@@ -101,5 +101,6 @@ class IntentValidator(BaseValidator):
             self.validate_repeat_last_move(),
             self.validate_set_skill_level(),
             self.validate_set_time_level(),
-            self.validate_get_skill_level()
+            self.validate_get_skill_level(),
+            self.validate_show_board()
         ]) 
