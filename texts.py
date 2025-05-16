@@ -221,3 +221,7 @@ cant_newgame_text = """
 cant_skill_level_text = """
 Изменить уровень сложности не получается.
 """ 
+
+get_skill_level_text = """
+Уровень сложности: {}
+"""
