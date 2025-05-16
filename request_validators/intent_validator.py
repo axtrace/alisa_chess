@@ -64,8 +64,7 @@ class IntentValidator(BaseValidator):
         """Проверяет, является ли запрос установкой уровня сложности."""
         if self._has_intent('SET_SKILL_LEVEL'):
             return True
-        set_skill_level_words = ['уровень', 'level', 'сложность', 'difficulty', 'уровень', 'level', 'сложность', 'difficulty']
-        return self._has_text(set_skill_level_words)
+        return False
     
     def validate_set_time_level(self) -> bool:
         """Проверяет, является ли запрос установкой времени на ход."""

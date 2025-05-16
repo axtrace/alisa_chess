@@ -42,17 +42,17 @@ class SpecialIntentHandler(BaseHandler):
             print(f"SpecialIntentHandler. validate_repeat_last_move. Запрос: {self.request}")
             self.game.repeat_last_move()
             return self.say(texts.repeat_last_move_text)
-
-        if self.intent_validator.validate_get_skill_level():
-            print(f"SpecialIntentHandler. validate_get_skill_level. Запрос: {self.request}")
-            current_level = self.game.get_skill_level()
-            return self.say(texts.get_skill_level_text.format(level=current_level))
         
         if self.intent_validator.validate_set_skill_level():
             print(f"SpecialIntentHandler. validate_set_skill_level. Запрос: {self.request}")
             self.game.set_skill_state('WAITING_SKILL_LEVEL')
             current_level = self.game.get_skill_level()
-            return self.say(texts.set_skill_level_text.format(level=current_level))
+            return self.say(texts.set_skill_level_text.format(current_level))
+        
+        if self.intent_validator.validate_get_skill_level():
+            print(f"SpecialIntentHandler. validate_get_skill_level. Запрос: {self.request}")
+            current_level = self.game.get_skill_level()
+            return self.say(texts.get_skill_level_text.format(current_level))
         
         if self.intent_validator.validate_show_board():
             print(f"SpecialIntentHandler. validate_show_board. Запрос: {self.request}")
