@@ -129,7 +129,7 @@ class TestAliceChess(unittest.TestCase):
         self.assertIn('text', response)
         self.assertIn('tts', response)
         self.assertFalse(response['end_session'])
-        self.assertEqual(self.alice.game.get_skill_state(), 'WAITING_CONFIRM')
+        self.assertEqual(self.alice.game.get_skill_state(), 'WAITING_NEWGAME_CONFIRM')
 
 
 if __name__ == '__main__':

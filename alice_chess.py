@@ -48,12 +48,12 @@ class AliceChess:
             raise ValueError(f"Неизвестное состояние игры: {state}")
         
         # Сначала проверяем специальные интенты, не зависящие от состояния
-        handler = SpecialIntentHandler(self.game, request)
-        special_intent_result = handler.handle()
+        special_intent_handler = SpecialIntentHandler(self.game, request)
+        special_intent_result = special_intent_handler.handle()
         if special_intent_result:
             return special_intent_result
         
-        print(f"handle_request. SpecialIntentHandler: {special_intent_result}")
+        print(f"handle_request. SpecialIntentHandler result: {special_intent_result}")
             
         # Затем обрабатываем запрос в зависимости от состояния игры
         state = self.game.get_skill_state()
