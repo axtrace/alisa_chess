@@ -41,7 +41,7 @@ class Game(object):
         self.skill_state = game_state.get('skill_state', 'INITIATED')
         self.prev_skill_state = game_state.get('prev_skill_state', '')
         self.user_color = game_state.get('user_color', '')
-        self._needs_promotion = game_state.get('needs_promotion', False)
+        
  
     def _init_board(self, game_state):
         if 'board_state' in game_state:
@@ -149,56 +149,8 @@ class Game(object):
             'current_turn': 'White' if self.board.turn == chess.WHITE else 'Black',
             'time_level': self.time_level,
             'skill_level': self.skill_level,
-            'needs_promotion': self._needs_promotion
         }
         return state
-
-
-    def check_promotion(self):
-        """Проверяет, требуется ли превращение пешки."""
-        if not self.board.move_stack:
-            self._needs_promotion = False
-            return False
-            
-        last_move = self.board.move_stack[-1]
-        if not last_move:
-            self._needs_promotion = False
-            return False
-            
-        # Проверяем, является ли последний ход ходом пешки
-        piece = self.board.piece_at(last_move.to_square)
-        if not piece or piece.piece_type != chess.PAWN:
-            self._needs_promotion = False
-            return False
-            
-        # Проверяем, достигла ли пешка последней горизонтали
-        rank = chess.square_rank(last_move.to_square)
-        self._needs_promotion = (piece.color == chess.WHITE and rank == 7) or (piece.color == chess.BLACK and rank == 0)
-        return self._needs_promotion
-
-    def promote_pawn(self, promotion_piece):
-        """Превращает пешку в указанную фигуру."""
-        if not self._needs_promotion:
-            return False
-            
-        last_move = self.board.move_stack[-1]
-        if not last_move:
-            return False
-            
-        # Создаем новый ход с превращением
-        promotion_move = chess.Move(
-            from_square=last_move.from_square,
-            to_square=last_move.to_square,
-            promotion=promotion_piece
-        )
-        
-        # Отменяем последний ход
-        self.board.pop()
-        
-        # Делаем ход с превращением
-        self.board.push(promotion_move)
-        self._needs_promotion = False
-        return True
 
     def get_last_move(self):
         """Возвращает последний ход в формате SAN."""
@@ -226,10 +178,6 @@ class Game(object):
     def is_check(self):
         """Проверяет, находится ли текущая сторона под шахом."""
         return self.board.is_check()
-
-    def is_promotion(self):
-        """Проверяет, требуется ли превращение пешки."""
-        return self.check_promotion()
 
     def is_insufficient_material(self):
         """Проверяет недостаточность материала для продолжения игры."""

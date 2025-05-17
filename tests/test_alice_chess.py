@@ -131,6 +131,96 @@ class TestAliceChess(unittest.TestCase):
         self.assertFalse(response['end_session'])
         self.assertEqual(self.alice.game.get_skill_state(), 'WAITING_NEWGAME_CONFIRM')
 
+    @patch('game.Game')
+    def test_handle_request_promotion(self, mock_game):
+        """Тест обработки запроса с превращением пешки."""
+        # Настраиваем мок для игры
+        mock_game_instance = MagicMock()
+        mock_game_instance.get_skill_state.return_value = 'WAITING_MOVE'
+        mock_game_instance.is_valid_move.return_value = True
+        
+        # Настраиваем user_move
+        def mock_user_move(move):
+            return True
+        mock_game_instance.user_move.side_effect = mock_user_move
+        
+        # Настраиваем who для возврата текущего хода
+        mock_game_instance.who.return_value = 'White'
+        
+        # Настраиваем comp_move для возврата хода компьютера
+        mock_game_instance.comp_move.return_value = 'e7e5'
+        
+        # Настраиваем get_board для возврата доски
+        mock_game_instance.get_board.return_value = '8/P7/8/7k/8/8/8/2K5 w - - 0 1'
+        
+        mock_game.return_value = mock_game_instance
+        
+        alice = AliceChess()
+        alice.game = mock_game_instance
+        
+        # Тестируем ход с превращением пешки
+        event = self.event.copy()
+        event['request']['command'] = 'а8'
+        event['request']['original_utterance'] = 'а8'
+        event['request']['nlu'] = {
+            'tokens': ['пешка', 'a', '8', 'ладья'],
+            'entities': [],
+            'intents': {
+                'CHESS_MOVE': {
+                    'slots': {
+                        'piece': {
+                            'type': 'ChessPiece',
+                            'tokens': {'start': 0, 'end': 1},
+                            'value': 'pawn'
+                        },
+                        'file_to': {
+                            'type': 'ChessFile',
+                            'tokens': {'start': 1, 'end': 2},
+                            'value': 'a'
+                        },
+                        'rank_to': {
+                            'type': 'ChessRank',
+                            'tokens': {'start': 2, 'end': 3},
+                            'value': '8'
+                        },
+                        'promotion_piece': {
+                            'type': 'ChessPiece',
+                            'tokens': {'start': 3, 'end': 4},
+                            'value': 'rook'
+                        }
+                    }
+                }
+            }
+        }
+        event['state']['user'] = {
+            'game_state': {
+                'board_state': '8/P7/8/7k/8/8/8/2K5 w - - 0 1',
+                'skill_state': 'WAITING_MOVE',
+                'prev_skill_state': 'WAITING_MOVE',
+                'user_color': 'WHITE',
+                'comp_color': 'BLACK',
+                'current_turn': 'White'
+            }
+        }
+        
+        # Добавляем отладочную информацию
+        print("Before handle_request:")
+        print(f"Game state: {mock_game_instance.get_skill_state()}")
+        
+        
+        response = alice.handle_request(event)
+        
+        # Добавляем отладочную информацию
+        print("After handle_request:")
+        print(f"Game state: {mock_game_instance.get_skill_state()}")
+        print(f"set_skill_state calls: {mock_game_instance.set_skill_state.call_args_list}")
+        
+        # Проверяем ответ
+        self.assertIn('text', response)
+        self.assertIn('♖', response['text'].lower())
+        self.assertIn('tts', response)
+        self.assertFalse(response['end_session'])
+
 
 if __name__ == '__main__':
     unittest.main() 

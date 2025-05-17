@@ -99,25 +99,6 @@ class TestHandlers(unittest.TestCase):
         self.assertIn('tts', response)
         self.assertIn('end_session', response)
         
-    def test_waiting_promotion_handler(self):
-        """Тест обработчика превращения пешки."""
-        self.game.set_skill_state('WAITING_PROMOTION')
-        request = {
-            'request': {
-                'command': 'ферзь',
-                'nlu': {
-                    'intents': {}
-                }
-            }
-        }
-        handler = WaitingPromotionHandler(self.game, request)
-        response = handler.handle()
-        
-        self.assertIsInstance(response, dict)
-        self.assertIn('text', response)
-        self.assertIn('tts', response)
-        self.assertIn('end_session', response)
-        
     def test_waiting_draw_confirm_handler_yes(self):
         """Тест обработчика подтверждения ничьей с положительным ответом."""
         self.game.set_skill_state('WAITING_DRAW_CONFIRM')

@@ -34,7 +34,7 @@ class MoveExtractor(object):
         'Q': {'queen', 'ферзь', 'королева', 'квин', 'ферз'},
         'R': {'rook', 'ладья', 'ура', 'тура', 'лада'},
         'N': {'knight', 'конь', 'лошадь', 'кон'},
-        'B': {'bishop', 'слон', 'офицер', 'сон', 'салон'},
+        'B': {'bishop', 'слон', 'офицер', 'сон', 'салон','fou','loper'},
         'p': {'pawn', 'пешка'}
     }
 
@@ -117,6 +117,7 @@ class MoveExtractor(object):
             rank_from = slots.get('rank_from', {}).get('value', '')
             file_to = slots.get('file_to', {}).get('value', '')
             rank_to = slots.get('rank_to', {}).get('value', '')
+            promotion_piece = self._get_piece_from_intent(slots.get('promotion_piece', {}).get('value', ''))
             
             if file_to and rank_to:  # Минимум нужны координаты назначения
                 move = ''.join(filter(None, [piece, file_from, rank_from, file_to, rank_to]))
@@ -126,7 +127,8 @@ class MoveExtractor(object):
                     'rank_from': rank_from,
                     'file_to': file_to,
                     'rank_to': rank_to,
-                    'move': move
+                    'move': move,
+                    'promotion_piece': promotion_piece
                 }
     
         # Проверяем интент PIECE
@@ -287,25 +289,74 @@ class MoveExtractor(object):
         return False, None
         
     def _find_matching_moves(self, board, move_structure):
-        legal_moves = [board.san(m) for m in board.legal_moves]
-        matching_moves = []
-        target_square = move_structure.get('file_to', '') + move_structure.get('rank_to', '')
-        piece = move_structure.get('piece', '')
         print(f"_find_matching_moves received: {move_structure}")
-        if not target_square or len(target_square) != 2:
-            return matching_moves
+
+        legal_moves = [board.san(m) for m in board.legal_moves]
         print(f"legal_moves: {legal_moves}")
-        # Находим все ходы, которые содержат ту же клетку назначения как и наш ход
-        for m in legal_moves:
-            print(f"m: {m}")
-            if re.sub(r'[+#=?!]+$', '', m)[-2:] == target_square:
-                if piece and piece in 'KQRBN':
-                    if piece in m:
-                        matching_moves.append(m)
-                        print(f"matching_moves if piece in m: {matching_moves}")
-                elif not piece or piece in 'Pp':
-                    if not m[0].isupper():
-                        matching_moves.append(m)
-                        print(f"matching_moves if not m[0].isupper(): {matching_moves}")
-        print(f"matching_moves: {matching_moves}")
-        return matching_moves
+        
+        # extract from user pronounced move
+        file_to = move_structure.get('file_to', '')
+        rank_to = move_structure.get('rank_to', '')
+        file_from = move_structure.get('file_from', '')
+        rank_from = move_structure.get('rank_from', '')
+        piece = move_structure.get('piece', '')
+        promotion_piece = move_structure.get('promotion_piece', '')
+                
+        candidate_moves = legal_moves
+
+        if promotion_piece:
+            candidate_moves = [move for move in candidate_moves if '=' + promotion_piece in move]
+            print(f"candidate_moves filtered by promotion ={promotion_piece}: {candidate_moves}")
+
+        pattern = re.compile(r'''
+            ^
+            (?P<piece>[KQRBN])?      # Фигура (K, Q, R, B, N) - опционально
+            (?P<file_from>[a-h])?    # Исходная вертикаль (a-h) - опционально
+            (?P<rank_from>[1-8])?    # Исходная горизонталь (1-8) - опционально
+            x?                        # Символ взятия (опционально)
+            (?P<file_to>[a-h])       # Целевая вертикаль (a-h)
+            (?P<rank_to>[1-8])       # Целевая горизонталь (1-8)
+            (?:=?(?P<promotion_piece>[QRBN]))?  # Превращение (Q, R, B, N) - опционально
+            $
+        ''', re.VERBOSE | re.IGNORECASE)
+
+        for m in candidate_moves[:]:   #проходим по копии списка, чтобы удаление не влекло непредсказуемых последствий
+
+            match = pattern.fullmatch(m)
+            if not match:
+
+                continue
+
+            candidate_move = match.groupdict()
+
+            if piece:
+                if piece in 'pP':                           # на входе пешка явно указана
+                    if candidate_move['piece']:             # а в шаге точно не пешка, а любая другая фигура
+                        candidate_moves.remove(m)
+                        continue
+                elif not piece == candidate_move['piece']:  # на входе не пешка
+                    candidate_moves.remove(m)
+                    continue
+
+            if file_to and not file_to == candidate_move['file_to']:
+                candidate_moves.remove(m)
+                continue
+
+            if rank_to and not rank_to == candidate_move['rank_to']:
+                candidate_moves.remove(m)
+                continue
+
+            if file_from and not file_from == candidate_move['file_from']:
+                candidate_moves.remove(m)
+                continue
+                
+            if rank_from and not rank_from == candidate_move['rank_from']:
+                candidate_moves.remove(m)
+                continue
+                
+            if promotion_piece and not promotion_piece == candidate_move['promotion_piece']:
+                candidate_moves.remove(m)
+                continue
+
+        print(f"candidate_moves: {candidate_moves}")
+        return candidate_moves

@@ -118,11 +118,6 @@ class WaitingMoveHandler(BaseHandler):
             self.game.set_skill_state('GAME_OVER')
             text, text_tts = self.prep_text_to_say(current_move, prev_turn, self.game.get_board(), '')
             return self.say(text + texts.stalemate_text, tts=text_tts)
-        
-        # Проверяем на превращение пешки
-        if self.game.is_promotion():
-            self.game.set_skill_state('WAITING_PROMOTION')
-            return self.say(texts.waiting_promotion_text)
             
         return None
     
@@ -153,7 +148,7 @@ class WaitingMoveHandler(BaseHandler):
             text, text_tts = self.text_preparer.say_not_legal_move(user_move=user_move)
             return self.say(text, tts=text_tts)
         if reason_type == "AMBIGUOUS":
-            text, text_tts = self.text_preparer.say_ambiguous_move(user_move=user_move)
+            text, text_tts = self.text_preparer.say_ambiguous_move(moves=user_move)
 
             return self.say(text, tts=text_tts) 
             

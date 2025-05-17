@@ -18,7 +18,7 @@ class TestGame(unittest.TestCase):
         self.assertEqual(self.game.skill_level, 1)
         self.assertEqual(self.game.time_level, 0.1)
         self.assertEqual(self.game.user_color, '')
-        self.assertFalse(self.game._needs_promotion)
+
 
 
     def test_init_with_game_state(self):
@@ -42,7 +42,7 @@ class TestGame(unittest.TestCase):
         self.assertEqual(game.user_color, 'WHITE')
         self.assertEqual(game.skill_level, 2)
         self.assertEqual(game.time_level, 0.3)
-        self.assertFalse(game._needs_promotion)
+
 
     def test_serialize_state(self):
         """Тест сериализации состояния игры."""
@@ -60,7 +60,6 @@ class TestGame(unittest.TestCase):
         self.assertEqual(state['current_turn'], 'White')
         self.assertEqual(state['skill_level'], 1)
         self.assertEqual(state['time_level'], 0.1)
-        self.assertFalse(state['needs_promotion'])
 
     def test_make_legal_move(self):
         """Тест выполнения допустимого хода."""
@@ -112,31 +111,6 @@ class TestGame(unittest.TestCase):
         game = Game()
         self.assertFalse(self.game.is_stalemate())
 
-    def test_check_promotion(self):
-        """Тест проверки необходимости превращения пешки."""
-        # Создаём ситуацию, требующую превращения пешки
-        self.game.board = chess.Board("8/P7/8/8/8/8/8/8 w - - 0 1")
-        # Делаем ход, который требует превращения
-        self.game.board.push(chess.Move.from_uci("a7a8"))
-        
-        # Должен быть флаг для превращения
-        self.assertTrue(self.game.check_promotion())
-        self.assertTrue(self.game._needs_promotion)
-
-    def test_promote_pawn(self):
-        """Тест превращения пешки."""
-        # Создаём ситуацию, требующую превращения пешки
-        self.game.board = chess.Board("8/P7/8/8/8/8/8/8 w - - 0 1")
-        self.game.board.push(chess.Move.from_uci("a7a8"))
-        self.game.check_promotion()
-        
-        # Превращаем в ферзя
-        self.assertTrue(self.game.promote_pawn(chess.QUEEN))
-        
-        # Проверяем, что на a8 стоит ферзь
-        piece = self.game.board.piece_at(chess.parse_square("a8"))
-        self.assertEqual(piece.piece_type, chess.QUEEN)
-        self.assertEqual(piece.color, chess.WHITE)
 
     def test_invalid_fen_in_game_state(self):
         """Тест обработки некорректного FEN в состоянии игры."""
