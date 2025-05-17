@@ -21,7 +21,7 @@ class WaitingSkillLevelHandler(BaseHandler):
         # Проверяем отказ
         if self.intent_validator.validate_no():
             # Возвращаемся в предыдущее состояние
-            self.game.set_skill_state(self.game.get_previous_state())
+            self.game.set_skill_state(self.game.get_prev_skill_state())
             return self.say(texts.skill_level_cancel_text)
 
         # Проверяем числовой уровень сложности
@@ -29,7 +29,7 @@ class WaitingSkillLevelHandler(BaseHandler):
             level = int(self.request['request']['command'])
             if self.min_level <= level <= self.max_level:
                 self.game.set_skill_level(level)
-                self.game.set_skill_state(self.game.get_previous_state())
+                self.game.set_skill_state(self.game.get_prev_skill_state())
                 waiting_move_text = ''
                 if self.game.get_skill_state() == 'WAITING_MOVE':
                     waiting_move_text = texts.waiting_move_text
@@ -40,5 +40,5 @@ class WaitingSkillLevelHandler(BaseHandler):
             return self.say(texts.skill_level_invalid_text)
 
         # Если ничего не подошло, возвращаемся в предыдущее состояние
-        self.game.set_skill_state(self.game.get_previous_state())
+        self.game.set_skill_state(self.game.get_prev_skill_state())
         return self.say(texts.skill_level_invalid_text)

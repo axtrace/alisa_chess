@@ -43,7 +43,6 @@ class Game(object):
         self.prev_skill_state = game_state.get('prev_skill_state', '')
         self.user_color = game_state.get('user_color', '')
         
- 
     def _init_board(self, game_state):
         if 'board_state' in game_state:
             return chess.Board(game_state['board_state'])
@@ -69,6 +68,7 @@ class Game(object):
     def get_prev_skill_state(self):
         """Возвращает предыдущее состояние."""
         return self.prev_skill_state
+
 
     def restore_prev_state(self):
         """Восстанавливает предыдущее состояние."""
