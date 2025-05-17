@@ -339,7 +339,7 @@ class MoveExtractor(object):
             (?:=?(?P<promotion_piece>[QRBN]))?  # Превращение (Q, R, B, N) - опционально
             [\+#\!\?]?               # Символы шаха, мата, оценки - опционально
             $
-        ''', re.VERBOSE | re.IGNORECASE)
+        ''', re.VERBOSE)
 
         matching_moves = []
 
