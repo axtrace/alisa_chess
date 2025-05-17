@@ -363,14 +363,14 @@ class MoveExtractor(object):
                 continue
 
             if candidate_move['file_from'] is not None:
-                if candidate_move['file_from'] != file_from:
+                if file_from and candidate_move['file_from'] != file_from:
                     print(f"candidate_move['file_from'] != file_from")
                     continue
 
             if candidate_move['rank_from'] is not None:
-                if candidate_move['rank_from'] != rank_from:
+                if rank_from and candidate_move['rank_from'] != rank_from:
                     print(f"candidate_move['rank_from'] != rank_from")
-                    continue       
+                    continue        
 
             matching_moves.append(m)
 
