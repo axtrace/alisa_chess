@@ -147,3 +147,4 @@ exp.py
 # old version
 .old/
 diag/
+_prev-stable/

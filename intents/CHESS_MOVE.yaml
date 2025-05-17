@@ -1,0 +1,40 @@
+root:
+    $piece? $file_from $rank_from $file_to $rank_to
+    $file_from $rank_from $file_to $rank_to
+    $file_from $rank_from на $file_to $rank_to
+    $piece? $file_from $rank_from на $file_to $rank_to
+    $piece? $file_to $rank_to
+    $file_to $rank_to
+    $piece? $file_from $file_to $rank_to
+    $piece? $rank_from $file_to $rank_to
+slots:
+    piece:
+        type: ChessPiece
+        source: $piece
+    file_from:
+        type: ChessFile
+        source: $file_from
+    rank_from:
+        type: ChessRank
+        source: $rank_from
+    file_to:
+        type: ChessFile
+        source: $file_to
+    rank_to:
+        type: ChessRank
+        source: $rank_to
+
+$piece:
+    $ChessPiece
+
+$rank_to:
+    $ChessRank
+
+$rank_from:
+    $ChessRank
+
+$file_to:
+    $ChessFile
+
+$file_from:
+    $ChessFile

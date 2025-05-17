@@ -1,0 +1,11 @@
+slots:
+    piece:
+        type: ChessPiece
+        source: $Piece
+root:
+    %lemma
+    $Piece
+$Piece:
+    $ChessPiece
+filler:
+    берет | ест | ходит | .+
