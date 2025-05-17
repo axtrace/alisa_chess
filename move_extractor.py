@@ -210,14 +210,23 @@ class MoveExtractor(object):
 
     def _extract_move_from_text(self, request):
         """Извлекает ход из текста запроса."""
+        print(f"_extract_move_from_text received: {request}")
         move_structure = {}
         if 'request' not in request or 'command' not in request['request']:
             return move_structure
 
-        command_text = request['request']['command']
-        
+        command_text = request.get('request', {}).get('command', '')
+        print(f"command_text: {command_text}")
+
         # Получаем фигуру
-        piece = self._get_piece_(request)
+        piece = self._get_piece_(command_text)
+        print(f"piece: {piece}")
+        promotion_piece = ''
+        if piece:
+            command_text_wo_piece = command_text
+            for w in self.piece_map[piece]:
+                command_text_wo_piece = re.sub(w, '', command_text_wo_piece)
+            promotion_piece = self._get_piece_(command_text_wo_piece)
         
         # Получаем клетки (файл и ранг)
         square_rex = re.compile(r'[a-zа-яё]+\s*[1-8]', flags=re.IGNORECASE)
@@ -243,6 +252,7 @@ class MoveExtractor(object):
             'rank_from': rank_from,
             'file_to': file_to,
             'rank_to': rank_to,
+            'promotion_piece': promotion_piece,
             'move': move
         }
         return move_structure
@@ -301,62 +311,69 @@ class MoveExtractor(object):
         rank_from = move_structure.get('rank_from', '')
         piece = move_structure.get('piece', '')
         promotion_piece = move_structure.get('promotion_piece', '')
-                
+        
+        # если явно указали пешку, то мы будем считать piece пустым
+        if piece.lower() == 'p':
+            piece = ''
+        
         candidate_moves = legal_moves
+
+        # оставим только ходы с file_to и rank_to в составе
+        if file_to and rank_to:
+            candidate_moves = [move for move in candidate_moves if file_to+rank_to in move]
 
         if promotion_piece:
             candidate_moves = [move for move in candidate_moves if '=' + promotion_piece in move]
-            print(f"candidate_moves filtered by promotion ={promotion_piece}: {candidate_moves}")
+            print(f"candidate_moves filtered by promotion: {candidate_moves}")
+
+        print(f"candidate_moves: {candidate_moves}")
 
         pattern = re.compile(r'''
             ^
             (?P<piece>[KQRBN])?      # Фигура (K, Q, R, B, N) - опционально
             (?P<file_from>[a-h])?    # Исходная вертикаль (a-h) - опционально
             (?P<rank_from>[1-8])?    # Исходная горизонталь (1-8) - опционально
-            x?                        # Символ взятия (опционально)
+            x?                       # Символ взятия (опционально)
             (?P<file_to>[a-h])       # Целевая вертикаль (a-h)
             (?P<rank_to>[1-8])       # Целевая горизонталь (1-8)
             (?:=?(?P<promotion_piece>[QRBN]))?  # Превращение (Q, R, B, N) - опционально
+            [\+#\!\?]?               # Символы шаха, мата, оценки - опционально
             $
         ''', re.VERBOSE | re.IGNORECASE)
 
-        for m in candidate_moves[:]:   #проходим по копии списка, чтобы удаление не влекло непредсказуемых последствий
+        matching_moves = []
 
+        for m in candidate_moves:
+            print(f"Checking move: {m}")
             match = pattern.fullmatch(m)
             if not match:
-
+                print(f"NONE MATCH: {m}")
                 continue
 
             candidate_move = match.groupdict()
+            print(f"Parsed move: {candidate_move}")
+            
+            # Проверяем фигуру
+            if candidate_move['piece'] is not None: 
+                if candidate_move['piece'] != piece:
+                    print(f"candidate_move['piece'] != piece")
+                    continue
+            elif piece:
+                print(f"candidate_move['piece'] in None, but piece in not None")
+                continue
 
-            if piece:
-                if piece in 'pP':                           # на входе пешка явно указана
-                    if candidate_move['piece']:             # а в шаге точно не пешка, а любая другая фигура
-                        candidate_moves.remove(m)
-                        continue
-                elif not piece == candidate_move['piece']:  # на входе не пешка
-                    candidate_moves.remove(m)
+            if candidate_move['file_from'] is not None:
+                if candidate_move['file_from'] != file_from:
+                    print(f"candidate_move['file_from'] != file_from")
                     continue
 
-            if file_to and not file_to == candidate_move['file_to']:
-                candidate_moves.remove(m)
-                continue
+            if candidate_move['rank_from'] is not None:
+                if candidate_move['rank_from'] != rank_from:
+                    print(f"candidate_move['rank_from'] != rank_from")
+                    continue       
 
-            if rank_to and not rank_to == candidate_move['rank_to']:
-                candidate_moves.remove(m)
-                continue
+            matching_moves.append(m)
 
-            if file_from and not file_from == candidate_move['file_from']:
-                candidate_moves.remove(m)
-                continue
-                
-            if rank_from and not rank_from == candidate_move['rank_from']:
-                candidate_moves.remove(m)
-                continue
-                
-            if promotion_piece and not promotion_piece == candidate_move['promotion_piece']:
-                candidate_moves.remove(m)
-                continue
-
-        print(f"candidate_moves: {candidate_moves}")
-        return candidate_moves
+        print(f"Matching moves: {matching_moves}")
+        
+        return matching_moves
