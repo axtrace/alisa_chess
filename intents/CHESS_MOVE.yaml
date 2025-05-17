@@ -1,12 +1,13 @@
 root:
-    $piece? $file_from $rank_from $file_to $rank_to
-    $file_from $rank_from $file_to $rank_to
-    $file_from $rank_from на $file_to $rank_to
-    $piece? $file_from $rank_from на $file_to $rank_to
-    $piece? $file_to $rank_to
-    $file_to $rank_to
-    $piece? $file_from $file_to $rank_to
-    $piece? $rank_from $file_to $rank_to
+    $piece? $file_to $rank_to $promotion_verb? $promotion_piece?
+    $piece? $file_from $rank_from $file_to $rank_to $promotion_verb? $promotion_piece?
+    $file_from $rank_from $file_to $rank_to $promotion_verb? $promotion_piece?
+    $file_from $rank_from на $file_to $rank_to $promotion_verb? $promotion_piece?
+    $piece? $file_from $rank_from на $file_to $rank_to $promotion_verb? $promotion_piece?
+    $piece? $file_to $rank_to $promotion_verb? $promotion_piece?
+    $file_to $rank_to $promotion_verb? $promotion_piece?
+    $piece? $file_from $file_to $rank_to $promotion_verb? $promotion_piece?
+    $piece? $rank_from $file_to $rank_to $promotion_verb? $promotion_piece?
 slots:
     piece:
         type: ChessPiece
@@ -23,6 +24,13 @@ slots:
     rank_to:
         type: ChessRank
         source: $rank_to
+    promotion_piece:
+        type: ChessPiece
+        source: $promotion_piece
+    promotion_verb:
+        type: PromotionVerb
+        source: $promotion_verb
+
 
 $piece:
     $ChessPiece
@@ -38,3 +46,15 @@ $file_to:
 
 $file_from:
     $ChessFile
+
+$promotion_piece:
+    $ChessPiece
+
+$promotion_verb:
+    преврати
+    преврати в
+    превращение
+    превращай
+    превращай в
+    в
+    равно
