@@ -69,7 +69,6 @@ class Game(object):
         """Возвращает предыдущее состояние."""
         return self.prev_skill_state
 
-
     def restore_prev_state(self):
         """Восстанавливает предыдущее состояние."""
         self.skill_state = self.prev_skill_state
@@ -119,6 +118,8 @@ class Game(object):
             self.time_level = 0.3
         else:   
             self.time_level = 0.1
+        print(f"Game.set_skill_level. skill_level: {self.skill_level}, time_level: {self.time_level}")
+    
 
     def get_skill_level(self):
         return self.skill_level

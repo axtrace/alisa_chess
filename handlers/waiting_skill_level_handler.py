@@ -31,6 +31,8 @@ class WaitingSkillLevelHandler(BaseHandler):
                 self.game.set_skill_level(level)
                 self.game.set_skill_state(self.game.get_prev_skill_state())
                 waiting_move_text = ''
+                if self.game.get_skill_state() == 'WAITING_SKILL_LEVEL':
+                   self.game.set_skill_state('WAITING_MOVE')
                 if self.game.get_skill_state() == 'WAITING_MOVE':
                     waiting_move_text = texts.waiting_move_text
                 return self.say(texts.skill_level_changed_text.format(level=level) + '\n' + waiting_move_text)
