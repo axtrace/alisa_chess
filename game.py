@@ -9,14 +9,15 @@ class ChessEngineAPI:
         self.api_url = os.getenv("CHESS_API_URL", "https://alice-chess.ru:8000/bestmove/")
         self.api_key = api_key or os.getenv("CHESS_API_KEY", "")
 
-    def get_best_move(self, fen: str, depth: int = 10) -> Optional[str]:
+    def get_best_move(self, fen: str, depth: int = 10, time: float = 0.1) -> Optional[str]:
         headers = {
             "X-API-Key": self.api_key,
             "Content-Type": "application/json"
         }
         data = {
             "fen": fen,
-            "depth": depth
+            "depth": depth,
+            "time": time
         }
         
         try:
@@ -74,7 +75,6 @@ class Game(object):
         self.skill_state = self.prev_skill_state
         self.prev_skill_state = ''
 
-
     def user_move(self, move_san):
         print(f"Game.user_move. Запрос на ход: {move_san}, доска {self.board.fen()}")
 
@@ -83,7 +83,7 @@ class Game(object):
 
     def comp_move(self):
         # Get the best move from the API
-        best_move = self.engine.get_best_move(self.board.fen(), self.skill_level)
+        best_move = self.engine.get_best_move(self.board.fen(), self.skill_level, self.time_level)
         if best_move:
             move = chess.Move.from_uci(best_move)
             san = self.board.san(move)  # Получаем SAN до push
@@ -111,6 +111,14 @@ class Game(object):
 
     def set_skill_level(self, skill_level):
         self.skill_level = int(skill_level)
+        if self.skill_level > 15:
+            self.time_level = 0.8
+        elif self.skill_level > 10:
+            self.time_level = 0.5
+        elif self.skill_level > 5:
+            self.time_level = 0.3
+        else:   
+            self.time_level = 0.1
 
     def get_skill_level(self):
         return self.skill_level

@@ -10,7 +10,6 @@ class TestFindMatchingMovesRealBoard(unittest.TestCase):
         board = chess.Board(board_fen)
         # Переопределяем san, чтобы вернуть SAN для каждого легального хода
         result = self.move_ext._find_matching_moves(board, move_structure)
-        # self.assertEqual(result, expected_moves)
         self.assertSetEqual(set(result), set(expected_moves))
 
     def test_cases(self):
