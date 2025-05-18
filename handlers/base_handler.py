@@ -39,7 +39,7 @@ class BaseHandler(ABC):
 
     def restore_prev_state(self):
         """Восстанавливает предыдущее состояние игры."""
-        prev_state = self.request['state']['user']['game_state']['prev_state']
+        prev_state = self.request['state']['user']['game_state']['prev_skill_state']
         self.game.set_skill_state(prev_state)
         return None
     
