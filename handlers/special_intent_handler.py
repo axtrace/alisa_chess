@@ -15,7 +15,15 @@ class SpecialIntentHandler(BaseHandler):
     def handle(self):
         # Проверяем специальные намерения, которые не зависят от состояния игры
         print(f"SpecialIntentHandler. handle. Проверяем запрос: {self.request}")
-
+        if self.intent_validator.validate_new_session():
+            print(f"SpecialIntentHandler. validate_new_session. Запрос: {self.request}")
+            state_text = texts.state_texts.get(self.game.get_skill_state(), '')
+            state = self.request.get('state',{}).get('user',{}).get('game_state', {})
+            if state:
+                return self.say(texts.resume_text + '\n' + state_text)
+            else:
+                return self.say(texts.hi_text)
+        
         if self.intent_validator.validate_help():
             print(f"SpecialIntentHandler. validate_help. Запрос: {self.request}")
             state_text = texts.state_texts.get(self.game.get_skill_state(), '')

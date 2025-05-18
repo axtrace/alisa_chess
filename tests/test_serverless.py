@@ -30,7 +30,7 @@ class TestServerless(unittest.TestCase):
                     "application_id": "test-app-id"
                 },
                 "user_id": "test-user-id",
-                "new": True
+                "new": False
             },
             "request": {
                 "command": "",

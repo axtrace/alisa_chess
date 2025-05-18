@@ -1,6 +1,7 @@
 import unittest
 from unittest.mock import patch, MagicMock
 from alice_chess import AliceChess
+from game import Game
 
 
 class TestAliceChess(unittest.TestCase):
@@ -30,7 +31,7 @@ class TestAliceChess(unittest.TestCase):
                     "application_id": "test-app-id"
                 },
                 "user_id": "test-user-id",
-                "new": True
+                "new": False
             },
             "request": {
                 "command": "",
@@ -220,6 +221,87 @@ class TestAliceChess(unittest.TestCase):
         self.assertIn('♖', response['text'].lower())
         self.assertIn('tts', response)
         self.assertFalse(response['end_session'])
+
+    def test_new_session_with_saved_state(self):
+        """Тест обработки новой сессии с сохраненным состоянием игры."""
+        # Подготавливаем тестовые данные
+        saved_game_state = {
+            'board_state': 'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1',
+            'skill_state': 'WAITING_MOVE',
+            'prev_skill_state': 'WAITING_COLOR',
+            'user_color': 'WHITE',
+            'current_turn': 'BLACK',
+            'time_level': 0.1,
+            'skill_level': 1,
+            'last_move': 'e4'
+        }
+
+        test_request = {
+            'session': {
+                'new': True,
+                'message_id': 0,
+                'session_id': 'test-session-id',
+                'user_id': 'test-user-id'
+            },
+            'state': {
+                'user': {
+                    'game_state': saved_game_state
+                }
+            },
+            'request': {
+                'command': '',
+                'original_utterance': '',
+                'nlu': {
+                    'tokens': [],
+                    'entities': [],
+                    'intents': {}
+                }
+            }
+        }
+
+        # Вызываем обработку запроса
+        response = self.alice.handle_request(test_request)
+
+        # Проверяем, что состояние игры восстановлено
+        self.assertEqual(self.alice.game.get_skill_state(), 'WAITING_MOVE')
+        self.assertEqual(self.alice.game.get_user_color(), 'WHITE')
+        self.assertEqual(self.alice.game.get_skill_level(), 1)
+        
+        # Проверяем, что ответ содержит сообщение о продолжении игры
+        self.assertIn('Продолжаем игру', response['text'])
+        self.assertIn('Ожидаю ваш ход', response['text'])
+
+    def test_new_session_without_saved_state(self):
+        """Тест обработки новой сессии без сохраненного состояния."""
+        test_request = {
+            'session': {
+                'new': True,
+                'message_id': 0,
+                'session_id': 'test-session-id',
+                'user_id': 'test-user-id'
+            },
+            'state': {
+                'user': {}
+            },
+            'request': {
+                'command': '',
+                'original_utterance': '',
+                'nlu': {
+                    'tokens': [],
+                    'entities': [],
+                    'intents': {}
+                }
+            }
+        }
+
+        # Вызываем обработку запроса
+        response = self.alice.handle_request(test_request)
+
+        # Проверяем, что игра инициализирована с начальным состоянием
+        self.assertEqual(self.alice.game.get_skill_state(), 'INITIATED')
+        
+        # Проверяем, что ответ содержит приветственное сообщение
+        self.assertIn('готова сыграть с вами в шахматы вслепую.', response['text'])
 
 
 if __name__ == '__main__':

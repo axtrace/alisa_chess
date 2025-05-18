@@ -86,9 +86,14 @@ class IntentValidator(BaseValidator):
         show_board_words = ['доска', 'board', 'доску']
         return self._has_text(show_board_words)
 
+    def validate_new_session(self) -> bool:
+        """Проверяет, является ли запрос началом новой сессии."""
+        return self.request.get('session', {}).get('new', False)
+
     def validate(self) -> bool:
         """Проверяет наличие любого из известных интентов."""
         return any([
+            self.validate_new_session(),
             self.validate_yes(),
             self.validate_no(),
             self.validate_help(),

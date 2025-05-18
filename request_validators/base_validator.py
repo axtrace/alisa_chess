@@ -14,10 +14,8 @@ class BaseValidator(ABC):
 
     def _has_intent(self, intent_name):
         """Проверяет наличие интента в запросе."""
-        print(f"BaseValidator. _has_intent. Запрос: {self.request}")
         nlu = self.request.get('request', {}).get('nlu', {})
         intents = nlu.get('intents', {})
-        print(f"BaseValidator. _has_intent. Intents: {intents}")
         return intent_name in intents
 
     def _has_text(self, list_of_words):

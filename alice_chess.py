@@ -37,7 +37,10 @@ class AliceChess:
         """Обрабатывает входящий запрос.
         
         Args:
-            request: Данные запроса
+            request: Входящий запрос от Алисы.
+
+        Returns:
+            Ответ для Алисы.
         """
 
         print(f"handle_request. Запрос: {request}")
