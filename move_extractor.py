@@ -87,7 +87,7 @@ class MoveExtractor(object):
         # Проверяем рокировку
         castling_move, castling_type = self._extract_castling_move(request)
         if castling_move:
-            return castling_move, castling_type
+            return [castling_type], castling_type
 
         # Пробуем извлечь ход из интентов
         extracted_move_structure = self._extract_move_from_intents(request)
@@ -287,14 +287,6 @@ class MoveExtractor(object):
                 return True, 'O-O-O'
             if 'SHORT_CASTLING' in intents or 'CASTLING' in intents:
                 return True, 'O-O'
-
-        # Если интенты не помогли, проверяем текст
-        if 'request' in request and 'command' in request['request']:
-            command = request['request']['command'].lower()
-            for castle_type in self.castling_map:
-                for phrase in self.castling_map[castle_type]:
-                    if phrase in command:
-                        return True, castle_type
 
         return False, None
         

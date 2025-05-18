@@ -111,9 +111,13 @@ class Game(object):
 
     def set_skill_level(self, skill_level):
         self.skill_level = int(skill_level)
-        if self.skill_level > 15:
-            self.time_level = 0.8
+        if self.skill_level > 17:
+            self.time_level = 2.0
+        elif self.skill_level > 15:
+            self.time_level = 1.0
         elif self.skill_level > 10:
+            self.time_level = 0.8
+        elif self.skill_level > 7:
             self.time_level = 0.5
         elif self.skill_level > 5:
             self.time_level = 0.3

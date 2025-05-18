@@ -20,7 +20,7 @@ jobs:
         folder-id: ${{ secrets.FOLDER_ID }}
         function-name: 'alice-chess-testing' # TODO: change to alice-chess-stable
         runtime: 'python39'
-        memory: '1024Mb'
+        memory: '2048Mb'
         entrypoint: 'alice_serverless.handler'
         environment: |
           CHESS_API_KEY=${{ secrets.CHESS_API_KEY }}
