@@ -27,13 +27,17 @@ jobs:
           DEBUG=True
           COUNT=1
         include: |
-          **/*.py
+          *.py
+          handlers/*.py
+          request_validators/*.py
           requirements.txt
         exclude: |
           **/*.ts
-          .github/**
           **/tests/**
           **/_prev-stable/**
+          tests/
+          _prev-stable/
+          .github/**
           venv/**
           .gitignore
           LICENSE
