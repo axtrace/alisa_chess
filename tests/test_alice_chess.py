@@ -268,8 +268,8 @@ class TestAliceChess(unittest.TestCase):
         self.assertEqual(self.alice.game.get_skill_level(), 1)
         
         # Проверяем, что ответ содержит сообщение о продолжении игры
-        self.assertIn('Продолжаем игру', response['text'])
-        self.assertIn('Ожидаю ваш ход', response['text'])
+        self.assertIn('Продолжим нашу игру', response['text'])
+        self.assertIn('Ваш ход', response['text'])
 
     def test_new_session_without_saved_state(self):
         """Тест обработки новой сессии без сохраненного состояния."""
