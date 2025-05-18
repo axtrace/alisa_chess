@@ -32,7 +32,7 @@ class Speaker(object):
 
     captures_names = {'ru': 'берёт', 'en': 'capture'}
 
-    promotions_names = {'ru': 'превращение в', 'en': 'promotion to'}
+    promotions_names = {'ru': 'превращается в', 'en': 'promotes to'}
 
     castling_names = {
         '0-0': {'ru': 'Короткая рокировка', 'en': 'Kingside castling'},
@@ -116,6 +116,9 @@ class Speaker(object):
             elif sym[0] in '+#':
                 # check or mate
                 speak_list.append(self._checkmate_pron_(sym[0], lang))
+            elif sym[0] in '=':
+                # promotion
+                speak_list.append(self.promotions_names.get(lang, ''))
         print(f"say_move result: {speak_list}")  # Отладочный вывод
         return ' '.join(speak_list)
 
