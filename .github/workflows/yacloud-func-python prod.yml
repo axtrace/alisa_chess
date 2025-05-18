@@ -17,7 +17,7 @@ jobs:
         folder-id: ${{ secrets.FOLDER_ID }}
         function-name: 'alice-chess-stable'
         runtime: 'python39'
-        memory: '1024Mb'
+        memory: '4096Mb'
         entrypoint: 'alice_serverless.handler'
         environment: |
           CHESS_API_KEY=${{ secrets.CHESS_API_KEY }}
@@ -29,8 +29,8 @@ jobs:
         exclude: |
           **/*.ts
           .github/**
-          tests/**
-          _prev-stable/**
+          **/tests/**
+          **/_prev-stable/**
           venv/**
           .gitignore
           LICENSE

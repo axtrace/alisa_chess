@@ -32,8 +32,9 @@ jobs:
         exclude: |
           **/*.ts
           .github/**
-          tests/**
-          _prev-stable/**
+          **/tests/**
+          **/_prev-stable/**
           venv/**
           .gitignore
           LICENSE
+
