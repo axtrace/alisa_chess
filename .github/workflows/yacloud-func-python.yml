@@ -18,7 +18,7 @@ jobs:
       with:
         yc-sa-json-credentials: ${{ secrets.YC_SA_JSON_CREDENTIALS }}
         folder-id: ${{ secrets.FOLDER_ID }}
-        function-name: 'alice-chess-testing' # TODO: change to alice-chess-stable
+        function-name: 'alice-chess-testing'
         runtime: 'python39'
         memory: '2048Mb'
         entrypoint: 'alice_serverless.handler'
