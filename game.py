@@ -161,7 +161,6 @@ class Game(object):
             'current_turn': 'WHITE' if self.board.turn == chess.WHITE else 'BLACK',
             'time_level': self.time_level,
             'skill_level': self.skill_level,
-            'winner': self.winner,
             'last_move': self.get_last_move()
         }
         return state
@@ -171,7 +170,7 @@ class Game(object):
         if not self.board.move_stack:
             return self.last_move
         last_move = self.board.move_stack[-1]
-        return self.board.san(last_move)
+        return last_move
 
     def is_valid_move(self, move_san):
         """Проверяет, является ли ход допустимым."""

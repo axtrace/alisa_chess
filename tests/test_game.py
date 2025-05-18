@@ -20,7 +20,6 @@ class TestGame(unittest.TestCase):
         self.assertEqual(self.game.user_color, '')
 
 
-
     def test_init_with_game_state(self):
         """Тест инициализации из сохранённого состояния."""
         fen = "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2"
@@ -57,7 +56,7 @@ class TestGame(unittest.TestCase):
         self.assertEqual(state['skill_state'], 'WAITING_MOVE')
         self.assertEqual(state['prev_skill_state'], 'INITIATED')
         self.assertEqual(state['user_color'], 'WHITE')
-        self.assertEqual(state['current_turn'], 'White')
+        self.assertEqual(state['current_turn'], 'WHITE')
         self.assertEqual(state['skill_level'], 1)
         self.assertEqual(state['time_level'], 0.1)
 
@@ -79,6 +78,78 @@ class TestGame(unittest.TestCase):
         self.assertFalse(self.game.is_valid_move('e3d4'))
         # Конь не может пойти на e4
         self.assertFalse(self.game.is_valid_move('Ne4'))
+
+    @patch('game.ChessEngineAPI')
+    def test_comp_move(self, mock_engine):
+        """Тест хода компьютера."""
+        # Настраиваем мок для движка
+        mock_engine_instance = mock_engine.return_value
+        mock_engine_instance.get_best_move.return_value = 'e2e4'  # Возвращаем ход e4
+        
+        # Создаем новую игру с замоканным движком
+        game = Game()
+        
+        # Делаем ход компьютера
+        comp_move = game.comp_move()
+
+        print(f"test_comp_move comp_move: {comp_move}")
+        # Проверяем, что ход был сделан
+        self.assertIsNotNone(comp_move)
+        
+        # Проверяем, что ход был выполнен на доске
+        self.assertNotEqual(game.board.fen(), self.initial_fen)
+        
+        # Проверяем, что движок был вызван с правильными параметрами
+        mock_engine_instance.get_best_move.assert_called_once_with(
+            self.initial_fen,  # начальная позиция
+            1,  # skill_level по умолчанию
+            0.1  # time_level по умолчанию
+        )
+
+    @patch('game.ChessEngineAPI')
+    def test_comp_move_engine_error(self, mock_engine):
+        """Тест хода компьютера при ошибке движка."""
+        # Настраиваем мок для движка, чтобы он возвращал None
+        mock_engine_instance = mock_engine.return_value
+        mock_engine_instance.get_best_move.return_value = None
+        
+        # Создаем новую игру с замоканным движком
+        game = Game()
+        
+        # Делаем ход компьютера
+        comp_move = game.comp_move()
+        
+        # Проверяем, что ход не был сделан
+        self.assertIsNone(comp_move)
+        
+        # Проверяем, что доска не изменилась
+        self.assertEqual(game.board.fen(), self.initial_fen)
+
+    @patch('game.ChessEngineAPI')
+    def test_comp_move_operation_order(self, mock_engine):
+        """Тест порядка операций в методе comp_move."""
+        # Настраиваем мок для движка
+        mock_engine_instance = mock_engine.return_value
+        mock_engine_instance.get_best_move.return_value = 'e2e4'
+        
+        # Создаем новую игру с замоканным движком
+        game = Game()
+        
+        # Сохраняем начальное состояние доски
+        initial_fen = game.board.fen()
+        
+        # Делаем ход компьютера
+        comp_move = game.comp_move()
+        
+        # Проверяем, что ход был сделан
+        self.assertIsNotNone(comp_move)
+        self.assertEqual(comp_move, 'e4')  # Проверяем SAN нотацию
+        
+        # Проверяем, что доска изменилась
+        self.assertNotEqual(game.board.fen(), initial_fen)
+        
+        # Проверяем, что пешка действительно на e4
+        self.assertEqual(game.board.piece_at(chess.parse_square('e4')).piece_type, chess.PAWN)
 
     def test_is_checkmate(self):
         """Тест на определение мата."""
@@ -120,7 +191,7 @@ class TestGame(unittest.TestCase):
 
     def test_missing_board_in_game_state(self):
         """Тест обработки отсутствующей доски в состоянии."""
-        # Состояние без board_state должно использовать начальную доску
+        # Состояние без board_state должно использоваться начальную доску
         state = {
             'skill_state': 'WAITING_MOVE',
             'user_color': 'WHITE'
