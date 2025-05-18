@@ -60,8 +60,9 @@ class Game(object):
         return self.skill_state
 
     def set_skill_state(self, skill_state):
-        """Устанавливает новое состояние, сохраняя предыдущее."""
-        self.prev_skill_state = self.skill_state
+        """Устанавливает новое состояние, сохраняя предыдущее, отличающееся от нового."""
+        if self.skill_state != skill_state:
+            self.prev_skill_state = self.skill_state
         self.skill_state = skill_state
         print(f"Установлено состояние: {self.skill_state}. Предыдущее состояние: {self.prev_skill_state}")
 
