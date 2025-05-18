@@ -14,9 +14,6 @@ class WaitingSkillLevelHandler(BaseHandler):
 
     def handle(self):
         """Обрабатывает запрос в состоянии ожидания выбора уровня сложности."""
-        # Проверяем специальные намерения
-        if self.intent_validator.validate_help():
-            return self.say(texts.help_text)
 
         # Проверяем отказ
         if self.intent_validator.validate_no():
