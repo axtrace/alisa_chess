@@ -33,6 +33,7 @@ jobs:
           **/*.ts
           .github/**
           /tests/**
+          /_prev-stable/**
           venv/**
           **/*.ts
           .gitignore
