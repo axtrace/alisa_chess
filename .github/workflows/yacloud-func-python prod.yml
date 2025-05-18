@@ -1,4 +1,4 @@
-name: Prod Deploy to YaCloud Functions
+name: Manual Deploy to PROD YaCloud Functions
 
 on:
   workflow_dispatch:
