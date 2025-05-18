@@ -151,6 +151,9 @@ class Game(object):
     
     def reset_board(self):
         self.board = chess.Board()
+        self.last_move = ''
+        self.user_color = ''
+        self.prev_skill_state = ''
 
     def serialize_state(self):
         """Сериализует состояние игры в строку."""
