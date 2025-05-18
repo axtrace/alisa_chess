@@ -41,7 +41,7 @@ class WaitingMoveHandler(BaseHandler):
             user_move = user_moves
 
         # Если игра после хода ПОЛЬЗОВАТЕЛЯ закончилась, то говорим об этом
-        game_state = self._check_game_state(user_move=user_move, prev_turn=user_color)
+        game_state = self._check_game_state(current_move=user_move, prev_turn=user_color)
         if game_state:
             return game_state
             
@@ -50,7 +50,7 @@ class WaitingMoveHandler(BaseHandler):
         comp_move = self.game.comp_move()
         
         # Если игра после хода КОМПЬЮТЕРА закончилась, то говорим об этом
-        game_state = self._check_game_state(comp_move=comp_move, prev_turn=comp_color)
+        game_state = self._check_game_state(current_move=comp_move, prev_turn=comp_color)
         if game_state:
             return game_state
             
