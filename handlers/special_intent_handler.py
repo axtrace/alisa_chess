@@ -78,7 +78,7 @@ class SpecialIntentHandler(BaseHandler):
             last_move = self.game.get_last_move()
             comp_color = 'WHITE' if self.game.get_user_color() == 'BLACK' else 'BLACK'
             add_text = self.game.get_board() + '\n'*2 + 'FEN: ' + self.game.board.fen() + '\n'
-            text, text_tts = self.prep_text_to_say(comp_move=last_move, prev_turn=comp_color, text_to_show=add_text, text_to_say='Показала доску в чате')
+            text, text_tts = self.prep_text_to_say(comp_move=last_move, prev_turn=comp_color, text_to_show=add_text, text_to_say='Показала доску в чате. ')
             return self.say(text, tts=text_tts)    
         
         return None
