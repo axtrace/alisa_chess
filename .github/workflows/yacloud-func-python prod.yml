@@ -1,4 +1,4 @@
-name: Auto Deploy to Yandex Cloud Functions (testing)
+name: Prod Deploy to YaCloud Functions
 
 on:
   workflow_dispatch:

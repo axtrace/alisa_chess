@@ -1,4 +1,4 @@
-name: Auto Deploy to Yandex Cloud Functions (testing)
+name: Auto Deploy to testing YaCloud Functions
 
 on:
   push:
