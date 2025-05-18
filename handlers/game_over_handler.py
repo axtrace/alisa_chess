@@ -17,4 +17,4 @@ class GameOverHandler(BaseHandler):
             self.game.set_skill_state('INITIATED')
             return self.say(texts.hi_text)
             
-        return self.say(texts.game_over_text) 
+        return self.say(texts.gameover_text)

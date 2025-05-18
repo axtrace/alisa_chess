@@ -98,26 +98,34 @@ class WaitingMoveHandler(BaseHandler):
         # Проверяем на недостаточность материала
         if self.game.is_insufficient_material():
             self.game.set_skill_state('GAME_OVER')
-            text, text_tts = self.prep_text_to_say(current_move, prev_turn, self.game.get_board(), '')
-            return self.say(text + texts.insufficient_material_text, tts=text_tts)
+            text, text_tts = self.prep_text_to_say(comp_move=current_move, prev_turn=prev_turn, text_to_show=self.game.get_board(), text_to_say='')
+            text += '\n' + texts.insufficient_material_text
+            text_tts += '\n' + texts.insufficient_material_text_tts
+            return self.say(text, tts=text_tts)
         
         # Проверяем на пятикратное повторение
         if self.game.is_fivefold_repetition():
             self.game.set_skill_state('GAME_OVER')
-            text, text_tts = self.prep_text_to_say(current_move, prev_turn, self.game.get_board(), '')
-            return self.say(text + texts.fivefold_repetition_text, tts=text_tts)
+            text, text_tts = self.prep_text_to_say(comp_move=current_move, prev_turn=prev_turn, text_to_show=self.game.get_board(), text_to_say='')
+            text += '\n' + texts.fivefold_repetition_text
+            text_tts += '\n' + texts.fivefold_repetition_text
+            return self.say(text, tts=text_tts)
         
         # Проверяем на мат
         if self.game.is_checkmate():
             self.game.set_skill_state('GAME_OVER')
-            text, text_tts = self.prep_text_to_say(current_move, prev_turn, self.game.get_board(), '')
-            return self.say(text + texts.checkmate_text, tts=text_tts)
+            text, text_tts = self.prep_text_to_say(comp_move=current_move, prev_turn=prev_turn, text_to_show=self.game.get_board(), text_to_say='')
+            text += '\n' + texts.checkmate_text
+            text_tts += '\n' + texts.checkmate_text
+            return self.say(text, tts=text_tts)
             
         # Проверяем на пат
         if self.game.is_stalemate():
             self.game.set_skill_state('GAME_OVER')
-            text, text_tts = self.prep_text_to_say(current_move, prev_turn, self.game.get_board(), '')
-            return self.say(text + texts.stalemate_text, tts=text_tts)
+            text, text_tts = self.prep_text_to_say(comp_move=current_move, prev_turn=prev_turn, text_to_show=self.game.get_board(), text_to_say='')
+            text += '\n' + texts.stalemate_text
+            text_tts += '\n' + texts.stalemate_text
+            return self.say(text, tts=text_tts)
             
         return None
     
