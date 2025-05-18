@@ -53,3 +53,12 @@ class BaseHandler(ABC):
         """Подготавливает текст для возврата в навык Алисы, чтобы озвучить ход."""
         text, text_tts = self.text_preparer.say_your_move(comp_move=comp_move, prev_turn=prev_turn, text_to_show=text_to_show, text_to_say=text_to_say)
         return text, text_tts
+    
+
+    def repeat_last_move(self):
+        """Повторяет последний ход."""
+        last_move = self.game.get_last_move()
+        return self.say(texts.repeat_last_move_text.format(last_move))  
+    
+
+    
