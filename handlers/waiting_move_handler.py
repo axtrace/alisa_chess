@@ -23,6 +23,8 @@ class WaitingMoveHandler(BaseHandler):
             
         if self.intent_validator.validate_repeat_last_move():
             return self._repeat_last_move_handler()
+        
+        user_color = self.game.get_user_color()
 
         # Обработка и выполнение хода пользователя
         user_moves, reason_type = self._handle_user_move()
@@ -38,22 +40,22 @@ class WaitingMoveHandler(BaseHandler):
         else:
             user_move = user_moves
 
-        # Если игра после хода пользователя закончилась, то говорим об этом
-        game_state = self._check_game_state(user_move)
+        # Если игра после хода ПОЛЬЗОВАТЕЛЯ закончилась, то говорим об этом
+        game_state = self._check_game_state(user_move=user_move, prev_turn=user_color)
         if game_state:
             return game_state
             
         # Делаем один ход компьютера
-        prev_turn = self.game.who()
+        comp_color = self.game.who() # who возвращает сторону, которая делает ход. До хода компьютера - это и есть сторона компьютера
         comp_move = self.game.comp_move()
         
-        # Если игра после хода компьютера закончилась, то говорим об этом
-        game_state = self._check_game_state(comp_move, user_move)
+        # Если игра после хода КОМПЬЮТЕРА закончилась, то говорим об этом
+        game_state = self._check_game_state(comp_move=comp_move, prev_turn=comp_color)
         if game_state:
             return game_state
             
         # Озвучиваем ход компьютера
-        text, text_tts = self.prep_text_to_say(comp_move=comp_move, prev_turn=prev_turn, text_to_show=self.game.get_board(), text_to_say='')
+        text, text_tts = self.prep_text_to_say(comp_move=comp_move, prev_turn=comp_color, text_to_show=self.game.get_board(), text_to_say='')
         return self.say(text, tts=text_tts)
 
     def _handle_user_move(self):
