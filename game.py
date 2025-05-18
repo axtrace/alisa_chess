@@ -100,9 +100,6 @@ class Game(object):
     def is_game_over(self):
         return self.board.is_game_over()
 
-    def quit(self):
-        pass # API не требует quit
-
     def is_move_legal(self, move):
         try:
             return self.board.parse_san(move) in self.board.legal_moves

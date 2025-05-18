@@ -42,8 +42,18 @@ class SpecialIntentHandler(BaseHandler):
         
         if self.intent_validator.validate_repeat_last_move():
             print(f"SpecialIntentHandler. validate_repeat_last_move. Запрос: {self.request}")
-            self.game.repeat_last_move()
-            return self.say(texts.repeat_last_move_text)
+            last_move = self.game.get_last_move()
+            user_color = self.game.get_user_color()
+            if last_move:
+                if user_color == 'WHITE':
+                    comp_color = 'BLACK'
+                else:
+                    comp_color = 'WHITE'
+                text, text_tts = self.prep_text_to_say(comp_move=last_move, prev_turn=comp_color, text_to_show=self.game.get_board(), text_to_say='')
+                return self.say(text, tts=text_tts)
+            else:
+                text = texts.no_moves_text
+                return self.say(text)
         
         if self.intent_validator.validate_set_skill_level():
             print(f"SpecialIntentHandler. validate_set_skill_level. Запрос: {self.request}")
