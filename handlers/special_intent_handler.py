@@ -23,17 +23,17 @@ class SpecialIntentHandler(BaseHandler):
         if self.intent_validator.validate_new_game():
             print(f"SpecialIntentHandler. validate_new_game. Запрос: {self.request}")
             self.game.set_skill_state('WAITING_NEWGAME_CONFIRM')
-            return self.say(texts.newgame_offer_text)
+            return self.say(texts.waiting_newgame_confirm_text)
             
         if self.intent_validator.validate_draw():
             print(f"SpecialIntentHandler. validate_draw. Запрос: {self.request}")
             self.game.set_skill_state('WAITING_DRAW_CONFIRM')
-            return self.say(texts.draw_offer_text)
+            return self.say(texts.waiting_draw_confirm_text)
             
         if self.intent_validator.validate_resign():
             print(f"SpecialIntentHandler. validate_resign. Запрос: {self.request}")
             self.game.set_skill_state('WAITING_RESIGN_CONFIRM')
-            return self.say(texts.resign_offer_text)
+            return self.say(texts.waiting_resign_confirm_text)
         
         if self.intent_validator.validate_unmake():
             print(f"SpecialIntentHandler. validate_unmake. Запрос: {self.request}")
@@ -49,7 +49,7 @@ class SpecialIntentHandler(BaseHandler):
             print(f"SpecialIntentHandler. validate_set_skill_level. Запрос: {self.request}")
             self.game.set_skill_state('WAITING_SKILL_LEVEL')
             current_level = self.game.get_skill_level()
-            return self.say(texts.set_skill_level_text.format(current_level))
+            return self.say(texts.waiting_skill_level_text.format(current_level))
         
         if self.intent_validator.validate_get_skill_level():
             print(f"SpecialIntentHandler. validate_get_skill_level. Запрос: {self.request}")

@@ -104,7 +104,7 @@ not_get_move_text = """Я не поняла ваш ход. Пожалуйста,
 not_get_promotion_text = """Пожалуйста, выберите фигуру для превращения пешки: ферзь, ладья, слон или конь."""
 
 # Текст при предложении ничьей
-draw_offer_text = """
+waiting_draw_confirm_text = """
 Правильно ли я поняла, что вы предлагаете ничью? 
 Подтвердите, пожалуйста, сказав 'Да' или 'Нет'.
 """
@@ -120,7 +120,7 @@ draw_accepted_text = """
 """
 
 # Текст при предложении сдачи
-resign_offer_text = """
+waiting_resign_confirm_text = """
 Вы действительно хотите сдаться? 
 Подтвердите, пожалуйста, сказав 'Да' или 'Нет'.
 """
@@ -136,7 +136,12 @@ resign_accepted_text = """
 """
 
 # Текст при предложении сдачи
-newgame_offer_text = """
+waiting_resign_confirm_text = """
+Вы действительно хотите начать новую игру?
+Подтвердите, пожалуйста, сказав 'Да' или 'Нет'.
+"""
+
+waiting_newgame_confirm_text = """
 Вы действительно хотите начать новую игру?
 Подтвердите, пожалуйста, сказав 'Да' или 'Нет'.
 """
@@ -155,7 +160,7 @@ skill_level_changed_text = """
 Уровень сложности установлен на {level}.
 """
 
-set_skill_level_text = """
+waiting_skill_level_text = """
 Текущий уровень сложности: {}.
 Вы хотите изменить уровень сложности?
 Скажите число от 1 до 20.
@@ -229,3 +234,14 @@ get_skill_level_text = """
 waiting_move_text = """
 Ожидаем вашего хода.
 """
+
+# Тексты, которые возвращаются в навык Алисы при переходе в состояние
+state_texts = {
+   'WAITING_CONFIRM': hi_text,
+   'WAITING_MOVE': waiting_move_text,
+   'WAITING_PROMOTION': waiting_promotion_text,
+   'WAITING_DRAW_CONFIRM': waiting_draw_confirm_text,
+   'WAITING_RESIGN_CONFIRM': waiting_resign_confirm_text,
+   'WAITING_NEWGAME_CONFIRM': waiting_newgame_confirm_text,
+   'WAITING_SKILL_LEVEL': waiting_skill_level_text
+}

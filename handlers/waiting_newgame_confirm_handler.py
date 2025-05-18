@@ -16,10 +16,12 @@ class WaitingNewgameConfirmHandler(BaseHandler):
         if self.intent_validator.validate_yes():
             self.reset_game()
             self.game.set_skill_state('WAITING_CONFIRM')
-            return self.say(texts.hi_text)
+            state_text = texts.state_texts.get(self.game.get_skill_state(), '')
+            return self.say(state_text)
             
         if self.intent_validator.validate_no():
             self.restore_prev_state()
-            return self.say(texts.newgame_declined_text)
+            state_text = texts.state_texts.get(self.game.get_skill_state(), '')
+            return self.say(texts.newgame_declined_text + '\n' + state_text)
             
-        return self.say(texts.newgame_offer_text) 
+        return self.say(texts.waiting_newgame_confirm_text) 

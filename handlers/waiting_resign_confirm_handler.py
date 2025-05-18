@@ -15,11 +15,13 @@ class WaitingResignConfirmHandler(BaseHandler):
         print(f"WaitingResignConfirmHandler. handle. Запрос: {self.request}")
         if self.intent_validator.validate_yes():
             self.game.set_skill_state('INITIATED')
-            return self.say(texts.resign_accepted_text)
+            state_text = texts.state_texts.get(self.game.get_skill_state(), '')
+            return self.say(texts.resign_accepted_text + '\n' + state_text)
             
         if self.intent_validator.validate_no():
             # self.game.set_skill_state('WAITING_MOVE')
             self.restore_prev_state()
-            return self.say(texts.resign_declined_text)
+            state_text = texts.state_texts.get(self.game.get_skill_state(), '')
+            return self.say(texts.resign_declined_text + '\n' + state_text)
             
-        return self.say(texts.resign_offer_text) 
+        return self.say(texts.waiting_resign_confirm_text) 

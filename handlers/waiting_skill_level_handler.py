@@ -29,18 +29,10 @@ class WaitingSkillLevelHandler(BaseHandler):
             level = int(self.request['request']['command'])
             if self.min_level <= level <= self.max_level:
                 self.game.set_skill_level(level)
-                self.game.set_skill_state(self.game.get_prev_skill_state())
-                waiting_move_text = ''
-                if self.game.get_skill_state() == 'WAITING_SKILL_LEVEL':
-                   self.game.set_skill_state('WAITING_MOVE')
-                if self.game.get_skill_state() == 'WAITING_MOVE':
-                    waiting_move_text = texts.waiting_move_text
-                return self.say(texts.skill_level_changed_text.format(level=level) + '\n' + waiting_move_text)
+                self.game.restore_prev_state()
+                state_text = texts.state_texts.get(self.game.get_skill_state(), '')
+                return self.say(texts.skill_level_changed_text.format(level=level) + '\n' + state_text)
             else:
                 return self.say(texts.skill_level_invalid_text)
         except ValueError:
             return self.say(texts.skill_level_invalid_text)
-
-        # Если ничего не подошло, возвращаемся в предыдущее состояние
-        self.game.set_skill_state(self.game.get_prev_skill_state())
-        return self.say(texts.skill_level_invalid_text)
