@@ -42,6 +42,7 @@ class Game(object):
         self.skill_state = game_state.get('skill_state', 'INITIATED')
         self.prev_skill_state = game_state.get('prev_skill_state', '')
         self.user_color = game_state.get('user_color', '')
+        self.last_move = game_state.get('last_move', '')
         
     def _init_board(self, game_state):
         if 'board_state' in game_state:
@@ -157,16 +158,18 @@ class Game(object):
             'skill_state': self.skill_state,
             'prev_skill_state': self.prev_skill_state,
             'user_color': self.user_color,
-            'current_turn': 'White' if self.board.turn == chess.WHITE else 'Black',
+            'current_turn': 'WHITE' if self.board.turn == chess.WHITE else 'BLACK',
             'time_level': self.time_level,
             'skill_level': self.skill_level,
+            'winner': self.winner,
+            'last_move': self.get_last_move()
         }
         return state
 
     def get_last_move(self):
         """Возвращает последний ход в формате SAN."""
         if not self.board.move_stack:
-            return None
+            return self.last_move
         last_move = self.board.move_stack[-1]
         return self.board.san(last_move)
 
