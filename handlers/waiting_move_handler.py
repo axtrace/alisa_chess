@@ -20,9 +20,6 @@ class WaitingMoveHandler(BaseHandler):
         # Проверяем специальные команды
         if self.intent_validator.validate_unmake():
             return self._unmake_handler()
-            
-        if self.intent_validator.validate_repeat_last_move():
-            return self._repeat_last_move_handler()
         
         user_color = self.game.get_user_color()
 
@@ -138,14 +135,6 @@ class WaitingMoveHandler(BaseHandler):
             return self.say(text, tts=text_tts)
         return self.say(texts.cant_unmake_text)
     
-
-    def _repeat_last_move_handler(self):
-        """Обрабатывает повтор последнего хода."""
-        last_move = self.game.get_last_move()
-        if last_move:
-            text, text_tts = self.text_preparer.say_repeat_last_move(last_move, text_to_show=self.game.get_board(), text_to_say='')
-            return self.say(text, tts=text_tts) 
-        return self.say("Нет ходов для повторения.")
 
     def _reason_handler(self, reason_type, user_move):
         """Обрабатывает причину некорректного хода."""
