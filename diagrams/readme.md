@@ -22,3 +22,8 @@
 - SAID_COLOR - цвет выбран
 - WAITING_MOVE - ожидание хода
 - SAID_MOVE - ход сделан
+
+## С4 диаграмма уровня 1
+
+![C4 диаграмма уровня 1](./alice-chess-c4level1.jpg)
+
