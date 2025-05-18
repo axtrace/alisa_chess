@@ -89,6 +89,7 @@ class Game(object):
             move = chess.Move.from_uci(best_move)
             san = self.board.san(move)  # Получаем SAN до push
             self.board.push(move)
+            self.last_move = san
             return san
         else:
             return None
@@ -167,11 +168,8 @@ class Game(object):
 
     def get_last_move(self):
         """Возвращает последний ход в формате SAN."""
-        if not self.board.move_stack:
-            return self.last_move
-        last_move = self.board.move_stack[-1]
-        return last_move
-
+        return self.last_move
+    
     def is_valid_move(self, move_san):
         """Проверяет, является ли ход допустимым."""
         try:

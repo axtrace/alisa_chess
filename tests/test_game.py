@@ -258,5 +258,21 @@ class TestGame(unittest.TestCase):
         print(f"test_set_and_serialize_skill_level state: {state}")
         self.assertEqual(state['skill_level'], 5)
 
+    def test_get_san_for_move(self):
+        """Тест получения SAN нотации для любого хода."""
+        # Легальный ход
+        self.assertEqual(self.game.get_san_for_move('e2e4'), 'e4')
+        
+        # Некорректный ход
+        self.assertIsNone(self.game.get_san_for_move('e2e5'))
+        
+        # Ход с превращением
+        self.game.board = chess.Board('8/P7/8/8/8/8/8/8 w - - 0 1')
+        self.assertEqual(self.game.get_san_for_move('a7a8q'), 'a8=Q')
+        
+        # Ход с взятием
+        self.game.board = chess.Board('rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2')
+        self.assertEqual(self.game.get_san_for_move('e4e5'), 'exe5')
+
 if __name__ == '__main__':
     unittest.main() 
