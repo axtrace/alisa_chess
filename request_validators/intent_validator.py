@@ -22,7 +22,7 @@ class IntentValidator(BaseValidator):
         """Проверяет, является ли запрос просьбой о помощи."""
         if self._has_intent('YANDEX.HELP'):
             return True
-        help_words = ['помощь', 'help', 'что ты умеешь', 'what can you do', 'помоги', 'помоги', 'помоги', 'помоги', 'помоги', 'помоги']
+        help_words = ['помощь', 'help', 'помоги', 'помоги', 'помоги', 'помоги', 'помоги', 'помоги']
         return self._has_text(help_words)
 
     def validate_whatcanyoudo(self) -> bool:
