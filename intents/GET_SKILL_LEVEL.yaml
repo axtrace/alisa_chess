@@ -1,24 +1,24 @@
 root:
     %lemma
-    какой уровень
-    какой у меня уровень
-    какой установлен уровень
-    какой сейчас уровень
-    покажи уровень
-    скажи уровень
-    узнай уровень
-    какой мой уровень
-    get level
-    get skill level
-    what is level
-    what is skill level
-    show level
-    show skill level
-    tell level
-    tell skill level
-    current level
-    current skill level
-    уровень
+    [какой уровень]
+    [какой у меня уровень]
+    [какой установлен уровень]
+    [какой сейчас уровень]
+    [покажи уровень]
+    [скажи уровень]
+    [узнай уровень]
+    [какой мой уровень]
+    [get level]
+    [get skill level]
+    [what is level]
+    [what is skill level]
+    [show level]
+    [show skill level]
+    [tell level]
+    [tell skill level]
+    [current level]
+    [current skill level]
+    [уровень]
 
 filler:
     пожалуйста | ну | эй | скажи | покажи | скажи пожалуйста | покажи пожалуйста | дай | сообщи

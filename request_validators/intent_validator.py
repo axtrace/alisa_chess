@@ -66,17 +66,17 @@ class IntentValidator(BaseValidator):
         repeat_words = ['повтори', 'repeat', 'еще раз', 'again', 'повторить', 'repeat', 'еще раз', 'again']
         return self._has_text(repeat_words)
     
+    def validate_repeat(self) -> bool:
+        """Проверяет, является ли запрос просьбой повторить."""
+        return self._has_intent('YANDEX.REPEAT')
+
     def validate_set_skill_level(self) -> bool:
         """Проверяет, является ли запрос установкой уровня сложности."""
-        if self._has_intent('SET_SKILL_LEVEL'):
-            return True
-        return False
+        return self._has_intent('SET_SKILL_LEVEL')
     
     def validate_get_skill_level(self) -> bool:
         """Проверяет, является ли запрос получением уровня сложности."""
-        if self._has_intent('GET_SKILL_LEVEL'):
-            return True
-        return False
+        return self._has_intent('GET_SKILL_LEVEL')
     
     def validate_set_time_level(self) -> bool:
         """Проверяет, является ли запрос установкой времени на ход."""
@@ -112,5 +112,6 @@ class IntentValidator(BaseValidator):
             self.validate_set_skill_level(),
             self.validate_set_time_level(),
             self.validate_get_skill_level(),
-            self.validate_show_board()
+            self.validate_show_board(),
+            self.validate_repeat()
         ]) 

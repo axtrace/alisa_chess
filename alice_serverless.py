@@ -26,7 +26,10 @@ def handler(event, context):
             'response': response,
             'user_state_update': {
                 'game_state': alice.get_game_state()
-            }
+            },
+            "session_state": {
+                "previous_response": response
+            },
         }
     except Exception as e:
         print(f"Error in handler: {str(e)}")

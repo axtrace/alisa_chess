@@ -63,6 +63,11 @@ class SpecialIntentHandler(BaseHandler):
             self.game.unmake_move()
             return self.say(texts.unmake_text)
         
+        if self.intent_validator.validate_repeat():
+            print(f"SpecialIntentHandler. validate_repeat. Запрос: {self.request}")
+            prev_response = self.request.get('state',{}).get('session',{}).get('previous_response',{})
+            return prev_response
+        
         if self.intent_validator.validate_repeat_last_move():
             print(f"SpecialIntentHandler. validate_repeat_last_move. Запрос: {self.request}")
             
