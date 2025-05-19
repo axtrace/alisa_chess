@@ -50,9 +50,10 @@ class Game(object):
         else:
             return chess.Board()
         
-    def _init_prev_board(self, game_state):     
-        if game_state.get('prev_board_state', ''):
-            return chess.Board(game_state['prev_board_state'])
+    def _init_prev_board(self, game_state):
+        prev_board = game_state.get('prev_board_state', '')     
+        if prev_board:
+            return chess.Board(prev_board)
         else:
             return self.board
         
