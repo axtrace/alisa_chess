@@ -103,9 +103,6 @@ class Game(object):
         else:
             return None
 
-    def undo_move(self):
-        # unmake the last user move
-        return self.board.pop() # Unmake the last move
 
     # define the user was last moved
     def is_game_over(self):

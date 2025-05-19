@@ -62,15 +62,13 @@ class SpecialIntentHandler(BaseHandler):
             print(f"SpecialIntentHandler. validate_undo. Запрос: {self.request}")
             if self.request.get('state',{}).get('user',{}).get('prev_board_state',{}):
                 self.game.undo_move()
-                text, text_tts = self.prep_text_to_say(comp_move=last_move, prev_turn=comp_color, text_to_show=self.game.get_board(), text_to_say='')
+                comp_color = 'WHITE' if self.game.get_user_color() == 'BLACK' else 'BLACK'
+                text, text_tts = self.prep_text_to_say(comp_move='', prev_turn=comp_color, text_to_show=self.game.get_board(), text_to_say='')
+                text = texts.undo_text + '\n' + text
+                text_tts = texts.undo_text + '\n' + text_tts
                 return self.say(text, tts=text_tts)
             else:
                 return self.say(texts.no_undo_text)
-                        
-            last_move = self.request.get('state',{}).get('user',{}).get('last_move',{})
-            comp_color = 'WHITE' if self.game.get_user_color() == 'BLACK' else 'BLACK'
-
-            return self.say(texts.unmake_text)
         
         if self.intent_validator.validate_repeat():
             print(f"SpecialIntentHandler. validate_repeat. Запрос: {self.request}")
