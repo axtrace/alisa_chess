@@ -53,9 +53,9 @@ class Game(object):
     def _init_prev_board(self, game_state):
         prev_board = game_state.get('prev_board_state', '')     
         if prev_board:
-            return chess.Board(prev_board)
+            return chess.Board(prev_board).fen()
         else:
-            return self.board
+            return self.board.fen()
         
     def undo_move(self):
         if self.prev_board:
