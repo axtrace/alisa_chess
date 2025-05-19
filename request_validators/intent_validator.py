@@ -52,19 +52,14 @@ class IntentValidator(BaseValidator):
         new_game_words = ['новая игра', 'new game', 'начать заново', 'start over', 'новую игру', 'new game', 'новую партию', 'new game', 'новую партию', 'new game']
         return self._has_text(new_game_words)
 
-    def validate_unmake(self) -> bool:
+    def validate_undo(self) -> bool:
         """Проверяет, является ли запрос отменой хода."""
-        if self._has_intent('UNMAKE'):
-            return True
-        unmake_words = ['отменить ход', 'отмена хода', 'вернуть ход', 'взять ход назад', 'отменить', 'отмена', 'назад', 'back']
-        return self._has_text(unmake_words)
+        return self._has_intent('UNDO')
 
     def validate_repeat_last_move(self) -> bool:
         """Проверяет, является ли запрос просьбой повторить последний ход."""
-        if self._has_intent('REPEAT_LAST_MOVE'):
-            return True
-        repeat_words = ['повтори', 'repeat', 'еще раз', 'again', 'повторить', 'repeat', 'еще раз', 'again']
-        return self._has_text(repeat_words)
+        return self._has_intent('REPEAT_LAST_MOVE')
+
     
     def validate_repeat(self) -> bool:
         """Проверяет, является ли запрос просьбой повторить."""
@@ -107,7 +102,7 @@ class IntentValidator(BaseValidator):
             self.validate_draw(),
             self.validate_resign(),
             self.validate_new_game(),
-            self.validate_unmake(),
+            self.validate_undo(),
             self.validate_repeat_last_move(),
             self.validate_set_skill_level(),
             self.validate_set_time_level(),

@@ -58,9 +58,18 @@ class SpecialIntentHandler(BaseHandler):
             self.game.set_skill_state('WAITING_RESIGN_CONFIRM')
             return self.say(texts.waiting_resign_confirm_text)
         
-        if self.intent_validator.validate_unmake():
-            print(f"SpecialIntentHandler. validate_unmake. Запрос: {self.request}")
-            self.game.unmake_move()
+        if self.intent_validator.validate_undo():
+            print(f"SpecialIntentHandler. validate_undo. Запрос: {self.request}")
+            if self.request.get('state',{}).get('user',{}).get('prev_board_state',{}):
+                self.game.undo_move()
+                text, text_tts = self.prep_text_to_say(comp_move=last_move, prev_turn=comp_color, text_to_show=self.game.get_board(), text_to_say='')
+                return self.say(text, tts=text_tts)
+            else:
+                return self.say(texts.no_undo_text)
+                        
+            last_move = self.request.get('state',{}).get('user',{}).get('last_move',{})
+            comp_color = 'WHITE' if self.game.get_user_color() == 'BLACK' else 'BLACK'
+
             return self.say(texts.unmake_text)
         
         if self.intent_validator.validate_repeat():

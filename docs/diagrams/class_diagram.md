@@ -26,7 +26,7 @@ classDiagram
         +restore_prev_state()
         +user_move(move_san)
         +comp_move()
-        +unmake_move()
+        +undo_move()
         +is_game_over()
         +is_move_legal(move)
         +set_skill_level(skill_level)

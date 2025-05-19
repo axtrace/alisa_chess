@@ -99,20 +99,20 @@ class TestValidators(unittest.TestCase):
         validator = IntentValidator(request)
         self.assertTrue(validator.validate_new_game())
         
-    def test_validate_unmake(self):
+    def test_validate_undo(self):
         """Тест валидации отмены хода."""
         request = {
             'request': {
                 'command': 'отменить ход',
                 'nlu': {
                     'intents': {
-                        'UNMAKE': {}
+                        'UNDO': {}
                     }
                 }
             }
         }
         validator = IntentValidator(request)
-        self.assertTrue(validator.validate_unmake())
+        self.assertTrue(validator.validate_undo())
         
     def test_validate_repeat_last_move(self):
         """Тест валидации повтора последнего хода."""

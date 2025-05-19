@@ -36,9 +36,9 @@ class Game(object):
     def __init__(self, skill_level: int = 1, time_level: float = 0.1, game_state: dict = {}):
         self.engine = ChessEngineAPI()
         self.board = self._init_board(game_state)
+        self.prev_board = game_state.get('board_state', '') # запоминаем доску для отмены хода
         self.skill_level = game_state.get('skill_level', skill_level)
         self.time_level = game_state.get('time_level', time_level)
-        self.winner = game_state.get('winner', '')
         self.skill_state = game_state.get('skill_state', 'INITIATED')
         self.prev_skill_state = game_state.get('prev_skill_state', '')
         self.user_color = game_state.get('user_color', '')
@@ -49,6 +49,15 @@ class Game(object):
             return chess.Board(game_state['board_state'])
         else:
             return chess.Board()
+        
+    def undo_move(self):
+        if self.prev_board:
+            print(f"Game.undo_move. Восстанавливаем доску: {self.prev_board}")  
+            self.board = chess.Board(self.prev_board)
+            self.prev_board = ''
+            return True
+        else:
+            return False
 
     def get_user_color(self):
         return self.user_color
@@ -94,7 +103,7 @@ class Game(object):
         else:
             return None
 
-    def unmake_move(self):
+    def undo_move(self):
         # unmake the last user move
         return self.board.pop() # Unmake the last move
 
@@ -150,6 +159,7 @@ class Game(object):
         return ''
     
     def reset_board(self):
+        self.prev_board = self.board.fen()
         self.board = chess.Board()
         self.last_move = ''
         self.user_color = ''
@@ -159,6 +169,7 @@ class Game(object):
         """Сериализует состояние игры в строку."""
         state = {
             'board_state': self.board.fen(),
+            'prev_board_state': self.prev_board,
             'skill_state': self.skill_state,
             'prev_skill_state': self.prev_skill_state,
             'user_color': self.user_color,

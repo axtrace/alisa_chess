@@ -17,10 +17,6 @@ class WaitingMoveHandler(BaseHandler):
         """Обрабатывает запрос в состоянии ожидания хода."""
         print(f"WaitingMoveHandler.handle. Запрос: {self.request}")
         
-        # Проверяем специальные команды
-        if self.intent_validator.validate_unmake():
-            return self._unmake_handler()
-        
         user_color = self.game.get_user_color()
 
         # Обработка и выполнение хода пользователя
@@ -130,7 +126,7 @@ class WaitingMoveHandler(BaseHandler):
     
     def _unmake_handler(self):
         """Обрабатывает отмену последнего хода."""
-        if self.game.unmake_move():
+        if self.game.undo_move():
             text, text_tts = self.text_preparer.say_your_move('', '', '', '', self.game.get_board(), '')
             return self.say(text, tts=text_tts)
         return self.say(texts.cant_unmake_text)
