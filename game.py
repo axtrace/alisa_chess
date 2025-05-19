@@ -167,8 +167,8 @@ class Game(object):
         return ''
     
     def reset_board(self):
-        self.prev_board = self.board.fen()
         self.board = chess.Board()
+        self.prev_board = ''
         self.last_move = ''
         self.user_color = ''
         self.prev_skill_state = ''
