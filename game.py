@@ -36,7 +36,7 @@ class Game(object):
     def __init__(self, skill_level: int = 1, time_level: float = 0.1, game_state: dict = {}):
         self.engine = ChessEngineAPI()
         self.board = self._init_board(game_state)
-        self.prev_board = game_state.get('board_state', '') # запоминаем доску для отмены хода
+        self.prev_board = self._init_prev_board(game_state)
         self.skill_level = game_state.get('skill_level', skill_level)
         self.time_level = game_state.get('time_level', time_level)
         self.skill_state = game_state.get('skill_state', 'INITIATED')
@@ -49,6 +49,12 @@ class Game(object):
             return chess.Board(game_state['board_state'])
         else:
             return chess.Board()
+        
+    def _init_prev_board(self, game_state):     
+        if game_state.get('prev_board_state', ''):
+            return chess.Board(game_state['prev_board_state'])
+        else:
+            return self.board
         
     def undo_move(self):
         if self.prev_board:
