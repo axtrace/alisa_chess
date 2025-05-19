@@ -60,8 +60,7 @@ class SpecialIntentHandler(BaseHandler):
         
         if self.intent_validator.validate_undo():
             print(f"SpecialIntentHandler. validate_undo. Запрос: {self.request}")
-            if self.request.get('state',{}).get('user',{}).get('prev_board_state',{}):
-                self.game.undo_move()
+            if self.game.undo_move():
                 comp_color = 'WHITE' if self.game.get_user_color() == 'BLACK' else 'BLACK'
                 text, text_tts = self.prep_text_to_say(comp_move='', prev_turn=comp_color, text_to_show=self.game.get_board(), text_to_say='')
                 text = texts.undo_text + '\n' + text
