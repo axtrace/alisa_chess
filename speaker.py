@@ -21,13 +21,13 @@ class Speaker(object):
         'ru': {'a': 'а', 'b': 'бэ', 'c': 'цэ', 'd': 'дэ', 'e': 'е', 'f': 'эф',
                'g': 'же', 'h': 'аш'}}
 
-    check = {'ru': 'шах', 'en': 'check'}
+    check = {'ru': 'шах.', 'en': 'check.'}
 
-    mate = {'ru': 'мат', 'en': 'mate'}
+    mate = {'ru': '**мат**.', 'en': '**checkmate**.'}
 
     checkmate_names = {
         '+': {'ru': 'шах', 'en': 'check'},
-        '#': {'ru': 'мат', 'en': 'mate'}
+        '#': {'ru': '**мат**.', 'en': '**checkmate**'}
     }
 
     captures_names = {'ru': 'берёт', 'en': 'capture'}

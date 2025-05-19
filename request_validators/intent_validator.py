@@ -25,6 +25,12 @@ class IntentValidator(BaseValidator):
         help_words = ['помощь', 'help', 'что ты умеешь', 'what can you do', 'помоги', 'помоги', 'помоги', 'помоги', 'помоги', 'помоги']
         return self._has_text(help_words)
 
+    def validate_whatcanyoudo(self) -> bool:
+        """Проверяет, является ли запрос просьбой о том, что умеет делать."""
+        if self._has_intent('YANDEX.WHAT_CAN_YOU_DO') or self._has_intent('WHAT_CAN_YOU_DO'):
+            return True
+        return False
+
     def validate_draw(self) -> bool:
         """Проверяет, является ли запрос предложением ничьей."""
         if self._has_intent('OFFER_DRAW'):
@@ -97,6 +103,7 @@ class IntentValidator(BaseValidator):
             self.validate_yes(),
             self.validate_no(),
             self.validate_help(),
+            self.validate_whatcanyoudo(),
             self.validate_draw(),
             self.validate_resign(),
             self.validate_new_game(),

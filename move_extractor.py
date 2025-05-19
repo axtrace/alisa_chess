@@ -351,7 +351,7 @@ class MoveExtractor(object):
                     print(f"candidate_move['piece'] != piece")
                     continue
             elif piece:
-                print(f"candidate_move['piece'] in None, but piece in not None")
+                # candidate_move['piece'] in None, but piece in not None
                 continue
 
             if candidate_move['file_from'] is not None:
