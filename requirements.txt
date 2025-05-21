@@ -2,4 +2,3 @@ chess
 requests
 python-chess
 requests
-logging
