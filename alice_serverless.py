@@ -1,4 +1,8 @@
 from alice_chess import AliceChess
+import logging
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 def handler(event, context):
     """Обработчик запросов от Алисы.
@@ -9,8 +13,6 @@ def handler(event, context):
     """
 
     try:
-        print(f"Входящий запрос: {event}")
-            
         # Инициализируем класс для обработки запросов
         alice = AliceChess()
         # Обрабатываем запрос, внутри восстанавливается состояние игры
@@ -18,8 +20,7 @@ def handler(event, context):
         
         # Сохраняем состояние игры в контекст пользователя, 
         # чтобы восстановить его при следующем запросе
-        print(f"Сохраняем состояние: {alice.get_game_state()}")
-        
+
         return {
             'version': '1.0',
             'session': event['session'],
@@ -32,7 +33,7 @@ def handler(event, context):
             },
         }
     except Exception as e:
-        print(f"Error in handler: {str(e)}")
+        logger.error(f"Error in handler: {str(e)}") 
         return {
             'version': '1.0',
             'session': event['session'],

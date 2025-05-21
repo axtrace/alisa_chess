@@ -3,6 +3,10 @@ import chess.pgn
 import requests
 import os
 from typing import Optional
+import logging
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 class ChessEngineAPI:
     def __init__(self, api_key: str = None):
@@ -26,7 +30,7 @@ class ChessEngineAPI:
             result = response.json()
             return result.get("best_move")
         except requests.exceptions.RequestException as e:
-            print(f"Error getting best move: {e}")
+            logger.error(f"Error getting best move: {e}")
             return None
 
 class Game(object):
@@ -58,12 +62,11 @@ class Game(object):
             else:
                 return self.board.fen()
         except Exception as e:
-            print(f"Game._init_prev_board. Ошибка при инициализации prev-доски: {e}")
+            logger.error(f"Game._init_prev_board. Ошибка при инициализации prev-доски: {e}")
             return self.board.fen()
         
     def undo_move(self):
         if self.prev_board:
-            print(f"Game.undo_move. Восстанавливаем доску: {self.prev_board}")  
             self.board = chess.Board(self.prev_board)
             self.prev_board = ''
             return True
@@ -75,7 +78,6 @@ class Game(object):
 
     def set_user_color(self, user_color):
         self.user_color = user_color
-        print(f"Установлен user_color: {self.user_color}")
 
     def get_skill_state(self):
         return self.skill_state
@@ -85,7 +87,6 @@ class Game(object):
         if self.skill_state != skill_state:
             self.prev_skill_state = self.skill_state
         self.skill_state = skill_state
-        print(f"Установлено состояние: {self.skill_state}. Предыдущее состояние: {self.prev_skill_state}")
 
     def get_prev_skill_state(self):
         """Возвращает предыдущее состояние."""
@@ -97,10 +98,7 @@ class Game(object):
         self.prev_skill_state = ''
 
     def user_move(self, move_san):
-        print(f"Game.user_move. Запрос на ход: {move_san}, доска {self.board.fen()}")
-
         self.board.push_san(move_san)
-        print(f"Game.user_move. Ход сделан: {move_san}, доска {self.board.fen()}")
 
     def comp_move(self):
         # Get the best move from the API
@@ -110,8 +108,10 @@ class Game(object):
             san = self.board.san(move)  # Получаем SAN до push
             self.board.push(move)
             self.last_move = san
+            logger.info(f"Game.comp_move. Ход сделан: {san}, доска {self.board.fen()}")
             return san
         else:
+            logger.error(f"Game.comp_move. Ошибка при получении лучшего хода: {best_move}")
             return None
 
 
@@ -123,6 +123,7 @@ class Game(object):
         try:
             return self.board.parse_san(move) in self.board.legal_moves
         except ValueError:
+            logger.error(f"Game.is_move_legal. Ошибка при проверке допустимости хода: {move}")
             return False
 
     def set_skill_level(self, skill_level):
@@ -139,7 +140,7 @@ class Game(object):
             self.time_level = 0.3
         else:   
             self.time_level = 0.1
-        print(f"Game.set_skill_level. skill_level: {self.skill_level}, time_level: {self.time_level}")
+        logger.info(f"Game.set_skill_level. skill_level: {self.skill_level}, time_level: {self.time_level}")
     
 
     def get_skill_level(self):

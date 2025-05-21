@@ -1,7 +1,10 @@
 import texts
 from .base_handler import BaseHandler
 from move_extractor import MoveExtractor
+import logging
 
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 class WaitingColorHandler(BaseHandler):
     """Обработчик состояния ожидания выбора цвета."""
@@ -12,7 +15,7 @@ class WaitingColorHandler(BaseHandler):
 
     def handle(self):
         """Обрабатывает запрос в состоянии ожидания выбора цвета."""
-        print(f"WaitingColorHandler. handle. Запрос: {self.request}")
+        logger.info(f"WaitingColorHandler. handle. Запрос: {self.request}") 
         is_color_defined, user_color = self.move_ext.extract_color(self.request)
         if not is_color_defined:
             return self.say(texts.not_get_turn_text)

@@ -1,4 +1,8 @@
 import re
+import logging
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 class MoveExtractor(object):
     """
@@ -85,21 +89,27 @@ class MoveExtractor(object):
     def extract_move(self, request, board):
         """Извлекает ход из запроса пользователя."""
         # Проверяем рокировку
+        logger.info(f"Extracting move from request: {request}")
         castling_move, castling_type = self._extract_castling_move(request)
         if castling_move:
+            logger.info(f"Castling move found: {castling_type}")
             return [castling_type], castling_type
 
         # Пробуем извлечь ход из интентов
         extracted_move_structure = self._extract_move_from_intents(request)
+        logger.info(f"Extracted move from intents: {extracted_move_structure}")
 
         if not extracted_move_structure:
             # Если интенты не помогли, пробуем извлечь из текста
             extracted_move_structure = self._extract_move_from_text(request)
+            logger.info(f"Extracted move from text: {extracted_move_structure}")
 
         if not extracted_move_structure:
+            logger.info(f"No move found in request: {request}")
             return None, None
         extracted_move = extracted_move_structure.get('move', '')
         matching_moves = self._find_matching_moves(board, extracted_move_structure)
+        logger.info(f"Matching moves: {matching_moves}")
         return matching_moves, extracted_move
 
     def _extract_move_from_intents(self, request):
@@ -179,13 +189,10 @@ class MoveExtractor(object):
         return self._get_key_(request, self.piece_map)
 
     def _get_square(self, request):
-        print(f"_get_square received: {request}")
         return self._get_file_(request), self._get_rank_(request)
 
     def _get_file_(self, request):
-        print(f"_get_file_ received: {request}")
         file_susp = self._get_key_(request, self.file_map)
-        print(f"file_susp: {file_susp}")
         if not file_susp:
             # hm, try extract by own way
             if isinstance(request, str):
@@ -195,32 +202,26 @@ class MoveExtractor(object):
                 # suggest it is request from user
                 text = request.command
             text_wo_digits = re.sub(r'[1-8]', '', text)
-            print(f"text_wo_digits: {text_wo_digits}")
             file_susp = self._get_key_(text_wo_digits, self.file_map)
-            print(f"file_susp: {file_susp}")
         return file_susp
 
     @staticmethod
     def _get_rank_(request):
         match = re.search(r'[1-8]', request)
         rank = match[0] if match else ''
-        print(f"_get_rank_ received: {request}, rank: {rank}")
         return rank
         # return self._get_key_(request, self.rank_map)
 
     def _extract_move_from_text(self, request):
         """Извлекает ход из текста запроса."""
-        print(f"_extract_move_from_text received: {request}")
         move_structure = {}
         if 'request' not in request or 'command' not in request['request']:
             return move_structure
 
         command_text = request.get('request', {}).get('command', '')
-        print(f"command_text: {command_text}")
 
         # Получаем фигуру
         piece = self._get_piece_(command_text)
-        print(f"piece: {piece}")
         promotion_piece = ''
         if piece:
             command_text_wo_piece = command_text
@@ -231,7 +232,6 @@ class MoveExtractor(object):
         # Получаем клетки (файл и ранг)
         square_rex = re.compile(r'[a-zа-яё]+\s*[1-8]', flags=re.IGNORECASE)
         squares = re.findall(square_rex, command_text)
-        print(f"squares: {squares}")
         
         if not squares:
             return move_structure
@@ -291,10 +291,10 @@ class MoveExtractor(object):
         return False, None
         
     def _find_matching_moves(self, board, move_structure):
-        print(f"_find_matching_moves received: {move_structure}")
+        logger.info(f"_find_matching_moves received: {move_structure}")
 
         legal_moves = [board.san(m) for m in board.legal_moves]
-        print(f"legal_moves: {legal_moves}")
+        logger.info(f"legal_moves: {legal_moves}")
         
         # extract from user pronounced move
         file_to = move_structure.get('file_to', '')
@@ -316,9 +316,9 @@ class MoveExtractor(object):
 
         if promotion_piece:
             candidate_moves = [move for move in candidate_moves if '=' + promotion_piece in move]
-            print(f"candidate_moves filtered by promotion: {candidate_moves}")
+            logger.info(f"candidate_moves filtered by promotion: {candidate_moves}")
 
-        print(f"candidate_moves: {candidate_moves}")
+        logger.info(f"candidate_moves: {candidate_moves}")
 
         pattern = re.compile(r'''
             ^
@@ -336,19 +336,16 @@ class MoveExtractor(object):
         matching_moves = []
 
         for m in candidate_moves:
-            print(f"Checking move: {m}")
+            logger.info(f"Checking move: {m}")
             match = pattern.fullmatch(m)
             if not match:
-                print(f"NONE MATCH: {m}")
                 continue
 
             candidate_move = match.groupdict()
-            print(f"Parsed move: {candidate_move}")
-            
+           
             # Проверяем фигуру
             if candidate_move['piece'] is not None: 
                 if candidate_move['piece'] != piece:
-                    print(f"candidate_move['piece'] != piece")
                     continue
             elif piece:
                 # candidate_move['piece'] in None, but piece in not None
@@ -356,16 +353,14 @@ class MoveExtractor(object):
 
             if candidate_move['file_from'] is not None:
                 if file_from and candidate_move['file_from'] != file_from:
-                    print(f"candidate_move['file_from'] != file_from")
                     continue
 
             if candidate_move['rank_from'] is not None:
                 if rank_from and candidate_move['rank_from'] != rank_from:
-                    print(f"candidate_move['rank_from'] != rank_from")
                     continue        
 
             matching_moves.append(m)
 
-        print(f"Matching moves: {matching_moves}")
+        logger.info(f"Matching moves: {matching_moves}")
         
         return matching_moves

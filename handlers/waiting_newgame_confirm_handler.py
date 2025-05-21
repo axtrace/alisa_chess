@@ -1,7 +1,10 @@
 import texts
 from .base_handler import BaseHandler
 from request_validators.intent_validator import IntentValidator
+import logging
 
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 class WaitingNewgameConfirmHandler(BaseHandler):
     """Обработчик состояния ожидания подтверждения новой игры."""
@@ -12,7 +15,7 @@ class WaitingNewgameConfirmHandler(BaseHandler):
 
     def handle(self):
         """Обрабатывает запрос в состоянии ожидания подтверждения новой игры."""
-        print(f"WaitingNewgameConfirmHandler. handle. Запрос: {self.request}")
+        logger.info(f"WaitingNewgameConfirmHandler. handle. Запрос: {self.request}") 
         if self.intent_validator.validate_yes():
             self.reset_game()
             self.game.set_skill_state('WAITING_CONFIRM')

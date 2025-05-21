@@ -3,6 +3,10 @@ from .base_handler import BaseHandler
 from move_extractor import MoveExtractor
 from request_validators.intent_validator import IntentValidator
 from text_preparer import TextPreparer
+import logging
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 class WaitingMoveHandler(BaseHandler):
     """Обработчик состояния ожидания хода пользователя."""
@@ -15,7 +19,7 @@ class WaitingMoveHandler(BaseHandler):
 
     def handle(self):
         """Обрабатывает запрос в состоянии ожидания хода."""
-        print(f"WaitingMoveHandler.handle. Запрос: {self.request}")
+        logger.info(f"WaitingMoveHandler.handle. Запрос: {self.request}")
         
         user_color = self.game.get_user_color()
 
@@ -24,7 +28,7 @@ class WaitingMoveHandler(BaseHandler):
 
         # Если вернулась какая-то причина, то обрабатываем её (ход некорректен)
         if reason_type != "OK":
-            print(f"WaitingMoveHandler.handle. reason_type: {reason_type}")
+            logger.info(f"WaitingMoveHandler.handle. reason_type: {reason_type}")
             return self._reason_handler(reason_type, user_moves) 
         
         # Если причина не вернулась и вернулся список ходов, то выбираем первый
@@ -58,15 +62,12 @@ class WaitingMoveHandler(BaseHandler):
             str: Ход пользователя или None, если ход некорректен
         """
         matching_moves, extracted_move = self.move_ext.extract_move(self.request, self.game.board)
-        print(f"WaitingMoveHandler._handle_user_move. matching_moves: {matching_moves}, extracted_move: {extracted_move}")
+        
         if extracted_move is None:
-            print(f"WaitingMoveHandler._handle_user_move. extracted_move is None")
             return None, "NOT_DEFINED"
         elif not matching_moves:
-            print(f"WaitingMoveHandler._handle_user_move. matching_moves is empty")
             return extracted_move, "INVALID"
         elif len(matching_moves) > 1:
-            print(f"WaitingMoveHandler._handle_user_move. matching_moves has more than one move")
             return matching_moves, "AMBIGUOUS"
         
         user_move = matching_moves[0]
@@ -77,7 +78,7 @@ class WaitingMoveHandler(BaseHandler):
         except ValueError:
             return user_move, "INVALID"
         
-        print(f"WaitingMoveHandler._handle_user_move. Ход сделан: {user_move}")
+        logger.info(f"WaitingMoveHandler._handle_user_move. Ход сделан: {user_move}")
         return user_move, "OK"
 
     def _check_game_state(self, current_move, prev_turn=''):
@@ -134,7 +135,7 @@ class WaitingMoveHandler(BaseHandler):
 
     def _reason_handler(self, reason_type, user_move):
         """Обрабатывает причину некорректного хода."""
-        print(f"WaitingMoveHandler._reason_handler. reason_type: {reason_type}, user_move: {user_move}")
+        logger.info(f"WaitingMoveHandler._reason_handler. reason_type: {reason_type}, user_move: {user_move}")
         if reason_type == "NOT_DEFINED":
             command_text = self.request.get('request', {}).get('command', '')
             text, text_tts = self.text_preparer.say_do_not_get(command_text=command_text)

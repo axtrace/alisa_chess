@@ -1,5 +1,8 @@
 import re
+import logging
 
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 class Speaker(object):
     """
@@ -93,7 +96,7 @@ class Speaker(object):
         return self.captures_names.get(lang, '')
 
     def say_move(self, move_san, lang='ru'):
-        print(f"say_move received: {move_san}, {lang}")  # Отладочный вывод 
+        logger.info(f"say_move received: {move_san}, {lang}")  # Отладочный вывод 
         speak_list = []
         regex_body = r'[a-h]|[1-8]|x|[KQRBN]|[+#]|0-0-0|0-0|O-O-O|O-O'
         move_regex = re.compile(regex_body)
@@ -119,22 +122,24 @@ class Speaker(object):
             elif sym[0] in '=':
                 # promotion
                 speak_list.append(self.promotions_names.get(lang, ''))
-        print(f"say_move result: {speak_list}")  # Отладочный вывод
+        logger.info(f"say_move result: {speak_list}")  # Отладочный вывод
         return ' '.join(speak_list)
 
     def say_turn(self, who, lang='ru'):
-        print(f"say_turn received: {who}, {lang}")  # Отладочный вывод
+        logger.info(f"say_turn received: {who}, {lang}")  # Отладочный вывод
         res = ''
         if who:  # Проверка на пустую строку или None
             turn_names = self.white_black_names.get(who.upper(), None)
             if turn_names is not None:
                 res = turn_names.get(lang, '')
-        print(f"say_turn result: {res}")  # Отладочный вывод
+        logger.info(f"say_turn result: {res}")  # Отладочный вывод
         return res
 
     def say_reason(self, reason, lang='ru'):
+        logger.info(f"say_reason received: {reason}, {lang}")  # Отладочный вывод
         res = ''
         reasons = self.gameover_reasons.get(reason, None)
         if reasons is not None:
             res = reasons.get(lang, '')
+        logger.info(f"say_reason result: {res}")  # Отладочный вывод
         return res

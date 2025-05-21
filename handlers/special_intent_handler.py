@@ -2,7 +2,10 @@ import texts
 from .base_handler import BaseHandler
 from move_extractor import MoveExtractor
 from request_validators.intent_validator import IntentValidator 
+import logging
 
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 class SpecialIntentHandler(BaseHandler):
     """Обработчик специальных намерений."""
@@ -14,10 +17,10 @@ class SpecialIntentHandler(BaseHandler):
 
     def handle(self):
         # Проверяем специальные намерения, которые не зависят от состояния игры
-        print(f"SpecialIntentHandler. handle. Проверяем запрос: {self.request}")
+        logger.info(f"SpecialIntentHandler. handle. Проверяем запрос: {self.request}")
         if self.intent_validator.validate_new_session():
             # Если пользователь хочет начать новую игру, то проверяем, была ли предыдущая игра
-            print(f"SpecialIntentHandler. validate_new_session. Запрос: {self.request}")
+            logger.info(f"SpecialIntentHandler. validate_new_session. Запрос: {self.request}")
             state_text = texts.state_texts.get(self.game.get_skill_state(), '')
             state = self.request.get('state',{}).get('user',{}).get('game_state', {})
             if state:
@@ -35,31 +38,31 @@ class SpecialIntentHandler(BaseHandler):
                 return self.say(texts.hi_text)
         
         if self.intent_validator.validate_help():
-            print(f"SpecialIntentHandler. validate_help. Запрос: {self.request}")
+            logger.info(f"SpecialIntentHandler. validate_help. Запрос: {self.request}")
             state_text = texts.state_texts.get(self.game.get_skill_state(), '')
             return self.say(texts.help_text + '\n' + state_text)
         
         if self.intent_validator.validate_whatcanyoudo():
-            print(f"SpecialIntentHandler. validate_whatcanyoudo. Запрос: {self.request}")
+            logger.info(f"SpecialIntentHandler. validate_whatcanyoudo. Запрос: {self.request}")
             return self.say(texts.what_can_you_do_text)
         
         if self.intent_validator.validate_new_game():
-            print(f"SpecialIntentHandler. validate_new_game. Запрос: {self.request}")
+            logger.info(f"SpecialIntentHandler. validate_new_game. Запрос: {self.request}")
             self.game.set_skill_state('WAITING_NEWGAME_CONFIRM')
             return self.say(texts.waiting_newgame_confirm_text)
             
         if self.intent_validator.validate_draw():
-            print(f"SpecialIntentHandler. validate_draw. Запрос: {self.request}")
+            logger.info(f"SpecialIntentHandler. validate_draw. Запрос: {self.request}")
             self.game.set_skill_state('WAITING_DRAW_CONFIRM')
             return self.say(texts.waiting_draw_confirm_text)
             
         if self.intent_validator.validate_resign():
-            print(f"SpecialIntentHandler. validate_resign. Запрос: {self.request}")
+            logger.info(f"SpecialIntentHandler. validate_resign. Запрос: {self.request}")
             self.game.set_skill_state('WAITING_RESIGN_CONFIRM')
             return self.say(texts.waiting_resign_confirm_text)
         
         if self.intent_validator.validate_undo():
-            print(f"SpecialIntentHandler. validate_undo. Запрос: {self.request}")
+            logger.info(f"SpecialIntentHandler. validate_undo. Запрос: {self.request}")
             if self.game.undo_move():
                 comp_color = 'WHITE' if self.game.get_user_color() == 'BLACK' else 'BLACK'
                 text, text_tts = self.prep_text_to_say(comp_move='', prev_turn=comp_color, text_to_show=self.game.get_board(), text_to_say='')
@@ -70,12 +73,12 @@ class SpecialIntentHandler(BaseHandler):
                 return self.say(texts.no_undo_text)
         
         if self.intent_validator.validate_repeat():
-            print(f"SpecialIntentHandler. validate_repeat. Запрос: {self.request}")
+            logger.info(f"SpecialIntentHandler. validate_repeat. Запрос: {self.request}")
             prev_response = self.request.get('state',{}).get('session',{}).get('previous_response',{})
             return prev_response
         
         if self.intent_validator.validate_repeat_last_move():
-            print(f"SpecialIntentHandler. validate_repeat_last_move. Запрос: {self.request}")
+            logger.info(f"SpecialIntentHandler. validate_repeat_last_move. Запрос: {self.request}")
             
             last_move = self.game.get_last_move()
             comp_color = 'WHITE' if self.game.get_user_color() == 'BLACK' else 'BLACK'
@@ -88,18 +91,18 @@ class SpecialIntentHandler(BaseHandler):
                 return self.say(text)
         
         if self.intent_validator.validate_set_skill_level():
-            print(f"SpecialIntentHandler. validate_set_skill_level. Запрос: {self.request}")
+            logger.info(f"SpecialIntentHandler. validate_set_skill_level. Запрос: {self.request}")
             self.game.set_skill_state('WAITING_SKILL_LEVEL')
             current_level = self.game.get_skill_level()
             return self.say(texts.waiting_skill_level_text.format(current_level))
         
         if self.intent_validator.validate_get_skill_level():
-            print(f"SpecialIntentHandler. validate_get_skill_level. Запрос: {self.request}")
+            logger.info(f"SpecialIntentHandler. validate_get_skill_level. Запрос: {self.request}")
             current_level = self.game.get_skill_level()
             return self.say(texts.get_skill_level_text.format(current_level))
         
         if self.intent_validator.validate_show_board():
-            print(f"SpecialIntentHandler. validate_show_board. Запрос: {self.request}")
+            logger.info(f"SpecialIntentHandler. validate_show_board. Запрос: {self.request}")
             last_move = self.game.get_last_move()
             comp_color = 'WHITE' if self.game.get_user_color() == 'BLACK' else 'BLACK'
             add_text = self.game.get_board() + '\n'*2 + 'FEN: ' + self.game.board.fen() + '\n'

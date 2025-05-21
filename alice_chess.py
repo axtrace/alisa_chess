@@ -13,6 +13,10 @@ from handlers.game_over_handler import GameOverHandler
 from handlers.special_intent_handler import SpecialIntentHandler
 from handlers.waiting_newgame_confirm_handler import WaitingNewgameConfirmHandler
 from handlers.waiting_skill_level_handler import WaitingSkillLevelHandler
+import logging
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 class AliceChess:
     """Основной класс для обработки запросов к навыку шахмат."""
@@ -43,7 +47,7 @@ class AliceChess:
             Ответ для Алисы.
         """
 
-        print(f"handle_request. Запрос: {request}")
+        logger.info(f"handle_request. Запрос: {request}")
         state = request.get('state',{}).get('user',{}).get('game_state', {})
         
         self.game = Game(game_state=state)
@@ -56,8 +60,6 @@ class AliceChess:
         if special_intent_result:
             return special_intent_result
         
-        print(f"handle_request. SpecialIntentHandler result: {special_intent_result}")
-            
         # Затем обрабатываем запрос в зависимости от состояния игры
         state = self.game.get_skill_state()
         
