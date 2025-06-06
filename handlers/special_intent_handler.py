@@ -23,7 +23,8 @@ class SpecialIntentHandler(BaseHandler):
             logger.info(f"SpecialIntentHandler. validate_new_session. Запрос: {self.request}")
             state_text = texts.state_texts.get(self.game.get_skill_state(), '')
             state = self.request.get('state',{}).get('user',{}).get('game_state', {})
-            if state:
+            skill_state = state.get('skill_state', {})
+            if state and skill_state in ['WAITING_MOVE']:
                 # Если была предыдущая игра, то показываем доску и предыдущий ход
                 last_move = self.game.get_last_move()
                 comp_color = 'WHITE' if self.game.get_user_color() == 'BLACK' else 'BLACK'

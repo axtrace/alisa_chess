@@ -21,7 +21,7 @@ class TextPreparer(object):
     def say_your_move(self, comp_move='', prev_turn='', text_to_show='', text_to_say='', lang='ru'):
         # form speech for your move
 
-        logger.info(f"say_your_move received: comp_move={comp_move}, prev_turn={prev_turn}, text_to_show={text_to_show}, text_to_say={text_to_say}")  # Отладочный вывод
+        # logger.info(f"say_your_move received: comp_move={comp_move}, prev_turn={prev_turn}, text_to_show={text_to_show}, text_to_say={text_to_say}")  # Отладочный вывод
 
         text = text_to_show if text_to_show else ''
         text_tts = text_to_say if text_to_say else ''
