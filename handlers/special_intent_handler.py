@@ -19,13 +19,10 @@ class SpecialIntentHandler(BaseHandler):
         # Проверяем специальные намерения, которые не зависят от состояния игры
         logger.info(f"SpecialIntentHandler. handle. Проверяем запрос: {self.request}")
         if self.intent_validator.validate_new_session():
-            # Если пользователь хочет начать новую игру, то проверяем, была ли предыдущая игра
+            # Если пользователь начал новую сессию, то проверяем, не ждём ли мы хода с предыдущей сессии
             logger.info(f"SpecialIntentHandler. validate_new_session. Запрос: {self.request}")
-            state_text = texts.state_texts.get(self.game.get_skill_state(), '')
-            state = self.request.get('state',{}).get('user',{}).get('game_state', {})
-            skill_state = state.get('skill_state', {})
-            if state and skill_state in ['WAITING_MOVE']:
-                # Если была предыдущая игра, то показываем доску и предыдущий ход
+            if self.game.get_skill_state() in ['WAITING_MOVE']:
+                # Если ждём, то показываем доску и предыдущий ход
                 last_move = self.game.get_last_move()
                 comp_color = 'WHITE' if self.game.get_user_color() == 'BLACK' else 'BLACK'
                 if last_move:

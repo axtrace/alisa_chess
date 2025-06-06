@@ -63,7 +63,7 @@ class AliceChess:
         # Затем обрабатываем запрос в зависимости от состояния игры
         state = self.game.get_skill_state()
         
-        if state in ['INITIATED', '']: 
+        if state in ['INITIATED', '']:
             handler = InitiatedHandler(self.game, request)
         elif state == 'WAITING_CONFIRM':
             handler = WaitingConfirmHandler(self.game, request)
