@@ -293,6 +293,7 @@ undo_text_tts = """
 state_texts = {
    'WAITING_CONFIRM': hi_text,
    'WAITING_MOVE': waiting_move_text,
+   'WAITING_COLOR': choose_turn_text,
    'WAITING_PROMOTION': waiting_promotion_text,
    'WAITING_DRAW_CONFIRM': waiting_draw_confirm_text,
    'WAITING_RESIGN_CONFIRM': waiting_resign_confirm_text,
