@@ -21,6 +21,7 @@ class SpecialIntentHandler(BaseHandler):
         if self.intent_validator.validate_new_session():
             # Если пользователь начал новую сессию, то проверяем, не ждём ли мы хода с предыдущей сессии
             logger.info(f"SpecialIntentHandler.validate_new_session. Запрос: {self.request}")
+            state_text = texts.state_texts.get(self.game.get_skill_state(), '')
             if self.game.get_skill_state() in ['WAITING_MOVE']:
                 # Если ждём, то показываем доску и предыдущий ход
                 last_move = self.game.get_last_move()
@@ -32,6 +33,8 @@ class SpecialIntentHandler(BaseHandler):
                     text = texts.resume_text + '\n' + self.game.get_board()
                     text_tts = texts.resume_text + '\n' + 'Показала доску в чате. sil <[60]>'
                 return self.say(text, tts=text_tts)
+            else:
+                return self.say(state_text)
         
         if self.intent_validator.validate_help():
             logger.info(f"SpecialIntentHandler. validate_help. Запрос: {self.request}")
