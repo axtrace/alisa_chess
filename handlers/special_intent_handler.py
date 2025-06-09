@@ -36,6 +36,8 @@ class SpecialIntentHandler(BaseHandler):
                 state_text = texts.state_texts.get(self.game.get_skill_state(), '')
                 if not state_text:
                     state_text = texts.hi_text
+                if self.game.get_skill_state() == 'WAITING_SKILL_LEVEL':
+                    state_text = state_text.format(self.game.get_skill_level())
                 return self.say(state_text)
         
         if self.intent_validator.validate_help():
