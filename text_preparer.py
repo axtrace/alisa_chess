@@ -59,19 +59,6 @@ class TextPreparer(object):
             text_tts += texts.not_legal_move.format(user_move_tts)
         return text, text_tts
 
-    @staticmethod
-    def say_result(comp_move, comp_move_tts, reason, reason_tts,
-                   prev_turn_tts):
-        winner = ''
-        if reason == '#':
-            winner = 'Победили ' + prev_turn_tts
-
-        text = texts.gameover_text.format(comp_move, '', reason_tts,
-                                          winner)
-        text_tts = texts.gameover_text.format(comp_move_tts, 'sil <[70]>',
-                                              reason_tts, winner)
-
-        return text, text_tts
 
     @staticmethod
     def say_choose_color():
