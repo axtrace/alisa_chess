@@ -298,5 +298,7 @@ state_texts = {
    'WAITING_DRAW_CONFIRM': waiting_draw_confirm_text,
    'WAITING_RESIGN_CONFIRM': waiting_resign_confirm_text,
    'WAITING_NEWGAME_CONFIRM': waiting_newgame_confirm_text,
-   'WAITING_SKILL_LEVEL': waiting_skill_level_text
+   'WAITING_SKILL_LEVEL': waiting_skill_level_text,
+   'GAME_OVER': gameover_text,
+   'WAITING_MOVE_REPEAT': repeat_last_move
 }
