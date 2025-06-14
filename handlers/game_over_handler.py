@@ -15,9 +15,8 @@ class GameOverHandler(BaseHandler):
 
     def handle(self):
         """Обрабатывает запрос в состоянии окончания игры."""
-        logger.info(f"GameOverHandler. handle. Запрос: {self.request}")
+        logger.info(f"GameOverHandler.handle. Запрос: {self.request}")
         if self.intent_validator.validate_new_game():
             self.game.set_skill_state('INITIATED')
             return self.say(texts.hi_text)
-            
         return self.say(texts.gameover_text)

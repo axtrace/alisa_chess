@@ -113,6 +113,7 @@ class WaitingMoveHandler(BaseHandler):
             text, text_tts = self.prep_text_to_say(comp_move=current_move, prev_turn=prev_turn, text_to_show=self.game.get_board(), text_to_say='')
             text += '\n' + texts.checkmate_text
             text_tts += '\n' + texts.checkmate_text
+            text_tts += '<speaker audio=\"alice-sounds-game-win-1.opus\">' + text_tts
             return self.say(text, tts=text_tts)
             
         # Проверяем на пат
