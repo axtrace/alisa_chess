@@ -38,8 +38,8 @@ class TextPreparer(object):
             text += f'{comp_move}. '
             text_tts += f'{move_to_say}. '
 
-        text += '\nВаш ход!'
-        text_tts += 'Ваш ход!'
+        # text += '\nВаш ход!'
+        # text_tts += '. Ваш ход!'
 
         return text, text_tts
 
