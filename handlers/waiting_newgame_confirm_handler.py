@@ -18,7 +18,7 @@ class WaitingNewgameConfirmHandler(BaseHandler):
         logger.info(f"WaitingNewgameConfirmHandler. handle. Запрос: {self.request}") 
         if self.intent_validator.validate_yes():
             self.reset_game()
-            self.game.set_skill_state('WAITING_CONFIRM')
+            self.game.set_skill_state('WAITING_COLOR')
             state_text = texts.state_texts.get(self.game.get_skill_state(), '')
             return self.say(state_text)
             

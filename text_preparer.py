@@ -30,17 +30,9 @@ class TextPreparer(object):
         prev_turn_tts = self.speaker.say_turn(prev_turn, lang) if prev_turn else ''
 
         if prev_turn:
-            # if previous turn was given
-            text_tts += f'{prev_turn_tts} пошли '
-            text += f'\n{prev_turn_tts} пошли '
-        if comp_move:
-            # if comp move was given
-            text += f'{comp_move}. '
-            text_tts += f'{move_to_say}. '
-
-        # text += '\nВаш ход!'
-        # text_tts += '. Ваш ход!'
-
+            text = f'\n{prev_turn_tts} пошли {comp_move}.' + text
+            text_tts = f'{prev_turn_tts} пошли {move_to_say}.' + text_tts
+  
         return text, text_tts
 
     @staticmethod
