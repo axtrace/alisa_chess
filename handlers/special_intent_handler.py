@@ -26,11 +26,11 @@ class SpecialIntentHandler(BaseHandler):
                 last_move = self.game.get_last_move()
                 comp_color = 'WHITE' if self.game.get_user_color() == 'BLACK' else 'BLACK'
                 if last_move:
-                    text, text_tts = self.prep_text_to_say(comp_move=last_move, prev_turn=comp_color, text_to_show=self.game.get_board(), text_to_say='')
+                    text, text_tts = self.prep_text_to_say(comp_move=last_move, prev_turn=comp_color, text_to_show=self.game.get_board() + '\nВаш ход!', text_to_say='')
                     text = texts.resume_text + '\n' + text
                 else:
                     text = texts.resume_text + '\n' + self.game.get_board()
-                    text_tts = texts.resume_text + '\n' + 'Показала доску в чате. sil <[60]>'
+                    text_tts = texts.resume_text + '\n' + 'Показала доску на экране. sil <[60]>'
                 return self.say(text, tts=text_tts)
             else:
                 state_text = texts.state_texts.get(self.game.get_skill_state(), '')
