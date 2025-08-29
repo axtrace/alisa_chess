@@ -29,7 +29,7 @@ class SpecialIntentHandler(BaseHandler):
                     text, text_tts = self.prep_text_to_say(comp_move=last_move, prev_turn=comp_color, text_to_show=self.game.get_board() + '\nВаш ход!', text_to_say='')
                     text = texts.resume_text + '\n' + text
                 else:
-                    text = texts.resume_text + '\n' + self.game.get_board()
+                    text = texts.resume_text + '\n' + self.game.get_board() + '\nВаш ход!'
                     text_tts = texts.resume_text + '\n' + 'Показала доску на экране. sil <[60]>'
                 return self.say(text, tts=text_tts)
             else:
