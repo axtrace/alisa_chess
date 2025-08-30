@@ -1,4 +1,3 @@
-```mermaid
 stateDiagram-v2
     [*] --> INITIATED: Новый пользователь / новая игра
     INITIATED --> WAITING_CONFIRM: Приветствие
@@ -22,6 +21,15 @@ stateDiagram-v2
     WAITING_PROMOTION --> [*]: Завершение сессии
     WAITING_DRAW_CONFIRM --> [*]: Завершение сессии
     WAITING_RESIGN_CONFIRM --> [*]: Завершение сессии
+    
+    %% Новые состояния и переходы
+    WAITING_MOVE --> WAITING_NEWGAME_CONFIRM: Запрос новой игры
+    WAITING_NEWGAME_CONFIRM --> WAITING_COLOR: Новая игра подтверждена
+    WAITING_NEWGAME_CONFIRM --> WAITING_MOVE: Новая игра отклонена
+    WAITING_MOVE --> WAITING_SKILL_LEVEL: Запрос изменения уровня
+    WAITING_SKILL_LEVEL --> WAITING_MOVE: Уровень изменен
+    WAITING_NEWGAME_CONFIRM --> [*]: Завершение сессии
+    WAITING_SKILL_LEVEL --> [*]: Завершение сессии
 
     note right of INITIATED: Начальное состояние
     note right of WAITING_CONFIRM: Ожидание согласия пользователя
@@ -30,5 +38,7 @@ stateDiagram-v2
     note right of WAITING_PROMOTION: Ожидание превращения пешки
     note right of WAITING_DRAW_CONFIRM: Ожидание подтверждения ничьей
     note right of WAITING_RESIGN_CONFIRM: Ожидание подтверждения сдачи
+    note right of WAITING_NEWGAME_CONFIRM: Ожидание подтверждения новой игры
+    note right of WAITING_SKILL_LEVEL: Ожидание выбора уровня сложности
     note right of GAME_OVER: Игра завершена
 ``` 
