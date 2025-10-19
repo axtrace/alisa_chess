@@ -27,6 +27,13 @@ class WaitingColorHandler(BaseHandler):
         if user_color == 'BLACK':
             comp_color = 'WHITE'
             comp_move = self.game.comp_move()
+
+            # Если API вернул None, сообщаем об ошибке
+            if comp_move is None:
+                logger.error("Game.comp_move вернул None - проблема с Chess API")
+                error_text = "Произошла ошибка при получении хода от шахматного движка. Попробуйте выбрать другой цвет или начать новую игру."
+                return self.say(error_text, tts=error_text)
+
             text, text_tts = self.prep_text_to_say(comp_move=comp_move, prev_turn=comp_color, text_to_show=self.game.get_board() + '\nВаш ход!', text_to_say='')
             return self.say(text, tts=text_tts)
             

@@ -26,6 +26,16 @@ show_help() {
     echo ""
 }
 
+# Определяем путь к активации виртуального окружения в зависимости от ОС
+get_venv_activate_path() {
+    local venv_dir="$1"
+    if [[ "$OSTYPE" == "msys" ]] || [[ "$OSTYPE" == "win32" ]]; then
+        echo "$venv_dir/Scripts/activate"
+    else
+        echo "$venv_dir/bin/activate"
+    fi
+}
+
 # Загрузка переменных окружения из .env файла
 if [ -f ".env" ]; then
     echo "🔧 Загрузка переменных из .env файла..."
@@ -43,6 +53,59 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="${PROJECT_ROOT:-$SCRIPT_DIR}"
 CHESSAPI_DIR="${CHESSAPI_DIR:-$(dirname "$PROJECT_ROOT")/chessapi}"
 CHESSAPI_VENV="${CHESSAPI_VENV:-chessapi_env}"
+CHESSAPI_MODULE="${CHESSAPI_MODULE:-chessapi.chessapi:app}"
+CHESSAPI_HOST="${CHESSAPI_HOST:-0.0.0.0}"
+CHESSAPI_PORT="${CHESSAPI_PORT:-8000}"
+
+# Если используется localhost URL, запускаем локальный сервер
+if [[ "$CHESS_API_URL" == *localhost* ]]; then
+    echo "♟️ Запуск локального Stockfish сервера..."
+
+    # Автоматический поиск директории chessapi если не указана явно
+    if [ ! -d "$CHESSAPI_DIR" ]; then
+        echo "Поиск директории chessapi..."
+        # Ищем в родительской директории
+        PARENT_DIR="$(dirname "$PROJECT_ROOT")"
+        if [ -d "$PARENT_DIR/chessapi" ]; then
+            CHESSAPI_DIR="$PARENT_DIR/chessapi"
+            echo "Найдена директория chessapi: $CHESSAPI_DIR"
+        else
+            echo "❌ Директория Chess API не найдена: $CHESSAPI_DIR"
+            echo "Установите Chess API проект или укажите правильный путь через переменную CHESSAPI_DIR"
+            echo "Пример: CHESSAPI_DIR=/path/to/chessapi ./start_local.sh"
+            exit 1
+        fi
+    fi
+
+    cd "$CHESSAPI_DIR"
+
+    # Автоматический поиск виртуального окружения
+    if [ ! -d "$CHESSAPI_VENV" ]; then
+        echo "Поиск виртуального окружения..."
+        # Ищем различные варианты имен виртуальных окружений
+        for venv_name in "chessapi_env" "env" "venv" ".venv"; do
+            if [ -d "$venv_name" ]; then
+                CHESSAPI_VENV="$venv_name"
+                echo "Найдено виртуальное окружение: $CHESSAPI_VENV"
+                break
+            fi
+        done
+        if [ ! -d "$CHESSAPI_VENV" ]; then
+            echo "❌ Виртуальное окружение Chess API не найдено в: $CHESSAPI_DIR"
+            echo "Создайте его командой: cd $CHESSAPI_DIR && python -m venv $CHESSAPI_VENV"
+            echo "Или укажите имя через переменную: CHESSAPI_VENV=name ./start_local.sh"
+            exit 1
+        fi
+    fi
+
+    CHESSAPI_VENV_ACTIVATE_PATH=$(get_venv_activate_path "$CHESSAPI_VENV")
+    source "$CHESSAPI_VENV_ACTIVATE_PATH"
+    echo "Запуск сервера: uvicorn $CHESSAPI_MODULE --host $CHESSAPI_HOST --port $CHESSAPI_PORT"
+    python -m uvicorn $CHESSAPI_MODULE --host $CHESSAPI_HOST --port $CHESSAPI_PORT &
+    CHESSAPI_PID=$!
+    cd "$PROJECT_ROOT"
+    echo "✅ Stockfish сервер запущен (PID: $CHESSAPI_PID)"
+fi
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -71,16 +134,6 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# Определяем путь к активации виртуального окружения в зависимости от ОС
-get_venv_activate_path() {
-    local venv_dir="$1"
-    if [[ "$OSTYPE" == "msys" ]] || [[ "$OSTYPE" == "win32" ]]; then
-        echo "$venv_dir/Scripts/activate"
-    else
-        echo "$venv_dir/bin/activate"
-    fi
-}
-
 # Проверяем виртуальное окружение
 if [ ! -d "env" ]; then
     echo "❌ Виртуальное окружение не найдено!"
@@ -105,32 +158,23 @@ else
     echo "   Key: не установлен (для удаленного сервера)"
 fi
 
-# Проверяем и запускаем локальный Stockfish сервер (только для локального режима)
-if [[ "$CHESS_API_URL" == http://localhost:8000/bestmove/ ]]; then
-    echo "♟️ Проверка локального Stockfish сервера..."
-    if ! curl -s http://localhost:8000/healthcheck -H "X-API-Key: $CHESS_API_KEY" > /dev/null 2>&1; then
-        echo "Запуск локального Stockfish сервера..."
-        if [ -d "$CHESSAPI_DIR" ]; then
-            cd "$CHESSAPI_DIR"
-            if [ -d "$CHESSAPI_VENV" ]; then
-                CHESSAPI_VENV_ACTIVATE_PATH=$(get_venv_activate_path "$CHESSAPI_VENV")
-                source "$CHESSAPI_VENV_ACTIVATE_PATH"
-                python -m uvicorn chessapi:app --host 0.0.0.0 --port 8000 &
-                CHESSAPI_PID=$!
-                cd "$PROJECT_ROOT"
-                echo "✅ Stockfish сервер запущен (PID: $CHESSAPI_PID)"
-            else
-                echo "❌ Виртуальное окружение Chess API не найдено: $CHESSAPI_DIR/$CHESSAPI_VENV"
-                echo "Создайте его командой: cd $CHESSAPI_DIR && python -m venv $CHESSAPI_VENV"
-                exit 1
-            fi
+# Проверяем работу локального сервера (только для локального режима)
+if [[ "$CHESS_API_URL" == *localhost* ]]; then
+    echo "♟️ Проверка работы локального Stockfish сервера..."
+    # Ждем запуска сервера
+    sleep 2
+    # Извлекаем базовый URL сервера (без пути) для проверки
+    if [[ "$CHESS_API_URL" =~ ^(https?://[^/]+) ]]; then
+        BASE_URL="${BASH_REMATCH[1]}"
+        if curl -s "$BASE_URL/healthcheck" -H "X-API-Key: $CHESS_API_KEY" > /dev/null 2>&1; then
+            echo "✅ Stockfish сервер работает корректно"
         else
-            echo "❌ Директория Chess API не найдена: $CHESSAPI_DIR"
-            echo "Установите Chess API проект или укажите правильный путь через переменную CHESSAPI_DIR"
+            echo "❌ Stockfish сервер не отвечает на $BASE_URL"
             exit 1
         fi
     else
-        echo "✅ Stockfish сервер уже работает"
+        echo "❌ Невозможно разобрать URL для проверки: $CHESS_API_URL"
+        exit 1
     fi
 else
     echo "🌐 Используется внешний Chess API сервер: $CHESS_API_URL"
