@@ -25,7 +25,13 @@ class WaitingPromotionHandler(BaseHandler):
         
         # Делаем ход компьютера
         comp_move = self.game.comp_move()
-        
+
+        # Если API вернул None, сообщаем об ошибке
+        if comp_move is None:
+            logger.error("Game.comp_move вернул None - проблема с Chess API")
+            error_text = "Произошла ошибка при получении хода от шахматного движка. Попробуйте повторить превращение или начать новую игру."
+            return self.say(error_text, tts=error_text)
+
         # Проверяем на шах и мат после хода компьютера
         if self.game.is_checkmate():
             self.game.set_skill_state('GAME_OVER')

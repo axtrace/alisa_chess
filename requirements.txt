@@ -1,4 +1,4 @@
 chess
 requests
 python-chess
-requests
+python-dotenv
