@@ -105,9 +105,10 @@ pip install -r requirements.txt
   ```
 
 ## Технические детали
-- Шахматный движок Stockfish 16, поднят на отдельном сервере. Код сервера см. https://github.com/axtrace/chessapi.
+- Шахматный движок Stockfish 17 с локальным FastAPI сервером
+- Локальный сервер: https://github.com/axtrace/chessapi
 - Используется: https://github.com/niklasf/python-chess
-- Варианты развертывания: Serverless на Yandex Cloud
+- Варианты развертывания: Локальный сервер + Serverless на Yandex Cloud
 
 ## Архитектура
 - Навык построен на классах AliceChess (основная логика), Game (шахматная партия), обработчиках состояний (handlers), валидаторах интентов (request_validators).
