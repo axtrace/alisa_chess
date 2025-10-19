@@ -33,13 +33,13 @@ class SpecialIntentHandler(BaseHandler):
                     text = texts.resume_text + '\n' + self.game.get_board() + '\nВаш ход!'
                     text_tts = texts.resume_text + '\n' + 'Показала доску на экране. sil <[60]>'+ '\nВаш ход!'
                 return self.say(text, tts=text_tts)
-            else:
+            elif self.game.get_skill_state() == 'WAITING_SKILL_LEVEL':
+                # Показываем текст для настройки уровня сложности
                 state_text = texts.state_texts.get(self.game.get_skill_state(), '')
-                if not state_text:
-                    state_text = texts.hi_text
-                if self.game.get_skill_state() == 'WAITING_SKILL_LEVEL':
-                    state_text = state_text.format(self.game.get_skill_level())
+                state_text = state_text.format(self.game.get_skill_level())
                 return self.say(state_text)
+            # Для других состояний (INITIATED, WAITING_CONFIRM, etc.) не возвращаем ничего,
+            # чтобы дать возможность обычному обработчику состояний отработать
         
         if self.intent_validator.validate_help():
             logger.info(f"SpecialIntentHandler. validate_help. Запрос: {self.request}")

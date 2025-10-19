@@ -4,6 +4,10 @@ import requests
 import os
 from typing import Optional
 import logging
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -153,7 +157,12 @@ class Game(object):
         return 'Black'
 
     def get_board(self):
-        return self.board.unicode() + '\n'
+        # Show user's pieces at the bottom (white when user plays white, black when user plays black)
+        if not self.user_color:
+            orientation = True  # Default to white at bottom
+        else:
+            orientation = self.user_color.upper() == 'WHITE'
+        return self.board.unicode(orientation=orientation, invert_color=True) + '\n'
 
     def gameover_reason(self):
         # returns a code for reason of game ends

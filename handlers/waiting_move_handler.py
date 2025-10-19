@@ -45,7 +45,13 @@ class WaitingMoveHandler(BaseHandler):
         # Делаем один ход компьютера
         comp_color = self.game.who() # who возвращает сторону, которая делает ход. До хода компьютера - это и есть сторона компьютера
         comp_move = self.game.comp_move()
-        
+
+        # Если API вернул None, сообщаем об ошибке
+        if comp_move is None:
+            logger.error("Game.comp_move вернул None - проблема с Chess API")
+            error_text = "Произошла ошибка при получении хода от шахматного движка. Попробуйте повторить ход или начать новую игру."
+            return self.say(error_text, tts=error_text)
+
         # Если игра после хода КОМПЬЮТЕРА закончилась, то говорим об этом
         game_state = self._check_game_state(current_move=comp_move, prev_turn=comp_color)
         if game_state:

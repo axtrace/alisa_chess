@@ -1,0 +1,234 @@
+#!/bin/bash
+
+echo "🎯 Запуск Alice Chess"
+echo "===================="
+
+# Функция для отображения справки
+show_help() {
+    echo "Использование: $0 [ОПЦИИ]"
+    echo ""
+    echo "Опции:"
+    echo "  --help, -h          Показать эту справку"
+    echo "  --url URL           URL Chess API сервера (по умолчанию: http://localhost:8000/bestmove/)"
+    echo "  --key KEY           API ключ для аутентификации (по умолчанию: локальный ключ)"
+    echo "  --remote            Использовать удаленный сервер alice-chess.ru"
+    echo ""
+    echo "Переменные окружения:"
+    echo "  PROJECT_ROOT        Путь к корневой директории проекта Alice Chess (по умолчанию: директория скрипта)"
+    echo "  CHESSAPI_DIR        Путь к директории Chess API проекта (по умолчанию: ../chessapi)"
+    echo "  CHESSAPI_VENV       Имя виртуального окружения Chess API (по умолчанию: chessapi_env)"
+    echo ""
+    echo "Примеры:"
+    echo "  $0                           # Локальный сервер по умолчанию"
+    echo "  $0 --remote                 # Удаленный сервер alice-chess.ru"
+    echo "  $0 --url https://my-server.com/bestmove/ --key my-key"
+    echo "  PROJECT_ROOT=/path/to/alice-chess $0  # Указать кастомный путь к проекту"
+    echo ""
+}
+
+# Определяем путь к активации виртуального окружения в зависимости от ОС
+get_venv_activate_path() {
+    local venv_dir="$1"
+    if [[ "$OSTYPE" == "msys" ]] || [[ "$OSTYPE" == "win32" ]]; then
+        echo "$venv_dir/Scripts/activate"
+    else
+        echo "$venv_dir/bin/activate"
+    fi
+}
+
+# Загрузка переменных окружения из .env файла
+if [ -f ".env" ]; then
+    echo "🔧 Загрузка переменных из .env файла..."
+    set -a
+    source .env
+    set +a
+fi
+
+# Парсинг аргументов командной строки (с fallback значениями из .env)
+CHESS_API_URL="${CHESS_API_URL:-http://localhost:8000/bestmove/}"
+CHESS_API_KEY="${CHESS_API_KEY:-}"
+
+# Настройки путей (с fallback значениями)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="${PROJECT_ROOT:-$SCRIPT_DIR}"
+CHESSAPI_DIR="${CHESSAPI_DIR:-$(dirname "$PROJECT_ROOT")/chessapi}"
+CHESSAPI_VENV="${CHESSAPI_VENV:-chessapi_env}"
+CHESSAPI_MODULE="${CHESSAPI_MODULE:-chessapi.chessapi:app}"
+CHESSAPI_HOST="${CHESSAPI_HOST:-0.0.0.0}"
+CHESSAPI_PORT="${CHESSAPI_PORT:-8000}"
+
+# Если используется localhost URL, запускаем локальный сервер
+if [[ "$CHESS_API_URL" == *localhost* ]]; then
+    echo "♟️ Запуск локального Stockfish сервера..."
+
+    # Автоматический поиск директории chessapi если не указана явно
+    if [ ! -d "$CHESSAPI_DIR" ]; then
+        echo "Поиск директории chessapi..."
+        # Ищем в родительской директории
+        PARENT_DIR="$(dirname "$PROJECT_ROOT")"
+        if [ -d "$PARENT_DIR/chessapi" ]; then
+            CHESSAPI_DIR="$PARENT_DIR/chessapi"
+            echo "Найдена директория chessapi: $CHESSAPI_DIR"
+        else
+            echo "❌ Директория Chess API не найдена: $CHESSAPI_DIR"
+            echo "Установите Chess API проект или укажите правильный путь через переменную CHESSAPI_DIR"
+            echo "Пример: CHESSAPI_DIR=/path/to/chessapi ./start_local.sh"
+            exit 1
+        fi
+    fi
+
+    cd "$CHESSAPI_DIR"
+
+    # Автоматический поиск виртуального окружения
+    if [ ! -d "$CHESSAPI_VENV" ]; then
+        echo "Поиск виртуального окружения..."
+        # Ищем различные варианты имен виртуальных окружений
+        for venv_name in "chessapi_env" "env" "venv" ".venv"; do
+            if [ -d "$venv_name" ]; then
+                CHESSAPI_VENV="$venv_name"
+                echo "Найдено виртуальное окружение: $CHESSAPI_VENV"
+                break
+            fi
+        done
+        if [ ! -d "$CHESSAPI_VENV" ]; then
+            echo "❌ Виртуальное окружение Chess API не найдено в: $CHESSAPI_DIR"
+            echo "Создайте его командой: cd $CHESSAPI_DIR && python -m venv $CHESSAPI_VENV"
+            echo "Или укажите имя через переменную: CHESSAPI_VENV=name ./start_local.sh"
+            exit 1
+        fi
+    fi
+
+    CHESSAPI_VENV_ACTIVATE_PATH=$(get_venv_activate_path "$CHESSAPI_VENV")
+    source "$CHESSAPI_VENV_ACTIVATE_PATH"
+    echo "Запуск сервера: uvicorn $CHESSAPI_MODULE --host $CHESSAPI_HOST --port $CHESSAPI_PORT"
+    python -m uvicorn $CHESSAPI_MODULE --host $CHESSAPI_HOST --port $CHESSAPI_PORT &
+    CHESSAPI_PID=$!
+    cd "$PROJECT_ROOT"
+    echo "✅ Stockfish сервер запущен (PID: $CHESSAPI_PID)"
+fi
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --help|-h)
+            show_help
+            exit 0
+            ;;
+        --url)
+            CHESS_API_URL="$2"
+            shift 2
+            ;;
+        --key)
+            CHESS_API_KEY="$2"
+            shift 2
+            ;;
+        --remote)
+            CHESS_API_URL="https://alice-chess.ru:8000/bestmove/"
+            CHESS_API_KEY="${CHESS_API_KEY:-}"  # Очистить ключ для удаленного сервера
+            shift
+            ;;
+        *)
+            echo "❌ Неизвестный параметр: $1"
+            echo "Используйте --help для справки"
+            exit 1
+            ;;
+    esac
+done
+
+# Проверяем виртуальное окружение
+if [ ! -d "env" ]; then
+    echo "❌ Виртуальное окружение не найдено!"
+    echo "Создайте его командой: python -m venv env"
+    exit 1
+fi
+
+# Активируем виртуальное окружение
+echo "🔧 Активация виртуального окружения..."
+VENV_ACTIVATE_PATH=$(get_venv_activate_path "env")
+source "$VENV_ACTIVATE_PATH"
+
+# Экспортируем переменные окружения
+export CHESS_API_URL
+export CHESS_API_KEY
+
+echo "🎯 Настройки Chess API:"
+echo "   URL: $CHESS_API_URL"
+if [ -n "$CHESS_API_KEY" ]; then
+    echo "   Key: ${CHESS_API_KEY:0:10}..."
+else
+    echo "   Key: не установлен (для удаленного сервера)"
+fi
+
+# Проверяем работу локального сервера (только для локального режима)
+if [[ "$CHESS_API_URL" == *localhost* ]]; then
+    echo "♟️ Проверка работы локального Stockfish сервера..."
+    # Ждем запуска сервера
+    sleep 2
+    # Извлекаем базовый URL сервера (без пути) для проверки
+    if [[ "$CHESS_API_URL" =~ ^(https?://[^/]+) ]]; then
+        BASE_URL="${BASH_REMATCH[1]}"
+        if curl -s "$BASE_URL/healthcheck" -H "X-API-Key: $CHESS_API_KEY" > /dev/null 2>&1; then
+            echo "✅ Stockfish сервер работает корректно"
+        else
+            echo "❌ Stockfish сервер не отвечает на $BASE_URL"
+            exit 1
+        fi
+    else
+        echo "❌ Невозможно разобрать URL для проверки: $CHESS_API_URL"
+        exit 1
+    fi
+else
+    echo "🌐 Используется внешний Chess API сервер: $CHESS_API_URL"
+fi
+
+# Проверяем зависимости
+echo "📦 Проверка зависимостей..."
+python -c "import alice_chess, chess, requests" 2>/dev/null
+if [ $? -ne 0 ]; then
+    echo "Установка зависимостей..."
+    pip install -r requirements.txt
+fi
+
+# Запускаем сервер в фоне
+echo "🚀 Запуск Flask-сервера..."
+python alice_flask_server.py &
+SERVER_PID=$!
+
+# Ждем запуска сервера
+sleep 3
+
+# Проверяем, что сервер запустился
+if curl -s http://localhost:5000/health > /dev/null 2>&1; then
+    echo "✅ Сервер запущен успешно!"
+    echo ""
+    echo "🎮 Как играть:"
+    echo "=============="
+    echo "1. Откройте новый терминал"
+    echo "2. Скопируйте и вставьте эту команду:"
+    echo ""
+    echo "   cd $PROJECT_ROOT && source env/bin/activate && python play_local.py"
+    echo ""
+    echo "📋 Доступные команды:"
+    echo "- 'Давай сыграем в шахматы' - начать игру"
+    echo "- 'Белые' или 'Черные' - выбрать цвет"
+    echo "- Шахматные ходы (е2е4, Кf3, О-О и т.д.)"
+    echo "- 'Покажи доску' - показать текущую позицию"
+    echo "- 'Новая игра' - начать новую партию"
+    echo "- 'Помощь' - показать справку"
+    echo "- 'Сдаюсь' - сдаться"
+    echo "- 'Ничья' - предложить ничью"
+    echo "- 'Уровень сложности' - изменить уровень"
+    echo "- 'выход' или 'quit' - выйти"
+    echo ""
+    echo "🛑 Для остановки сервера нажмите Ctrl+C"
+    echo ""
+    echo "Сервер работает на: http://localhost:5000"
+    echo "PID сервера: $SERVER_PID"
+    echo ""
+
+    # Ждем завершения
+    wait $SERVER_PID
+else
+    echo "❌ Сервер не запустился!"
+    kill $SERVER_PID 2>/dev/null
+    exit 1
+fi
