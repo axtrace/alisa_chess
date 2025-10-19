@@ -72,13 +72,11 @@ class SpecialIntentHandler(BaseHandler):
                     + '\nВаш ход!'
                 )
             return self.say(text, tts=text_tts)
-        else:
+        if self.game.get_skill_state() == SkillState.WAITING_SKILL_LEVEL:
             state_text = texts.state_texts.get(self.game.get_skill_state(), '')
-            if not state_text:
-                state_text = texts.hi_text
-            if self.game.get_skill_state() == SkillState.WAITING_SKILL_LEVEL:
-                state_text = state_text.format(self.game.get_skill_level())
+            state_text = state_text.format(self.game.get_skill_level())
             return self.say(state_text)
+        return None
 
     def _has_move_in_request(self) -> bool:
         """Возвращает True, если в запросе пользователя есть распознаваемый шахматный ход.
