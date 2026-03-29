@@ -1,4 +1,1 @@
-chess
-requests
 python-chess
-requests

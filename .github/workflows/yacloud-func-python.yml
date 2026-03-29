@@ -12,6 +12,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
+    - name: Download Stockfish
+      run: |
+        wget -q http://mirror.yandex.ru/ubuntu/pool/universe/s/stockfish/stockfish_16-1build1_amd64.deb
+        ar -x stockfish_16-1build1_amd64.deb
+        tar -xf data.tar.xz
+        cp ./usr/games/stockfish ./stockfish
+        chmod +x ./stockfish
     - name: Deploy Function
       id: sls-func
       uses: yc-actions/yc-sls-function@v2
@@ -31,6 +38,7 @@ jobs:
           handlers/*.py
           request_validators/*.py
           requirements.txt
+          stockfish
         exclude: |
           **/*.ts
           **/tests/**
@@ -41,4 +49,3 @@ jobs:
           venv/**
           .gitignore
           LICENSE
-

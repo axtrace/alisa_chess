@@ -5,7 +5,7 @@ from game import Game
 
 class TestGame(unittest.TestCase):
     """Тесты для класса Game."""
-    
+
     def setUp(self):
         """Подготовка перед каждым тестом."""
         self.game = Game()
@@ -32,9 +32,9 @@ class TestGame(unittest.TestCase):
             'time_level': 0.3,
             'needs_promotion': False
         }
-        
+
         game = Game(game_state=game_state)
-        
+
         self.assertEqual(game.board.fen(), fen)
         self.assertEqual(game.skill_state, 'WAITING_MOVE')
         self.assertEqual(game.prev_skill_state, 'WAITING_COLOR')
@@ -51,7 +51,7 @@ class TestGame(unittest.TestCase):
         self.game.set_user_color('WHITE')
 
         state = self.game.serialize_state()
-        
+
         self.assertEqual(state['board_state'], fen)
         self.assertEqual(state['skill_state'], 'WAITING_MOVE')
         self.assertEqual(state['prev_skill_state'], 'INITIATED')
@@ -64,7 +64,7 @@ class TestGame(unittest.TestCase):
         """Тест выполнения допустимого хода."""
         self.assertTrue(self.game.is_valid_move('e4'))
         self.game.user_move('e4')
-        
+
         # Доска должна измениться
         self.assertNotEqual(self.game.board.fen(), self.initial_fen)
         # Пешка должна быть на e4
@@ -79,76 +79,57 @@ class TestGame(unittest.TestCase):
         # Конь не может пойти на e4
         self.assertFalse(self.game.is_valid_move('Ne4'))
 
-    @patch('game.ChessEngineAPI')
-    def test_comp_move(self, mock_engine):
+    @patch('chess.engine.SimpleEngine.popen_uci')
+    def test_comp_move(self, mock_popen):
         """Тест хода компьютера."""
-        # Настраиваем мок для движка
-        mock_engine_instance = mock_engine.return_value
-        mock_engine_instance.get_best_move.return_value = 'e2e4'  # Возвращаем ход e4
-        
-        # Создаем новую игру с замоканным движком
+        mock_engine_instance = MagicMock()
+        mock_popen.return_value = mock_engine_instance
+        mock_result = MagicMock()
+        mock_result.move = chess.Move.from_uci('e2e4')
+        mock_engine_instance.play.return_value = mock_result
+
         game = Game()
-        
-        # Делаем ход компьютера
+
         comp_move = game.comp_move()
 
         print(f"test_comp_move comp_move: {comp_move}")
-        # Проверяем, что ход был сделан
         self.assertIsNotNone(comp_move)
-        
-        # Проверяем, что ход был выполнен на доске
         self.assertNotEqual(game.board.fen(), self.initial_fen)
-        
-        # Проверяем, что движок был вызван с правильными параметрами
-        mock_engine_instance.get_best_move.assert_called_once_with(
-            self.initial_fen,  # начальная позиция
-            1,  # skill_level по умолчанию
-            0.1  # time_level по умолчанию
-        )
+        mock_engine_instance.play.assert_called_once()
 
-    @patch('game.ChessEngineAPI')
-    def test_comp_move_engine_error(self, mock_engine):
+    @patch('chess.engine.SimpleEngine.popen_uci')
+    def test_comp_move_engine_error(self, mock_popen):
         """Тест хода компьютера при ошибке движка."""
-        # Настраиваем мок для движка, чтобы он возвращал None
-        mock_engine_instance = mock_engine.return_value
-        mock_engine_instance.get_best_move.return_value = None
-        
-        # Создаем новую игру с замоканным движком
+        mock_engine_instance = MagicMock()
+        mock_popen.return_value = mock_engine_instance
+        mock_result = MagicMock()
+        mock_result.move = None
+        mock_engine_instance.play.return_value = mock_result
+
         game = Game()
-        
-        # Делаем ход компьютера
+
         comp_move = game.comp_move()
-        
-        # Проверяем, что ход не был сделан
+
         self.assertIsNone(comp_move)
-        
-        # Проверяем, что доска не изменилась
         self.assertEqual(game.board.fen(), self.initial_fen)
 
-    @patch('game.ChessEngineAPI')
-    def test_comp_move_operation_order(self, mock_engine):
+    @patch('chess.engine.SimpleEngine.popen_uci')
+    def test_comp_move_operation_order(self, mock_popen):
         """Тест порядка операций в методе comp_move."""
-        # Настраиваем мок для движка
-        mock_engine_instance = mock_engine.return_value
-        mock_engine_instance.get_best_move.return_value = 'e2e4'
-        
-        # Создаем новую игру с замоканным движком
+        mock_engine_instance = MagicMock()
+        mock_popen.return_value = mock_engine_instance
+        mock_result = MagicMock()
+        mock_result.move = chess.Move.from_uci('e2e4')
+        mock_engine_instance.play.return_value = mock_result
+
         game = Game()
-        
-        # Сохраняем начальное состояние доски
         initial_fen = game.board.fen()
-        
-        # Делаем ход компьютера
+
         comp_move = game.comp_move()
-        
-        # Проверяем, что ход был сделан
+
         self.assertIsNotNone(comp_move)
-        self.assertEqual(comp_move, 'e4')  # Проверяем SAN нотацию
-        
-        # Проверяем, что доска изменилась
+        self.assertEqual(comp_move, 'e4')
         self.assertNotEqual(game.board.fen(), initial_fen)
-        
-        # Проверяем, что пешка действительно на e4
         self.assertEqual(game.board.piece_at(chess.parse_square('e4')).piece_type, chess.PAWN)
 
     def test_is_checkmate(self):
@@ -156,7 +137,7 @@ class TestGame(unittest.TestCase):
         # Детский мат
         self.game.board = chess.Board("rnb1kbnr/pppp1ppp/8/4p3/6Pq/5P2/PPPPP2P/RNBQKBNR w KQkq - 1 3")
         self.assertTrue(self.game.is_checkmate())
-        
+
         # Не мат
         self.game.board = chess.Board()
         self.assertFalse(self.game.is_checkmate())
@@ -172,12 +153,12 @@ class TestGame(unittest.TestCase):
             'time_level': 0.3,
             'needs_promotion': False
         }
-        
+
         game = Game(game_state=game_state)
 
         self.assertFalse(game.is_checkmate())
         self.assertTrue(game.is_stalemate())
-        
+
         # Не пат
         game = Game()
         self.assertFalse(self.game.is_stalemate())
@@ -205,7 +186,7 @@ class TestGame(unittest.TestCase):
     def test_board_exception_handling(self, mock_board):
         """Тест обработки исключений при инициализации доски."""
         mock_board.side_effect = ValueError("Bad FEN")
-        
+
         # При ошибке создания доски из FEN должна использоваться начальная доска
         game_state = {'board_state': 'bad_fen'}
         with self.assertRaises(ValueError):
@@ -260,4 +241,4 @@ class TestGame(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    unittest.main() 
+    unittest.main()

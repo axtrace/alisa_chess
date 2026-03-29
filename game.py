@@ -1,44 +1,17 @@
 import chess
 import chess.pgn
-import requests
-import os
-from typing import Optional
+import chess.engine
 import logging
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
-
-class ChessEngineAPI:
-    def __init__(self, api_key: str = None):
-        self.api_url = os.getenv("CHESS_API_URL", "https://alice-chess.ru:8000/bestmove/")
-        self.api_key = api_key or os.getenv("CHESS_API_KEY", "")
-
-    def get_best_move(self, fen: str, depth: int = 10, time: float = 0.1) -> Optional[str]:
-        headers = {
-            "X-API-Key": self.api_key,
-            "Content-Type": "application/json"
-        }
-        data = {
-            "fen": fen,
-            "depth": depth,
-            "time": time
-        }
-        
-        try:
-            response = requests.post(self.api_url, headers=headers, json=data)
-            response.raise_for_status()
-            result = response.json()
-            return result.get("best_move")
-        except requests.exceptions.RequestException as e:
-            logger.error(f"Error getting best move: {e}")
-            return None
 
 class Game(object):
     """
     Class for chess game
     """
     def __init__(self, skill_level: int = 1, time_level: float = 0.1, game_state: dict = {}):
-        self.engine = ChessEngineAPI()
+        self.engine = chess.engine.SimpleEngine.popen_uci("./stockfish")
         self.board = self._init_board(game_state)
         self.prev_board = self._init_prev_board(game_state)
         self.skill_level = game_state.get('skill_level', skill_level)
@@ -47,16 +20,16 @@ class Game(object):
         self.prev_skill_state = game_state.get('prev_skill_state', '')
         self.user_color = game_state.get('user_color', '')
         self.last_move = game_state.get('last_move', '')
-        
+
     def _init_board(self, game_state):
         if 'board_state' in game_state:
             return chess.Board(game_state['board_state'])
         else:
             return chess.Board()
-        
+
     def _init_prev_board(self, game_state):
         try:
-            prev_board = game_state.get('prev_board_state', '')     
+            prev_board = game_state.get('prev_board_state', '')
             if prev_board:
                 return chess.Board(prev_board).fen()
             else:
@@ -64,7 +37,7 @@ class Game(object):
         except Exception as e:
             logger.error(f"Game._init_prev_board. Ошибка при инициализации prev-доски: {e}")
             return self.board.fen()
-        
+
     def undo_move(self):
         if self.prev_board:
             self.board = chess.Board(self.prev_board)
@@ -101,17 +74,16 @@ class Game(object):
         self.board.push_san(move_san)
 
     def comp_move(self):
-        # Get the best move from the API
-        best_move = self.engine.get_best_move(self.board.fen(), self.skill_level, self.time_level)
-        if best_move:
-            move = chess.Move.from_uci(best_move)
-            san = self.board.san(move)  # Получаем SAN до push
-            self.board.push(move)
+        self.engine.configure({"Skill Level": self.skill_level})
+        result = self.engine.play(self.board, chess.engine.Limit(time=self.time_level))
+        if result.move:
+            san = self.board.san(result.move)
+            self.board.push(result.move)
             self.last_move = san
             logger.info(f"Game.comp_move. Ход сделан: {san}, доска {self.board.fen()}")
             return san
         else:
-            logger.error(f"Game.comp_move. Ошибка при получении лучшего хода: {best_move}")
+            logger.error("Game.comp_move. Движок не вернул ход")
             return None
 
 
@@ -138,10 +110,14 @@ class Game(object):
             self.time_level = 0.5
         elif self.skill_level > 5:
             self.time_level = 0.3
-        else:   
+        else:
             self.time_level = 0.1
+        self.engine.configure({"Skill Level": self.skill_level})
         logger.info(f"Game.set_skill_level. skill_level: {self.skill_level}, time_level: {self.time_level}")
-    
+
+    def quit(self):
+        self.engine.quit()
+
 
     def get_skill_level(self):
         return self.skill_level
@@ -149,7 +125,7 @@ class Game(object):
     def who(self):
         # who's turn now
         if self.board.turn == chess.WHITE:
-            return 'White' 
+            return 'White'
         return 'Black'
 
     def get_board(self):
@@ -166,7 +142,7 @@ class Game(object):
         elif self.board.is_insufficient_material():
             return 'insufficient'
         return ''
-    
+
     def reset_board(self):
         self.board = chess.Board()
         self.prev_board = ''
@@ -192,7 +168,7 @@ class Game(object):
     def get_last_move(self):
         """Возвращает последний ход в формате SAN."""
         return self.last_move
-    
+
     def is_valid_move(self, move_san):
         """Проверяет, является ли ход допустимым."""
         try:
