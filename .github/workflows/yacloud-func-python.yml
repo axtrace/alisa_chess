@@ -24,6 +24,7 @@ jobs:
       uses: yc-actions/yc-sls-function@v2
       with:
         yc-sa-json-credentials: ${{ secrets.YC_SA_JSON_CREDENTIALS }}
+        bucket-name: ${{ secrets.BUCKET_NAME }}
         folder-id: ${{ secrets.FOLDER_ID }}
         function-name: 'alice-chess-testing'
         runtime: 'python312'
