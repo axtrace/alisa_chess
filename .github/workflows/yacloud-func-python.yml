@@ -16,7 +16,7 @@ jobs:
       run: |
         wget -q http://mirror.yandex.ru/ubuntu/pool/universe/s/stockfish/stockfish_16-1build1_amd64.deb
         ar -x stockfish_16-1build1_amd64.deb
-        tar -xf data.tar.xz
+        tar -xf $(ls data.tar.*)
         cp ./usr/games/stockfish ./stockfish
         chmod +x ./stockfish
     - name: Deploy Function
