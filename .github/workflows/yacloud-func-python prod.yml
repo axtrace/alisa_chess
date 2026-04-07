@@ -21,6 +21,7 @@ jobs:
       uses: yc-actions/yc-sls-function@v3
       with:
         yc-sa-json-credentials: ${{ secrets.YC_SA_JSON_CREDENTIALS }}
+        bucket: ${{ secrets.BUCKET_NAME }}
         folder-id: ${{ secrets.FOLDER_ID }}
         function-name: 'alice-chess-stable'
         runtime: 'python39'
