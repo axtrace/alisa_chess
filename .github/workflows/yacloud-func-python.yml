@@ -11,7 +11,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Download Stockfish
       run: |
         wget -q http://mirror.yandex.ru/ubuntu/pool/universe/s/stockfish/stockfish_14.1-1_amd64.deb
@@ -21,7 +21,7 @@ jobs:
         chmod +x ./stockfish
     - name: Deploy Function
       id: sls-func
-      uses: yc-actions/yc-sls-function@v2
+      uses: yc-actions/yc-sls-function@v3
       with:
         yc-sa-json-credentials: ${{ secrets.YC_SA_JSON_CREDENTIALS }}
         bucket: ${{ secrets.BUCKET_NAME }}
