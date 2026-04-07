@@ -44,7 +44,7 @@ class SpecialIntentHandler(BaseHandler):
         if self.intent_validator.validate_help():
             logger.info(f"SpecialIntentHandler. validate_help. Запрос: {self.request}")
             state_text = texts.state_texts.get(self.game.get_skill_state(), '')
-            engine_info = texts.engine_info.format(self.game.get_engine_name())
+            engine_info = texts.engine_info.format(self.game.get_engine_name(), self.game.get_skill_level())
             return self.say(texts.help_text + '\n' + engine_info + '\n' + state_text)
 
         if self.intent_validator.validate_whatcanyoudo():
