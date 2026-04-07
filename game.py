@@ -10,7 +10,9 @@ class Game(object):
     """
     Class for chess game
     """
-    def __init__(self, skill_level: int = 1, time_level: float = 0.1, game_state: dict = {}):
+    def __init__(self, skill_level: int = 1, time_level: float = 0.1, game_state: dict = None):
+        if game_state is None:
+            game_state = {}
         self.engine = chess.engine.SimpleEngine.popen_uci("./stockfish")
         self.board = self._init_board(game_state)
         self.prev_board = self._init_prev_board(game_state)
@@ -48,6 +50,10 @@ class Game(object):
 
     def get_user_color(self):
         return self.user_color
+
+    def get_comp_color(self):
+        """Возвращает цвет компьютера (противоположный цвету пользователя)."""
+        return 'WHITE' if self.user_color == 'BLACK' else 'BLACK'
 
     def set_user_color(self, user_color):
         self.user_color = user_color
@@ -118,6 +124,10 @@ class Game(object):
     def quit(self):
         self.engine.quit()
 
+
+    def get_engine_name(self):
+        """Возвращает название движка, например 'Stockfish 18'."""
+        return self.engine.id.get('name', 'Stockfish')
 
     def get_skill_level(self):
         return self.skill_level

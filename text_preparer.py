@@ -32,11 +32,10 @@ class TextPreparer(object):
         if prev_turn:
             text = f'\n{prev_turn_tts} пошли {comp_move}.' + '\n' + text
             text_tts = f'{prev_turn_tts} пошли {move_to_say}.' + '\n' + text_tts
-  
+
         return text, text_tts
 
-    @staticmethod
-    def say_repeat_last_move(self,last_move):
+    def say_repeat_last_move(self, last_move):
         text = texts.repeat_last_move.format(last_move)
         text_tts = self.speaker.say_move(last_move)
         return text, text_tts

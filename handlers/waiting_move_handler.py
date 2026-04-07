@@ -19,7 +19,7 @@ class WaitingMoveHandler(BaseHandler):
 
     def handle(self):
         """Обрабатывает запрос в состоянии ожидания хода."""
-        logger.info(f"WaitingMoveHandler.handle. Запрос: {self.request}")
+        logger.debug(f"WaitingMoveHandler.handle. Запрос: {self.request}")
 
         user_color = self.game.get_user_color()
 
@@ -96,7 +96,7 @@ class WaitingMoveHandler(BaseHandler):
             self.game.set_skill_state('GAME_OVER')
             text, text_tts = self.prep_text_to_say(comp_move=current_move, prev_turn=prev_turn, text_to_show=self.game.get_board(), text_to_say='')
             text += '\n' + texts.insufficient_material_text
-            text_tts += '\n' + texts.insufficient_material_text_tts
+            text_tts += '\n' + texts.insufficient_material_text
             return self.say(text, tts=text_tts)
 
         # Проверяем на пятикратное повторение
