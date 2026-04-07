@@ -9,6 +9,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
+    - name: Download Stockfish
+      run: |
+        wget -q http://mirror.yandex.ru/ubuntu/pool/universe/s/stockfish/stockfish_14.1-1_amd64.deb
+        ar -x stockfish_14.1-1_amd64.deb
+        tar -xf $(ls data.tar.*)
+        cp ./usr/games/stockfish ./stockfish
+        chmod +x ./stockfish
     - name: Deploy Function
       id: sls-func
       uses: yc-actions/yc-sls-function@v3
@@ -28,6 +35,7 @@ jobs:
           handlers/*.py
           request_validators/*.py
           requirements.txt
+          stockfish
         exclude: |
           **/*.ts
           **/tests/**
