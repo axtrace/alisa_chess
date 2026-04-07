@@ -74,6 +74,12 @@ class TestFindMatchingMovesRealBoard(unittest.TestCase):
                 "move_structure": {'piece': 'N', 'file_from': '', 'rank_from': '', 'file_to': 'f', 'rank_to': '3', 'move': 'Nf3', 'promotion_piece': ''},
                 "matching_moves": ['Nf3']
             },
+            # 11. Пешка на a8 без указания фигуры — по умолчанию ферзь
+            {
+                "board": "8/P7/8/8/8/8/8/8 w - - 0 1",
+                "move_structure": {'piece': '', 'file_from': '', 'rank_from': '', 'file_to': 'a', 'rank_to': '8', 'move': 'a8', 'promotion_piece': ''},
+                "matching_moves": ['a8=Q']
+            },
         ]
         for i, case in enumerate(cases, 1):
             with self.subTest(case=i):

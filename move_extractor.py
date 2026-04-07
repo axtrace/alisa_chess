@@ -89,7 +89,7 @@ class MoveExtractor(object):
     def extract_move(self, request, board):
         """Извлекает ход из запроса пользователя."""
         # Проверяем рокировку
-        logger.info(f"Extracting move from request: {request}")
+        logger.debug(f"Extracting move from request: {request}")
         castling_move, castling_type = self._extract_castling_move(request)
         if castling_move:
             logger.info(f"Castling move found: {castling_type}")
@@ -97,15 +97,15 @@ class MoveExtractor(object):
 
         # Пробуем извлечь ход из интентов
         extracted_move_structure = self._extract_move_from_intents(request)
-        logger.info(f"Extracted move from intents: {extracted_move_structure}")
+        logger.debug(f"Extracted move from intents: {extracted_move_structure}")
 
         if not extracted_move_structure:
             # Если интенты не помогли, пробуем извлечь из текста
             extracted_move_structure = self._extract_move_from_text(request)
-            logger.info(f"Extracted move from text: {extracted_move_structure}")
+            logger.debug(f"Extracted move from text: {extracted_move_structure}")
 
         if not extracted_move_structure:
-            logger.info(f"No move found in request: {request}")
+            logger.info(f"No move found in request command: {request.get('request', {}).get('command', '')}")
             return None, None
         extracted_move = extracted_move_structure.get('move', '')
         matching_moves = self._find_matching_moves(board, extracted_move_structure)
@@ -128,7 +128,7 @@ class MoveExtractor(object):
             file_to = slots.get('file_to', {}).get('value', '')
             rank_to = slots.get('rank_to', {}).get('value', '')
             promotion_piece = self._get_piece_from_intent(slots.get('promotion_piece', {}).get('value', ''))
-            
+
             if file_to and rank_to:  # Минимум нужны координаты назначения
                 move = ''.join(filter(None, [piece, file_from, rank_from, file_to, rank_to]))
                 move_structure = {
@@ -140,16 +140,16 @@ class MoveExtractor(object):
                     'move': move,
                     'promotion_piece': promotion_piece
                 }
-    
+
         # Проверяем интент PIECE
         elif 'PIECE' in intents:
             piece = self._get_piece_from_intent(intents['PIECE']['slots']['piece']['value'])
-            if piece: 
+            if piece:
                 move_structure = {
                     'piece': piece,
                     'move': piece
                 }
-            
+
         return move_structure
 
     def _get_piece_from_intent(self, piece_value):
@@ -228,22 +228,22 @@ class MoveExtractor(object):
             for w in self.piece_map[piece]:
                 command_text_wo_piece = re.sub(w, '', command_text_wo_piece)
             promotion_piece = self._get_piece_(command_text_wo_piece)
-        
+
         # Получаем клетки (файл и ранг)
         square_rex = re.compile(r'[a-zа-яё]+\s*[1-8]', flags=re.IGNORECASE)
         squares = re.findall(square_rex, command_text)
-        
+
         if not squares:
             return move_structure
-            
+
         file_to, rank_to = self._get_square(squares[-1])
         file_from, rank_from = '', ''
         if len(squares) > 1:
             file_from, rank_from = self._get_square(squares[0])
-            
+
         if not (len(file_to) and len(rank_to)):
             return move_structure
-            
+
         # Формируем ход: a5, Bc3, Nf3g5
         move = ''.join(filter(None, [piece, file_from, rank_from, file_to, rank_to]))
         move_structure = {
@@ -263,7 +263,7 @@ class MoveExtractor(object):
             return False, None
 
         command = request['request']['command'].lower()
-        
+
         # Проверяем интенты
         intents = self._get_intents_(request)
         if intents and 'PROMOTION' in intents:
@@ -289,13 +289,13 @@ class MoveExtractor(object):
                 return True, 'O-O'
 
         return False, None
-        
+
     def _find_matching_moves(self, board, move_structure):
-        logger.info(f"_find_matching_moves received: {move_structure}")
+        logger.debug(f"_find_matching_moves received: {move_structure}")
 
         legal_moves = [board.san(m) for m in board.legal_moves]
-        logger.info(f"legal_moves: {legal_moves}")
-        
+        logger.debug(f"legal_moves: {legal_moves}")
+
         # extract from user pronounced move
         file_to = move_structure.get('file_to', '')
         rank_to = move_structure.get('rank_to', '')
@@ -303,11 +303,11 @@ class MoveExtractor(object):
         rank_from = move_structure.get('rank_from', '')
         piece = move_structure.get('piece', '')
         promotion_piece = move_structure.get('promotion_piece', '')
-        
+
         # если явно указали пешку, то мы будем считать piece пустым
         if piece.lower() == 'p':
             piece = ''
-        
+
         candidate_moves = legal_moves
 
         # оставим только ходы с file_to и rank_to в составе
@@ -317,6 +317,13 @@ class MoveExtractor(object):
         if promotion_piece:
             candidate_moves = [move for move in candidate_moves if '=' + promotion_piece in move]
             logger.info(f"candidate_moves filtered by promotion: {candidate_moves}")
+        else:
+            # Если фигура превращения не указана, но все кандидаты — варианты превращения,
+            # выбираем ферзя по умолчанию
+            promotion_candidates = [move for move in candidate_moves if '=' in move]
+            if promotion_candidates and len(promotion_candidates) == len(candidate_moves):
+                candidate_moves = [move for move in candidate_moves if '=Q' in move]
+                logger.info(f"candidate_moves: promotion piece not specified, defaulting to queen: {candidate_moves}")
 
         logger.info(f"candidate_moves: {candidate_moves}")
 
@@ -336,15 +343,15 @@ class MoveExtractor(object):
         matching_moves = []
 
         for m in candidate_moves:
-            logger.info(f"Checking move: {m}")
+            logger.debug(f"Checking move: {m}")
             match = pattern.fullmatch(m)
             if not match:
                 continue
 
             candidate_move = match.groupdict()
-           
+
             # Проверяем фигуру
-            if candidate_move['piece'] is not None: 
+            if candidate_move['piece'] is not None:
                 if candidate_move['piece'] != piece:
                     continue
             elif piece:
@@ -357,10 +364,10 @@ class MoveExtractor(object):
 
             if candidate_move['rank_from'] is not None:
                 if rank_from and candidate_move['rank_from'] != rank_from:
-                    continue        
+                    continue
 
             matching_moves.append(m)
 
-        logger.info(f"Matching moves: {matching_moves}")
-        
+        logger.info(f"_find_matching_moves result: {matching_moves}")
+
         return matching_moves

@@ -27,9 +27,9 @@ undo_unavailable = """
 """
 
 engine_info = """
-Я использую шахматный движок Stockfish 16.
+Я использую шахматный движок {}.
 Сейчас уровень сложности установлен на 10.
-Его можно изменить командой "Измени уровень".
+Его можно изменить командой Измени уровень.
 """
 
 choose_turn_text = """
@@ -174,10 +174,6 @@ draw_text = """
 Если хотите сыграть ещё раз, скажите Новая игра
 """
 
-waiting_promotion_text = """
-Выберите фигуру для превращения пешки: ферзь, ладья, слон или конь.
-"""
-
 promotion_text = """
 Пешка успешно превращена в {}.
 """
@@ -237,7 +233,6 @@ state_texts = {
    'WAITING_CONFIRM': hi_text,
    'WAITING_MOVE': waiting_move_text,
    'WAITING_COLOR': choose_turn_text,
-   'WAITING_PROMOTION': waiting_promotion_text,
    'WAITING_DRAW_CONFIRM': waiting_draw_confirm_text,
    'WAITING_RESIGN_CONFIRM': waiting_resign_confirm_text,
    'WAITING_NEWGAME_CONFIRM': waiting_newgame_confirm_text,
