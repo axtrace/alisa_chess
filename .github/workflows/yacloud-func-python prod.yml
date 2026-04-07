@@ -24,7 +24,7 @@ jobs:
         bucket: ${{ secrets.BUCKET_NAME }}
         folder-id: ${{ secrets.FOLDER_ID }}
         function-name: 'alice-chess-stable'
-        runtime: 'python39'
+        runtime: 'python312'
         memory: '4096Mb'
         entrypoint: 'alice_serverless.handler'
         environment: |
