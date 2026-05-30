@@ -67,7 +67,14 @@ python3 -m pytest tests/test_alice_chess.py::TestAliceChess::test_handle_request
 
 ### Линт / форматирование
 
-Пока не настроены (задача №17). Если планируется правка большого объёма — обсуди с владельцем перед внедрением `ruff`/`mypy`.
+```bash
+ruff check .          # проверка стиля
+ruff format .         # автоматическое форматирование
+mypy .                # проверка типов (постепенно внедряется)
+pre-commit run --all-files  # запуск всех pre-commit хуков
+```
+
+Настроены в рамках задачи №17: `ruff` (lint+format), `mypy` (постепенно), `pre-commit` + CI-чек.
 
 ### Локальный прогон handler
 
@@ -130,23 +137,12 @@ grep -rn "<имя_функции>" tests/
 
 ---
 
-## 8. Дорожная карта (открытые задачи)
+## 8. Дорожная карта
 
-В порядке убывания приоритета. **Если планируешь крупное изменение — сначала проверь, нет ли пересечения с задачей ниже.**
-
-1. Перевести все сравнения состояний на [`SkillState`](skill_state.py:4) (убрать строковые литералы).
-2. Заменить if/elif в [`SpecialIntentHandler`](handlers/special_intent_handler.py:10) на реестр интентов (dict: intent → method).
-3. Удалить дубликат [`Game.is_move_legal`](game.py:140) / [`is_valid_move`](game.py:245).
-4. Безопасная валидация и clamp уровня сложности (try/except + диапазон 1..20).
-5. Ввести `TtsBuilder` и вынести SSML-разметку из хендлеров.
-6. `pyproject.toml` без пинов версий; убрать [`setup.py`](setup.py:1) и упоминания Flask.
-7. `ruff` (lint+format) + `mypy` (постепенно) + `pre-commit` + CI-чек.
-8. Единый `logging_config.py`: `JsonFormatter`, `ContextVar`, `bind_request_context`; убрать `setLevel` из модулей.
-9. Замокать Stockfish в unit-тестах [`tests/test_game.py`](tests/test_game.py:1) и [`tests/test_handlers.py`](tests/test_handlers.py:1).
-10. Актуализировать [`docs/architecture.md`](docs/architecture.md): убрать несуществующие файлы, поправить версию движка.
-11. ADR для трёх ключевых решений: state-machine, stockfish-lifecycle, сериализация состояния.
-12. Метрики и алерты в Yandex Monitoring (latency, % invalid/ambiguous, error rate, cold start rate).
-13. Интеграционные «золотые партии» поверх юнит-тестов.
+*Будущие улучшения могут включать:*
+- Расширение golden-тестов более сложными сценариями
+- Добавление метрик производительности движка
+- Поддержка дополнительных голосовых платформ
 
 ---
 
