@@ -152,6 +152,9 @@ python3 -m unittest discover tests
 
 Поддерживается развёртывание как Yandex Cloud Function. Точка входа — `alice_serverless.handler`. Workflow для деплоя лежат в [`.github/workflows/`](.github/workflows/). Подробнее в [`docs/deployment.md`](docs/deployment.md).
 
+**Планируемые изменения после одобрения модератора:**
+После получения одобрения модератора будут удалены процессы `Manual Deploy to TESTING YaCloud Functions` и `Manual Deploy to PROD YaCloud Functions`, останутся только `Manual Deploy 2 PROD YaCloud Functions` и `Auto Deploy 2 TESTING YaCloud Functions`. Переменные с постфиксом `_2` будут переименованы.
+
 ## Архитектура
 
 - Основная логика — класс [`AliceChess`](alice_chess.py:18); обрабатывает запрос как контекстный менеджер, гарантированно закрывая UCI-движок.

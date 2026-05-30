@@ -144,6 +144,11 @@ grep -rn "<имя_функции>" tests/
 - Добавление метрик производительности движка
 - Поддержка дополнительных голосовых платформ
 
+*Планируемые изменения деплоя после одобрения модератора:*
+- Удаление процессов: `Manual Deploy to TESTING YaCloud Functions` и `Manual Deploy to PROD YaCloud Functions`
+- Сохранение процессов: `Manual Deploy 2 PROD YaCloud Functions` и `Auto Deploy 2 TESTING YaCloud Functions`
+- Переименование переменных с удалением постфикса `_2`: `YC_SA_JSON_CREDENTIALS_2`, `BUCKET_NAME_2`, `FOLDER_ID_2`
+
 ---
 
 ## 9. Чек-лист перед завершением задачи
