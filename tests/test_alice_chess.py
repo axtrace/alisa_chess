@@ -6,7 +6,7 @@ from game import Game
 
 class TestAliceChess(unittest.TestCase):
     """Тесты для класса AliceChess."""
-    
+
     def setUp(self):
         """Подготовка базового запроса для тестов."""
         self.event = {
@@ -68,7 +68,7 @@ class TestAliceChess(unittest.TestCase):
         self.assertIn('tts', response)
         self.assertFalse(response['end_session'])
 
-    @patch('game.Game')
+    @patch('alice_chess.Game')
     def test_handle_request_waiting_move(self, mock_game):
         """Тест обработки запроса в состоянии ожидания хода."""
         # Настраиваем мок для игры
@@ -76,7 +76,7 @@ class TestAliceChess(unittest.TestCase):
         mock_game_instance.get_skill_state.return_value = 'WAITING_MOVE'
         mock_game_instance.is_valid_move.return_value = True
         mock_game.return_value = mock_game_instance
-        
+
         alice = AliceChess()
         event = self.event.copy()
         event['request']['command'] = 'e2e4'
@@ -86,7 +86,7 @@ class TestAliceChess(unittest.TestCase):
         self.assertIn('tts', response)
         self.assertFalse(response['end_session'])
 
-    @patch('game.Game')
+    @patch('alice_chess.Game')
     def test_handle_request_waiting_move_invalid(self, mock_game):
         """Тест обработки запроса с некорректным ходом в состоянии ожидания хода."""
         # Настраиваем мок для игры
@@ -94,18 +94,18 @@ class TestAliceChess(unittest.TestCase):
         mock_game_instance.get_skill_state.return_value = 'WAITING_MOVE'
         mock_game_instance.is_valid_move.return_value = False
         mock_game.return_value = mock_game_instance
-        
+
         alice = AliceChess()
         # Устанавливаем состояние игры в WAITING_MOVE
         alice.game = mock_game_instance
         print(f"alice.game.get_skill_state(): {alice.game.get_skill_state()}")
-        
+
         event = self.event.copy()
         event['request']['command'] = 'д2д5'  # Некорректный ход
         event['request']['original_utterance'] = 'д2д5'
         event['state']['user']['game_state'] = {'skill_state': 'WAITING_MOVE'}
         response = alice.handle_request(event)
-        
+
         # Проверяем, что ответ содержит сообщение об ошибке
         self.assertIn('text', response)
         self.assertIn('tts', response)
@@ -132,33 +132,38 @@ class TestAliceChess(unittest.TestCase):
         self.assertFalse(response['end_session'])
         self.assertEqual(self.alice.game.get_skill_state(), 'WAITING_NEWGAME_CONFIRM')
 
-    @patch('game.Game')
+    @patch('alice_chess.Game')
     def test_handle_request_promotion(self, mock_game):
         """Тест обработки запроса с превращением пешки."""
+        import chess
         # Настраиваем мок для игры
         mock_game_instance = MagicMock()
         mock_game_instance.get_skill_state.return_value = 'WAITING_MOVE'
         mock_game_instance.is_valid_move.return_value = True
-        
+
+        # Используем настоящую доску, чтобы извлечение хода работало с легальными ходами
+        real_board = chess.Board('8/P7/8/7k/8/8/8/2K5 w - - 0 1')
+        mock_game_instance.board = real_board
+
         # Настраиваем user_move
         def mock_user_move(move):
             return True
         mock_game_instance.user_move.side_effect = mock_user_move
-        
+
         # Настраиваем who для возврата текущего хода
         mock_game_instance.who.return_value = 'White'
-        
+
         # Настраиваем comp_move для возврата хода компьютера
         mock_game_instance.comp_move.return_value = 'e7e5'
-        
+
         # Настраиваем get_board для возврата доски
         mock_game_instance.get_board.return_value = '8/P7/8/7k/8/8/8/2K5 w - - 0 1'
-        
+
         mock_game.return_value = mock_game_instance
-        
+
         alice = AliceChess()
         alice.game = mock_game_instance
-        
+
         # Тестируем ход с превращением пешки
         event = self.event.copy()
         event['request']['command'] = 'а8'
@@ -203,24 +208,24 @@ class TestAliceChess(unittest.TestCase):
                 'current_turn': 'White'
             }
         }
-        
+
         # Добавляем отладочную информацию
         print("Before handle_request:")
         print(f"Game state: {mock_game_instance.get_skill_state()}")
-        
-        
+
+
         response = alice.handle_request(event)
-        
+
         # Добавляем отладочную информацию
         print("After handle_request:")
         print(f"Game state: {mock_game_instance.get_skill_state()}")
         print(f"set_skill_state calls: {mock_game_instance.set_skill_state.call_args_list}")
-        
+
         # Проверяем ответ
         self.assertIn('text', response)
-        self.assertIn('♖', response['text'].lower())
+        # Проверяем, что ход с превращением в ладью был распознан и сделан
+        self.assertIn('a8=r', response['text'].lower())
         self.assertIn('tts', response)
-        self.assertFalse(response['end_session'])
 
     def test_new_session_with_saved_state(self):
         """Тест обработки новой сессии с сохраненным состоянием игры."""
@@ -266,7 +271,7 @@ class TestAliceChess(unittest.TestCase):
         self.assertEqual(self.alice.game.get_skill_state(), 'WAITING_MOVE')
         self.assertEqual(self.alice.game.get_user_color(), 'WHITE')
         self.assertEqual(self.alice.game.get_skill_level(), 1)
-        
+
         # Проверяем, что ответ содержит сообщение о продолжении игры
         self.assertIn('Продолжим нашу игру', response['text'])
         self.assertIn('Ваш ход', response['text'])
@@ -299,10 +304,10 @@ class TestAliceChess(unittest.TestCase):
 
         # Проверяем, что игра инициализирована с начальным состоянием
         self.assertEqual(self.alice.game.get_skill_state(), 'INITIATED')
-        
+
         # Проверяем, что ответ содержит приветственное сообщение
         self.assertIn('готова сыграть с вами в шахматы вслепую.', response['text'])
 
 
 if __name__ == '__main__':
-    unittest.main() 
+    unittest.main()

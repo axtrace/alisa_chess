@@ -5,7 +5,7 @@ from alice_serverless import handler
 
 class TestServerless(unittest.TestCase):
     """Тесты для обработчика запросов от Алисы."""
-    
+
     def setUp(self):
         """Подготовка базового запроса для тестов."""
         self.base_event = {
@@ -58,6 +58,7 @@ class TestServerless(unittest.TestCase):
         with patch('alice_serverless.AliceChess') as mock_alice:
             # Настраиваем мок
             mock_instance = mock_alice.return_value
+            mock_instance.__enter__.return_value = mock_instance
             mock_instance.handle_request.return_value = {
                 'text': '\nДавайте сыграем в шахматы вслепую.\nХоды объявляются устно.\nДля начала игры скажите \'Да\'\nЕсли хотите узнать больше, скажите \'Помощь\'\n',
                 'tts': '\nДавайте сыграем в шахматы вслепую.\nХоды объявляются устно.\nДля начала игры скажите \'Да\'\nЕсли хотите узнать больше, скажите \'Помощь\'\n',
@@ -71,10 +72,10 @@ class TestServerless(unittest.TestCase):
                 'comp_color': '',
                 'current_turn': 'White'
             }
-            
+
             # Вызываем обработчик
             response = handler(self.base_event, None)
-            
+
             # Проверяем результат
             self.assertEqual(response['version'], '1.0')
             self.assertEqual(response['session'], self.base_event['session'])
@@ -85,7 +86,7 @@ class TestServerless(unittest.TestCase):
             })
             self.assertIn('user_state_update', response)
             self.assertIn('game_state', response['user_state_update'])
-            
+
             # Проверяем, что AliceChess был вызван без параметров
             mock_alice.assert_called_once_with()
             mock_instance.handle_request.assert_called_once_with(self.base_event)
@@ -104,10 +105,11 @@ class TestServerless(unittest.TestCase):
                 'current_turn': 'Black'
             }
         }
-        
+
         with patch('alice_serverless.AliceChess') as mock_alice:
             # Настраиваем мок
             mock_instance = mock_alice.return_value
+            mock_instance.__enter__.return_value = mock_instance
             mock_instance.handle_request.return_value = {
                 'text': '\nПростите, я не смогла понять ваш ход из фразы: \'{}\'.\nПовторите, пожалуйста.\nСкажите \'Помощь\', если возникают проблемы с распознаванием.\n',
                 'tts': '\nПростите, я не смогла понять ваш ход из фразы: \'{}\'.\nПовторите, пожалуйста.\nСкажите \'Помощь\', если возникают проблемы с распознаванием.\n',
@@ -121,10 +123,10 @@ class TestServerless(unittest.TestCase):
                 'comp_color': '',
                 'current_turn': 'Black'
             }
-            
+
             # Вызываем обработчик
             response = handler(event, None)
-            
+
             # Проверяем результат
             self.assertEqual(response['version'], '1.0')
             self.assertEqual(response['session'], event['session'])
@@ -135,7 +137,7 @@ class TestServerless(unittest.TestCase):
             })
             self.assertIn('user_state_update', response)
             self.assertIn('game_state', response['user_state_update'])
-            
+
             # Проверяем, что AliceChess был вызван без параметров
             mock_alice.assert_called_once_with()
             mock_instance.handle_request.assert_called_once_with(event)
@@ -145,10 +147,10 @@ class TestServerless(unittest.TestCase):
         with patch('alice_serverless.AliceChess') as mock_alice:
             # Настраиваем мок для выброса исключения
             mock_alice.side_effect = Exception("Test error")
-            
+
             # Вызываем обработчик
             response = handler(self.base_event, None)
-            
+
             # Проверяем результат
             self.assertEqual(response['version'], '1.0')
             self.assertEqual(response['session'], self.base_event['session'])
@@ -174,10 +176,11 @@ class TestServerless(unittest.TestCase):
                 'current_turn': 'White'
             }
         }
-        
+
         with patch('alice_serverless.AliceChess') as mock_alice:
             # Настраиваем мок
             mock_instance = mock_alice.return_value
+            mock_instance.__enter__.return_value = mock_instance
             mock_instance.handle_request.return_value = {
                 'text': '\nПростите, я не смогла понять ваш ход из фразы: \'e2e4\'.\nПовторите, пожалуйста.\nСкажите \'Помощь\', если возникают проблемы с распознаванием.\n',
                 'tts': '\nПростите, я не смогла понять ваш ход из фразы: \'e2e4\'.\nПовторите, пожалуйста.\nСкажите \'Помощь\', если возникают проблемы с распознаванием.\n',
@@ -191,10 +194,10 @@ class TestServerless(unittest.TestCase):
                 'comp_color': '',
                 'current_turn': 'White'
             }
-            
+
             # Вызываем обработчик
             response = handler(event, None)
-            
+
             # Проверяем результат
             self.assertEqual(response['version'], '1.0')
             self.assertEqual(response['session'], event['session'])
@@ -205,9 +208,9 @@ class TestServerless(unittest.TestCase):
             })
             self.assertIn('user_state_update', response)
             self.assertIn('game_state', response['user_state_update'])
-            
+
             # Проверяем, что состояние игры обновилось
             self.assertEqual(
                 response['user_state_update']['game_state']['board_state'],
                 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
-            ) 
+            )
