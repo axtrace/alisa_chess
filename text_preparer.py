@@ -1,10 +1,12 @@
+import logging
+
 import texts
 from speaker import Speaker
-import logging
 
 logger = logging.getLogger(__name__)
 
-class TextPreparer(object):
+
+class TextPreparer:
     """
     Class for prepare text for show and text for speak from text.py
     """
@@ -49,7 +51,6 @@ class TextPreparer(object):
             text_tts += texts.not_legal_move.format(user_move_tts)
         return text, text_tts
 
-
     @staticmethod
     def say_choose_color():
         text = texts.choose_turn_text
@@ -69,11 +70,7 @@ class TextPreparer(object):
         text_tts = texts.help_text_intro
 
         text += texts.names_for_pieces.format('', '', '', '', '')
-        text_tts += texts.names_for_pieces.format('sil <[70]>',
-                                                  'sil <[60]>',
-                                                  'sil <[60]>',
-                                                  'sil <[60]>',
-                                                  'sil <[60]>')
+        text_tts += texts.names_for_pieces.format('sil <[70]>', 'sil <[60]>', 'sil <[60]>', 'sil <[60]>', 'sil <[60]>')
 
         text += texts.coord_rules.format('Слон d3')
         text_tts += texts.coord_rules.format('Слон дэ 3')

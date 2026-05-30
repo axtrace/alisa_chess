@@ -1,11 +1,12 @@
+import logging
+
 from alice_chess import AliceChess
 from logging_config import (
-    setup_logging,
     bind_request_context,
     clear_request_context,
+    setup_logging,
 )
 from metrics import emit_counter, measure_duration
-import logging
 
 setup_logging()
 logger = logging.getLogger(__name__)
@@ -62,14 +63,12 @@ def handler(event, context):
             'version': '1.0',
             'session': event['session'],
             'response': response,
-            'user_state_update': {
-                'game_state': game_state
-            },
-            "session_state": session_state,
+            'user_state_update': {'game_state': game_state},
+            'session_state': session_state,
         }
     except Exception as e:
         emit_counter('skill.error', tags={'kind': type(e).__name__})
-        logger.error(f"Error in handler: {str(e)}")
+        logger.error(f'Error in handler: {str(e)}')
 
         # Пытаемся сохранить состояние игры, если оно было инициализировано
         game_state = None
@@ -77,7 +76,7 @@ def handler(event, context):
             if alice is not None:
                 game_state = alice.get_game_state()
         except Exception as state_error:
-            logger.error(f"Error getting game state: {state_error}")
+            logger.error(f'Error getting game state: {state_error}')
 
         error_text = f'Произошла ошибка при обработке запроса: {str(e)}'
         return {
@@ -88,15 +87,13 @@ def handler(event, context):
                 'text': error_text,
                 'end_session': True,
             },
-            'user_state_update': {
-                'game_state': game_state
-            } if game_state else {},
-            "session_state": {
-                "previous_response": {
+            'user_state_update': {'game_state': game_state} if game_state else {},
+            'session_state': {
+                'previous_response': {
                     'tts': 'Произошла ошибка при обработке запроса',
                     'text': error_text,
                 }
-            }
+            },
         }
     finally:
         clear_request_context()

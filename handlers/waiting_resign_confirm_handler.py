@@ -1,7 +1,9 @@
-import texts
-from .base_confirmation_handler import BaseConfirmationHandler
-from skill_state import SkillState
 import logging
+
+import texts
+from skill_state import SkillState
+
+from .base_confirmation_handler import BaseConfirmationHandler
 
 logger = logging.getLogger(__name__)
 
@@ -25,5 +27,5 @@ class WaitingResignConfirmHandler(BaseConfirmationHandler):
         self.game.set_skill_state(SkillState.INITIATED)
 
     def handle(self):
-        logger.info(f"WaitingResignConfirmHandler.handle. Запрос: {self.request}")
+        logger.info(f'WaitingResignConfirmHandler.handle. Запрос: {self.request}')
         return super().handle()

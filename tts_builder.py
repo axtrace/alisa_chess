@@ -15,7 +15,7 @@ class TtsBuilder:
     """Хелперы для построения TTS-разметки Алисы."""
 
     # Звуки из библиотеки Алисы.
-    SOUND_GAME_WIN = "alice-sounds-game-win-1.opus"
+    SOUND_GAME_WIN = 'alice-sounds-game-win-1.opus'
 
     # Длительности пауз в сантисекундах.
     PAUSE_SHORT = 60
@@ -25,7 +25,7 @@ class TtsBuilder:
     @staticmethod
     def silence(centiseconds: int = PAUSE_SHORT) -> str:
         """Возвращает SSML-паузу заданной длительности (в сантисекундах)."""
-        return f"sil <[{centiseconds}]>"
+        return f'sil <[{centiseconds}]>'
 
     @staticmethod
     def speaker(audio: str) -> str:
@@ -35,9 +35,9 @@ class TtsBuilder:
     @classmethod
     def with_silence_suffix(cls, text: str, centiseconds: int = PAUSE_SHORT) -> str:
         """Добавляет паузу в конец текста."""
-        return f"{text} {cls.silence(centiseconds)}"
+        return f'{text} {cls.silence(centiseconds)}'
 
     @classmethod
     def with_sound_prefix(cls, audio: str, text: str) -> str:
         """Добавляет звук в начало текста."""
-        return f"{cls.speaker(audio)}{text}"
+        return f'{cls.speaker(audio)}{text}'

@@ -9,8 +9,8 @@
 
 import json
 import logging
-from typing import Optional, Dict, Any
-from enum import Enum
+from typing import Any, Optional
+
 import chess
 from pydantic import BaseModel, Field, field_validator
 
@@ -20,14 +20,14 @@ from skill_state import SkillState
 class GameStateV1(BaseModel):
     """Схема V1 - текущая структура состояния игры."""
 
-    board_state: str = Field(default=chess.STARTING_FEN, description="FEN-строка текущей позиции")
-    prev_board_state: str = Field(default="", description="FEN-строка предыдущей позиции")
-    skill_state: str = Field(default="", description="Текущее состояние навыка")
-    prev_skill_state: str = Field(default="", description="Предыдущее состояние навыка")
-    user_color: str = Field(default="", description="Цвет игрока ('white' или 'black')")
-    last_move: str = Field(default="", description="Последний ход в SAN-нотации")
-    skill_level: int = Field(default=1, ge=1, le=20, description="Уровень сложности (1-20)")
-    time_level: float = Field(default=0.1, ge=0.01, le=5.0, description="Время на ход в секундах")
+    board_state: str = Field(default=chess.STARTING_FEN, description='FEN-строка текущей позиции')
+    prev_board_state: str = Field(default='', description='FEN-строка предыдущей позиции')
+    skill_state: str = Field(default='', description='Текущее состояние навыка')
+    prev_skill_state: str = Field(default='', description='Предыдущее состояние навыка')
+    user_color: str = Field(default='', description="Цвет игрока ('white' или 'black')")
+    last_move: str = Field(default='', description='Последний ход в SAN-нотации')
+    skill_level: int = Field(default=1, ge=1, le=20, description='Уровень сложности (1-20)')
+    time_level: float = Field(default=0.1, ge=0.01, le=5.0, description='Время на ход в секундах')
 
     @field_validator('board_state')
     @classmethod
@@ -37,7 +37,7 @@ class GameStateV1(BaseModel):
             try:
                 chess.Board(v)
             except ValueError as e:
-                raise ValueError(f"Некорректная FEN-строка: {v}") from e
+                raise ValueError(f'Некорректная FEN-строка: {v}') from e
         return v
 
     @field_validator('skill_state')
@@ -45,7 +45,7 @@ class GameStateV1(BaseModel):
     def validate_skill_state(cls, v):
         """Проверяет корректность состояния навыка."""
         if v and v.upper() not in SkillState.__members__:
-            raise ValueError(f"Некорректное состояние навыка: {v}")
+            raise ValueError(f'Некорректное состояние навыка: {v}')
         return v.upper() if v else v
 
     @field_validator('user_color')
@@ -53,7 +53,7 @@ class GameStateV1(BaseModel):
     def validate_user_color(cls, v):
         """Проверяет корректность цвета игрока (case-insensitive)."""
         if v and v.upper() not in ('WHITE', 'BLACK'):
-            raise ValueError(f"Некорректный цвет игрока: {v}")
+            raise ValueError(f'Некорректный цвет игрока: {v}')
         return v.upper() if v else v
 
 
@@ -62,16 +62,16 @@ class GameStateV2(BaseModel):
 
     _version: int = 2
 
-    board_state: str = Field(default=chess.STARTING_FEN, description="FEN-строка текущей позиции")
-    prev_board_state: str = Field(default="", description="FEN-строка предыдущей позиции")
-    skill_state: SkillState = Field(default=SkillState.INITIATED, description="Текущее состояние навыка")
-    prev_skill_state: SkillState = Field(default=SkillState.INITIATED, description="Предыдущее состояние навыка")
-    user_color: str = Field(default="", description="Цвет игрока ('white' или 'black')")
-    last_move: str = Field(default="", description="Последний ход в SAN-нотации")
-    skill_level: int = Field(default=1, ge=1, le=20, description="Уровень сложности (1-20)")
-    time_level: float = Field(default=0.1, ge=0.01, le=5.0, description="Время на ход в секундах")
-    move_count: int = Field(default=0, ge=0, description="Количество сделанных ходов")
-    game_start_time: Optional[str] = Field(default=None, description="Время начала игры (ISO формат)")
+    board_state: str = Field(default=chess.STARTING_FEN, description='FEN-строка текущей позиции')
+    prev_board_state: str = Field(default='', description='FEN-строка предыдущей позиции')
+    skill_state: SkillState = Field(default=SkillState.INITIATED, description='Текущее состояние навыка')
+    prev_skill_state: SkillState = Field(default=SkillState.INITIATED, description='Предыдущее состояние навыка')
+    user_color: str = Field(default='', description="Цвет игрока ('white' или 'black')")
+    last_move: str = Field(default='', description='Последний ход в SAN-нотации')
+    skill_level: int = Field(default=1, ge=1, le=20, description='Уровень сложности (1-20)')
+    time_level: float = Field(default=0.1, ge=0.01, le=5.0, description='Время на ход в секундах')
+    move_count: int = Field(default=0, ge=0, description='Количество сделанных ходов')
+    game_start_time: Optional[str] = Field(default=None, description='Время начала игры (ISO формат)')
 
     @field_validator('board_state')
     @classmethod
@@ -81,7 +81,7 @@ class GameStateV2(BaseModel):
             try:
                 chess.Board(v)
             except ValueError as e:
-                raise ValueError(f"Некорректная FEN-строка: {v}") from e
+                raise ValueError(f'Некорректная FEN-строка: {v}') from e
         return v
 
     @field_validator('user_color')
@@ -89,18 +89,18 @@ class GameStateV2(BaseModel):
     def validate_user_color(cls, v):
         """Проверяет корректность цвета игрока (case-insensitive)."""
         if v and v.upper() not in ('WHITE', 'BLACK'):
-            raise ValueError(f"Некорректный цвет игрока: {v}")
+            raise ValueError(f'Некорректный цвет игрока: {v}')
         return v.upper() if v else v
 
 
 class GameState(BaseModel):
     """Автоматическое определение версии состояния и миграция."""
 
-    version: int = Field(default=2, description="Версия схемы состояния")
-    data: GameStateV2 = Field(description="Данные состояния игры")
+    version: int = Field(default=2, description='Версия схемы состояния')
+    data: GameStateV2 = Field(description='Данные состояния игры')
 
     @classmethod
-    def from_dict(cls, state_dict: Dict[str, Any]) -> 'GameState':
+    def from_dict(cls, state_dict: dict[str, Any]) -> 'GameState':
         """Создает GameState из словаря с автоматической миграцией версий."""
         if not state_dict:
             return cls.default()
@@ -118,11 +118,12 @@ class GameState(BaseModel):
             v2_data = GameStateV2(**state_dict)
             return cls(version=2, data=v2_data)
         else:
-            raise ValueError(f"Неподдерживаемая версия состояния: {version}")
+            raise ValueError(f'Неподдерживаемая версия состояния: {version}')
 
     @classmethod
     def _migrate_v1_to_v2(cls, v1_state: GameStateV1) -> GameStateV2:
         """Мигрирует состояние с V1 на V2."""
+
         def _to_skill_state(v: str) -> SkillState:
             if not v:
                 return SkillState.INITIATED
@@ -141,23 +142,17 @@ class GameState(BaseModel):
             skill_level=v1_state.skill_level,
             time_level=v1_state.time_level,
             move_count=0,  # Новое поле
-            game_start_time=None  # Новое поле
+            game_start_time=None,  # Новое поле
         )
 
     @classmethod
     def default(cls) -> 'GameState':
         """Создает состояние по умолчанию."""
-        return cls(
-            version=2,
-            data=GameStateV2()
-        )
+        return cls(version=2, data=GameStateV2())
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Преобразует состояние в словарь для сериализации."""
-        return {
-            '_version': self.version,
-            **self.data.model_dump()
-        }
+        return {'_version': self.version, **self.data.model_dump()}
 
     def to_json(self) -> str:
         """Сериализует состояние в JSON строку."""
@@ -172,7 +167,7 @@ class GameState(BaseModel):
         except (json.JSONDecodeError, ValueError) as e:
             # При ошибке возвращаем состояние по умолчанию
             logger = logging.getLogger(__name__)
-            logger.warning(f"Ошибка десериализации состояния: {e}. Возвращаем состояние по умолчанию.")
+            logger.warning(f'Ошибка десериализации состояния: {e}. Возвращаем состояние по умолчанию.')
             return cls.default()
 
 
@@ -191,9 +186,10 @@ def create_game_state_from_game(game) -> GameState:
             skill_level=game.skill_level,
             time_level=game.time_level,
             move_count=getattr(game, 'move_count', 0),
-            game_start_time=getattr(game, 'game_start_time', None)
-        )
+            game_start_time=getattr(game, 'game_start_time', None),
+        ),
     )
+
 
 def restore_game_from_state(game, game_state: GameState) -> None:
     """Восстанавливает состояние игры из GameState с обработкой ошибок."""
@@ -206,7 +202,7 @@ def restore_game_from_state(game, game_state: GameState) -> None:
         if data.board_state:
             try:
                 game.board = chess.Board(data.board_state)
-                logger.debug(f"Восстановлена доска из FEN: {data.board_state}")
+                logger.debug(f'Восстановлена доска из FEN: {data.board_state}')
             except ValueError as e:
                 logger.warning(f"Некорректная FEN-строка '{data.board_state}': {e}. Создаем новую доску.")
                 game.board = chess.Board()
@@ -214,42 +210,42 @@ def restore_game_from_state(game, game_state: GameState) -> None:
             game.board = chess.Board()
 
         # Восстанавливаем остальные поля с валидацией
-        game.prev_board = data.prev_board_state or ""
+        game.prev_board = data.prev_board_state or ''
 
         # Обработка SkillState с защитой от некорректных значений
         try:
-            game.skill_state = data.skill_state.value if data.skill_state else ""
+            game.skill_state = data.skill_state.value if data.skill_state else ''
         except (AttributeError, ValueError) as e:
-            logger.warning(f"Некорректное состояние навыка: {e}. Устанавливаем INITIATED.")
+            logger.warning(f'Некорректное состояние навыка: {e}. Устанавливаем INITIATED.')
             game.skill_state = SkillState.INITIATED
 
         try:
-            game.prev_skill_state = data.prev_skill_state.value if data.prev_skill_state else ""
+            game.prev_skill_state = data.prev_skill_state.value if data.prev_skill_state else ''
         except (AttributeError, ValueError) as e:
-            logger.warning(f"Некорректное предыдущее состояние навыка: {e}. Устанавливаем пустую строку.")
-            game.prev_skill_state = ""
+            logger.warning(f'Некорректное предыдущее состояние навыка: {e}. Устанавливаем пустую строку.')
+            game.prev_skill_state = ''
 
         # Валидация цвета игрока (case-insensitive)
         if data.user_color and data.user_color.upper() in ('WHITE', 'BLACK'):
             game.user_color = data.user_color.upper()
         else:
-            game.user_color = ""
+            game.user_color = ''
 
         # Валидация уровня сложности
         if 1 <= data.skill_level <= 20:
             game.skill_level = data.skill_level
         else:
-            logger.warning(f"Некорректный уровень сложности: {data.skill_level}. Устанавливаем 1.")
+            logger.warning(f'Некорректный уровень сложности: {data.skill_level}. Устанавливаем 1.')
             game.skill_level = 1
 
         # Валидация времени на ход
         if 0.01 <= data.time_level <= 5.0:
             game.time_level = data.time_level
         else:
-            logger.warning(f"Некорректное время на ход: {data.time_level}. Устанавливаем 0.1.")
+            logger.warning(f'Некорректное время на ход: {data.time_level}. Устанавливаем 0.1.')
             game.time_level = 0.1
 
-        game.last_move = data.last_move or ""
+        game.last_move = data.last_move or ''
 
         # Новые поля (если есть)
         if hasattr(game, 'move_count'):
@@ -257,17 +253,17 @@ def restore_game_from_state(game, game_state: GameState) -> None:
         if hasattr(game, 'game_start_time'):
             game.game_start_time = data.game_start_time
 
-        logger.debug("Состояние игры успешно восстановлено")
+        logger.debug('Состояние игры успешно восстановлено')
 
     except Exception as e:
-        logger.error(f"Критическая ошибка при восстановлении состояния: {e}")
+        logger.error(f'Критическая ошибка при восстановлении состояния: {e}')
         # В случае критической ошибки создаем новую игру
         game.board = chess.Board()
-        game.prev_board = ""
+        game.prev_board = ''
         game.skill_state = SkillState.INITIATED
-        game.prev_skill_state = ""
-        game.user_color = ""
-        game.last_move = ""
+        game.prev_skill_state = ''
+        game.user_color = ''
+        game.last_move = ''
         game.skill_level = 1
         game.time_level = 0.1
         if hasattr(game, 'move_count'):

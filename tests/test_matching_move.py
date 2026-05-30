@@ -1,6 +1,9 @@
 import unittest
+
 import chess
+
 from move_extractor import MoveExtractor
+
 
 class TestFindMatchingMovesRealBoard(unittest.TestCase):
     def setUp(self):
@@ -16,74 +19,163 @@ class TestFindMatchingMovesRealBoard(unittest.TestCase):
         cases = [
             # 1. Пешечный ход с взятием
             {
-                "board": "8/8/8/8/8/p7/1P6/8 w - - 0 1",
-                "move_structure": {'piece': '', 'file_from': '', 'rank_from': '', 'file_to': 'a', 'rank_to': '3', 'move': 'a3', 'promotion_piece': ''},
-                "matching_moves": ['bxa3']
+                'board': '8/8/8/8/8/p7/1P6/8 w - - 0 1',
+                'move_structure': {
+                    'piece': '',
+                    'file_from': '',
+                    'rank_from': '',
+                    'file_to': 'a',
+                    'rank_to': '3',
+                    'move': 'a3',
+                    'promotion_piece': '',
+                },
+                'matching_moves': ['bxa3'],
             },
             # 2. Конь с вертикали c на b3
             {
-                "board": "8/8/8/2N5/8/8/3N4/8 w - - 0 1",
-                "move_structure": {'piece': 'N', 'file_from': 'c', 'rank_from': '', 'file_to': 'b', 'rank_to': '3', 'move': 'Ncb3', 'promotion_piece': ''},
-                "matching_moves": ['Ncb3']
+                'board': '8/8/8/2N5/8/8/3N4/8 w - - 0 1',
+                'move_structure': {
+                    'piece': 'N',
+                    'file_from': 'c',
+                    'rank_from': '',
+                    'file_to': 'b',
+                    'rank_to': '3',
+                    'move': 'Ncb3',
+                    'promotion_piece': '',
+                },
+                'matching_moves': ['Ncb3'],
             },
             # 3. Конь на b3 (любой)
             {
-                "board": "8/8/8/N1N5/8/8/8/8 w - - 0 1",
-                "move_structure": {'piece': 'N', 'file_from': '', 'rank_from': '', 'file_to': 'b', 'rank_to': '3', 'move': 'Nb3', 'promotion_piece': ''},
-                "matching_moves": ['Ncb3', 'Nab3']
+                'board': '8/8/8/N1N5/8/8/8/8 w - - 0 1',
+                'move_structure': {
+                    'piece': 'N',
+                    'file_from': '',
+                    'rank_from': '',
+                    'file_to': 'b',
+                    'rank_to': '3',
+                    'move': 'Nb3',
+                    'promotion_piece': '',
+                },
+                'matching_moves': ['Ncb3', 'Nab3'],
             },
             # 4. Пешка на e4
             {
-                "board": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
-                "move_structure": {'piece': '', 'file_from': '', 'rank_from': '', 'file_to': 'e', 'rank_to': '4', 'move': 'e4', 'promotion_piece': ''},
-                "matching_moves": ['e4']
+                'board': 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+                'move_structure': {
+                    'piece': '',
+                    'file_from': '',
+                    'rank_from': '',
+                    'file_to': 'e',
+                    'rank_to': '4',
+                    'move': 'e4',
+                    'promotion_piece': '',
+                },
+                'matching_moves': ['e4'],
             },
             # 5. Пешка превращается в ферзя на a8
             {
-                "board": "8/P7/8/8/8/8/8/8 w - - 0 1",
-                "move_structure": {'piece': '', 'file_from': '', 'rank_from': '', 'file_to': 'a', 'rank_to': '8', 'move': 'a8=Q', 'promotion_piece': 'Q'},
-                "matching_moves": ['a8=Q']
+                'board': '8/P7/8/8/8/8/8/8 w - - 0 1',
+                'move_structure': {
+                    'piece': '',
+                    'file_from': '',
+                    'rank_from': '',
+                    'file_to': 'a',
+                    'rank_to': '8',
+                    'move': 'a8=Q',
+                    'promotion_piece': 'Q',
+                },
+                'matching_moves': ['a8=Q'],
             },
             # 6. Пешка превращается в коня на b8
             {
-                "board": "8/1P6/8/8/8/8/8/8 w - - 0 1",
-                "move_structure": {'piece': '', 'file_from': '', 'rank_from': '', 'file_to': 'b', 'rank_to': '8', 'move': 'b8=N', 'promotion_piece': 'N'},
-                "matching_moves": ['b8=N']
+                'board': '8/1P6/8/8/8/8/8/8 w - - 0 1',
+                'move_structure': {
+                    'piece': '',
+                    'file_from': '',
+                    'rank_from': '',
+                    'file_to': 'b',
+                    'rank_to': '8',
+                    'move': 'b8=N',
+                    'promotion_piece': 'N',
+                },
+                'matching_moves': ['b8=N'],
             },
             # 7. Ладья с вертикали a на e3
             {
-                "board": "8/8/8/N1N5/8/R6R/8/8 w - - 0 1",
-                "move_structure": {'piece': 'R', 'file_from': 'a', 'rank_from': '', 'file_to': 'e', 'rank_to': '3', 'move': 'Rae3', 'promotion_piece': ''},
-                "matching_moves": ['Rae3']
+                'board': '8/8/8/N1N5/8/R6R/8/8 w - - 0 1',
+                'move_structure': {
+                    'piece': 'R',
+                    'file_from': 'a',
+                    'rank_from': '',
+                    'file_to': 'e',
+                    'rank_to': '3',
+                    'move': 'Rae3',
+                    'promotion_piece': '',
+                },
+                'matching_moves': ['Rae3'],
             },
             # 8. Ладья на e3 (любая)
             {
-                "board": "8/8/8/N1N5/8/R6R/8/8 w - - 0 1",
-                "move_structure": {'piece': 'R', 'file_from': '', 'rank_from': '', 'file_to': 'e', 'rank_to': '3', 'move': 'Re3', 'promotion_piece': ''},
-                "matching_moves": ['Rhe3', 'Rae3']
+                'board': '8/8/8/N1N5/8/R6R/8/8 w - - 0 1',
+                'move_structure': {
+                    'piece': 'R',
+                    'file_from': '',
+                    'rank_from': '',
+                    'file_to': 'e',
+                    'rank_to': '3',
+                    'move': 'Re3',
+                    'promotion_piece': '',
+                },
+                'matching_moves': ['Rhe3', 'Rae3'],
             },
             # 9. Слон на e2
             {
-                "board": "8/8/8/8/8/5B2/8/8 w - - 0 1",
-                "move_structure": {'piece': 'B', 'file_from': '', 'rank_from': '', 'file_to': 'e', 'rank_to': '2', 'move': 'Be2', 'promotion_piece': ''},
-                "matching_moves": ['Be2']
+                'board': '8/8/8/8/8/5B2/8/8 w - - 0 1',
+                'move_structure': {
+                    'piece': 'B',
+                    'file_from': '',
+                    'rank_from': '',
+                    'file_to': 'e',
+                    'rank_to': '2',
+                    'move': 'Be2',
+                    'promotion_piece': '',
+                },
+                'matching_moves': ['Be2'],
             },
             # 10. Конь на f3
             {
-                "board": "8/8/8/8/8/8/8/6N1 w - - 0 1",
-                "move_structure": {'piece': 'N', 'file_from': '', 'rank_from': '', 'file_to': 'f', 'rank_to': '3', 'move': 'Nf3', 'promotion_piece': ''},
-                "matching_moves": ['Nf3']
+                'board': '8/8/8/8/8/8/8/6N1 w - - 0 1',
+                'move_structure': {
+                    'piece': 'N',
+                    'file_from': '',
+                    'rank_from': '',
+                    'file_to': 'f',
+                    'rank_to': '3',
+                    'move': 'Nf3',
+                    'promotion_piece': '',
+                },
+                'matching_moves': ['Nf3'],
             },
             # 11. Пешка на a8 без указания фигуры — по умолчанию ферзь
             {
-                "board": "8/P7/8/8/8/8/8/8 w - - 0 1",
-                "move_structure": {'piece': '', 'file_from': '', 'rank_from': '', 'file_to': 'a', 'rank_to': '8', 'move': 'a8', 'promotion_piece': ''},
-                "matching_moves": ['a8=Q']
+                'board': '8/P7/8/8/8/8/8/8 w - - 0 1',
+                'move_structure': {
+                    'piece': '',
+                    'file_from': '',
+                    'rank_from': '',
+                    'file_to': 'a',
+                    'rank_to': '8',
+                    'move': 'a8',
+                    'promotion_piece': '',
+                },
+                'matching_moves': ['a8=Q'],
             },
         ]
         for i, case in enumerate(cases, 1):
             with self.subTest(case=i):
-                self.run_case(case["board"], case["move_structure"], case["matching_moves"])
+                self.run_case(case['board'], case['move_structure'], case['matching_moves'])
+
 
 if __name__ == '__main__':
     unittest.main()

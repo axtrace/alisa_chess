@@ -26,13 +26,13 @@ from __future__ import annotations
 
 import logging
 import time
+from collections.abc import Mapping
 from contextlib import contextmanager
-from typing import Mapping, Optional
 
 logger = logging.getLogger('alisa_chess.metrics')
 
 
-def emit_counter(name: str, value: int = 1, tags: Optional[Mapping[str, str]] = None) -> None:
+def emit_counter(name: str, value: int = 1, tags: Mapping[str, str] | None = None) -> None:
     """Эмитит счётчик метрики в лог в виде структурированной записи."""
     logger.info(
         'metric',
@@ -45,7 +45,7 @@ def emit_counter(name: str, value: int = 1, tags: Optional[Mapping[str, str]] = 
     )
 
 
-def emit_gauge(name: str, value: float, tags: Optional[Mapping[str, str]] = None) -> None:
+def emit_gauge(name: str, value: float, tags: Mapping[str, str] | None = None) -> None:
     """Эмитит мгновенное значение (gauge) в лог."""
     logger.info(
         'metric',
@@ -58,7 +58,7 @@ def emit_gauge(name: str, value: float, tags: Optional[Mapping[str, str]] = None
     )
 
 
-def emit_histogram(name: str, value: float, tags: Optional[Mapping[str, str]] = None) -> None:
+def emit_histogram(name: str, value: float, tags: Mapping[str, str] | None = None) -> None:
     """Эмитит наблюдение для гистограммы (длительности, размеры payload)."""
     logger.info(
         'metric',
@@ -72,7 +72,7 @@ def emit_histogram(name: str, value: float, tags: Optional[Mapping[str, str]] = 
 
 
 @contextmanager
-def measure_duration(name: str, tags: Optional[Mapping[str, str]] = None):
+def measure_duration(name: str, tags: Mapping[str, str] | None = None):
     """Контекстный менеджер: измеряет длительность блока и эмитит гистограмму (мс)."""
     started = time.perf_counter()
     try:

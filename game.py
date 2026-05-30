@@ -1,15 +1,19 @@
-import chess
-import chess.pgn
-import chess.engine
 import logging
+
+import chess
+import chess.engine
+import chess.pgn
+
 from skill_state import SkillState
 
 logger = logging.getLogger(__name__)
 
-class Game(object):
+
+class Game:
     """
     Class for chess game
     """
+
     def __init__(self, skill_level: int = 1, time_level: float = 0.1, game_state: dict = None):
         if game_state is None:
             game_state = {}
@@ -25,6 +29,7 @@ class Game(object):
                 # Может бросить ValueError - это ожидаемое поведение
                 self.board = chess.Board(board_state)
             from game_state import GameState
+
             try:
                 game_state_obj = GameState.from_dict(game_state)
                 self._restore_from_game_state(game_state_obj)
@@ -32,7 +37,7 @@ class Game(object):
                 # Пробрасываем ValueError (некорректный FEN и т.п.)
                 raise
             except Exception as e:
-                logger.warning(f"Ошибка миграции состояния: {e}. Используем состояние по умолчанию.")
+                logger.warning(f'Ошибка миграции состояния: {e}. Используем состояние по умолчанию.')
         else:
             self._init_default_state(skill_level, time_level)
 
@@ -52,15 +57,16 @@ class Game(object):
     def _restore_from_game_state(self, game_state):
         """Восстанавливает состояние из GameState."""
         from game_state import restore_game_from_state
+
         restore_game_from_state(self, game_state)
 
     @property
     def engine(self):
         """Ленивая инициализация Stockfish engine."""
         if self._engine is None:
-            self._engine = chess.engine.SimpleEngine.popen_uci("./stockfish")
+            self._engine = chess.engine.SimpleEngine.popen_uci('./stockfish')
             # Конфигурируем уровень сложности при первом запуске
-            self._engine.configure({"Skill Level": self.skill_level})
+            self._engine.configure({'Skill Level': self.skill_level})
         return self._engine
 
     def _init_board(self, game_state):
@@ -77,7 +83,7 @@ class Game(object):
             else:
                 return self.board.fen()
         except Exception as e:
-            logger.error(f"Game._init_prev_board. Ошибка при инициализации prev-доски: {e}")
+            logger.error(f'Game._init_prev_board. Ошибка при инициализации prev-доски: {e}')
             return self.board.fen()
 
     def undo_move(self):
@@ -120,18 +126,17 @@ class Game(object):
         self.board.push_san(move_san)
 
     def comp_move(self):
-        self.engine.configure({"Skill Level": self.skill_level})
+        self.engine.configure({'Skill Level': self.skill_level})
         result = self.engine.play(self.board, chess.engine.Limit(time=self.time_level))
         if result.move:
             san = self.board.san(result.move)
             self.board.push(result.move)
             self.last_move = san
-            logger.info(f"Game.comp_move. Ход сделан: {san}, доска {self.board.fen()}")
+            logger.info(f'Game.comp_move. Ход сделан: {san}, доска {self.board.fen()}')
             return san
         else:
-            logger.error("Game.comp_move. Движок не вернул ход")
+            logger.error('Game.comp_move. Движок не вернул ход')
             return None
-
 
     # define the user was last moved
     def is_game_over(self):
@@ -152,16 +157,16 @@ class Game(object):
             parsed_level = int(skill_level)
         except (TypeError, ValueError):
             logger.error(
-                f"Game.set_skill_level. Невалидный skill_level={skill_level!r}, "
-                f"использую DEFAULT_SKILL_LEVEL={self.DEFAULT_SKILL_LEVEL}"
+                f'Game.set_skill_level. Невалидный skill_level={skill_level!r}, '
+                f'использую DEFAULT_SKILL_LEVEL={self.DEFAULT_SKILL_LEVEL}'
             )
             parsed_level = self.DEFAULT_SKILL_LEVEL
 
         clamped_level = max(self.MIN_SKILL_LEVEL, min(self.MAX_SKILL_LEVEL, parsed_level))
         if clamped_level != parsed_level:
             logger.warning(
-                f"Game.set_skill_level. skill_level={parsed_level} выходит за диапазон "
-                f"[{self.MIN_SKILL_LEVEL}, {self.MAX_SKILL_LEVEL}], скорректирован до {clamped_level}"
+                f'Game.set_skill_level. skill_level={parsed_level} выходит за диапазон '
+                f'[{self.MIN_SKILL_LEVEL}, {self.MAX_SKILL_LEVEL}], скорректирован до {clamped_level}'
             )
         self.skill_level = clamped_level
 
@@ -180,10 +185,10 @@ class Game(object):
         # Конфигурируем engine только если он уже инициализирован
         if self._engine is not None:
             try:
-                self.engine.configure({"Skill Level": self.skill_level})
+                self.engine.configure({'Skill Level': self.skill_level})
             except Exception as e:
-                logger.error(f"Game.set_skill_level. Ошибка конфигурации движка: {e}")
-        logger.info(f"Game.set_skill_level. skill_level: {self.skill_level}, time_level: {self.time_level}")
+                logger.error(f'Game.set_skill_level. Ошибка конфигурации движка: {e}')
+        logger.info(f'Game.set_skill_level. skill_level: {self.skill_level}, time_level: {self.time_level}')
 
     def quit(self):
         """Безопасно закрывает Stockfish engine."""
@@ -192,7 +197,7 @@ class Game(object):
                 self._engine.quit()
                 self._engine = None
             except Exception as e:
-                logger.error(f"Game.quit. Ошибка при закрытии движка: {e}")
+                logger.error(f'Game.quit. Ошибка при закрытии движка: {e}')
 
     def __enter__(self):
         """Контекстный менеджер для гарантированного закрытия движка."""
@@ -206,7 +211,6 @@ class Game(object):
     def __del__(self):
         """Гарантированное закрытие движка при удалении объекта."""
         self.quit()
-
 
     def get_engine_name(self):
         """Возвращает название движка, например 'Stockfish 18'."""
@@ -248,6 +252,7 @@ class Game(object):
     def serialize_state(self):
         """Сериализует состояние игры в словарь (совместимость)."""
         from game_state import create_game_state_from_game
+
         game_state = create_game_state_from_game(self)
         result = game_state.to_dict()
         # Добавляем поля для обратной совместимости
@@ -258,6 +263,7 @@ class Game(object):
     def serialize_state_v2(self):
         """Сериализует состояние игры с использованием новой схемы."""
         from game_state import create_game_state_from_game
+
         return create_game_state_from_game(self)
 
     def get_last_move(self):
@@ -270,7 +276,7 @@ class Game(object):
             move = self.board.parse_san(move_san)
             return move in self.board.legal_moves
         except ValueError:
-            logger.error(f"Game.is_valid_move. Ошибка при проверке допустимости хода: {move_san}")
+            logger.error(f'Game.is_valid_move. Ошибка при проверке допустимости хода: {move_san}')
             return False
 
     def is_checkmate(self):

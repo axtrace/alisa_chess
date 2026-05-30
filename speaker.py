@@ -1,12 +1,14 @@
-import re
 import logging
+import re
 
 logger = logging.getLogger(__name__)
 
-class Speaker(object):
+
+class Speaker:
     """
     Class for spelling moves and some texts
     """
+
     def __init__(self):
         pass
 
@@ -16,21 +18,18 @@ class Speaker(object):
         'R': {'ru': 'Ладья', 'en': 'Rock'},
         'N': {'ru': 'Конь', 'en': 'Knight'},
         'B': {'ru': 'Слон', 'en': 'Bishop'},
-        'p': {'ru': 'Пешка', 'en': 'Pawn'}
+        'p': {'ru': 'Пешка', 'en': 'Pawn'},
     }
 
     letters_for_pronunciation = {
-        'ru': {'a': 'а', 'b': 'бэ', 'c': 'цэ', 'd': 'дэ', 'e': 'е', 'f': 'эф',
-               'g': 'же', 'h': 'аш'}}
+        'ru': {'a': 'а', 'b': 'бэ', 'c': 'цэ', 'd': 'дэ', 'e': 'е', 'f': 'эф', 'g': 'же', 'h': 'аш'}
+    }
 
     check = {'ru': 'шах.', 'en': 'check.'}
 
     mate = {'ru': '**мат**.', 'en': '**checkmate**.'}
 
-    checkmate_names = {
-        '+': {'ru': 'шах', 'en': 'check'},
-        '#': {'ru': '**мат**.', 'en': '**checkmate**'}
-    }
+    checkmate_names = {'+': {'ru': 'шах', 'en': 'check'}, '#': {'ru': '**мат**.', 'en': '**checkmate**'}}
 
     captures_names = {'ru': 'берёт', 'en': 'capture'}
 
@@ -38,20 +37,16 @@ class Speaker(object):
 
     castling_names = {
         '0-0': {'ru': 'Короткая рокировка', 'en': 'Kingside castling'},
-        '0-0-0': {'ru': 'Длинная рокировка', 'en': 'Queenside castling'}
+        '0-0-0': {'ru': 'Длинная рокировка', 'en': 'Queenside castling'},
     }
 
-    white_black_names = {
-        'WHITE': {'ru': 'Белые', 'en': 'White'},
-        'BLACK': {'ru': 'Черные', 'en': 'Black'}
-    }
+    white_black_names = {'WHITE': {'ru': 'Белые', 'en': 'White'}, 'BLACK': {'ru': 'Черные', 'en': 'Black'}}
 
     gameover_reasons = {
         '#': {'ru': 'мат', 'en': 'mate'},
         '=': {'ru': 'пат', 'en': 'stalemate'},
         '5': {'ru': 'ничья из-за 5 повторов', 'en': 'fivefold repetition'},
-        'insufficient': {'ru': 'ничья из-за недостаточности материала',
-                         'en': 'draw due to insufficient material'}
+        'insufficient': {'ru': 'ничья из-за недостаточности материала', 'en': 'draw due to insufficient material'},
     }
 
     def _castling_pron_(self, move_san, lang='ru'):
@@ -95,7 +90,7 @@ class Speaker(object):
         return self.captures_names.get(lang, '')
 
     def say_move(self, move_san, lang='ru'):
-        logger.debug(f"say_move received: {move_san}, {lang}")
+        logger.debug(f'say_move received: {move_san}, {lang}')
         speak_list = []
         regex_body = r'[a-h]|[1-8]|x|[KQRBN]|[+#]|0-0-0|0-0|O-O-O|O-O'
         move_regex = re.compile(regex_body)
@@ -121,24 +116,24 @@ class Speaker(object):
             elif sym[0] in '=':
                 # promotion
                 speak_list.append(self.promotions_names.get(lang, ''))
-        logger.debug(f"say_move result: {speak_list}")
+        logger.debug(f'say_move result: {speak_list}')
         return ' '.join(speak_list)
 
     def say_turn(self, who, lang='ru'):
-        logger.debug(f"say_turn received: {who}, {lang}")
+        logger.debug(f'say_turn received: {who}, {lang}')
         res = ''
         if who:  # Проверка на пустую строку или None
             turn_names = self.white_black_names.get(who.upper(), None)
             if turn_names is not None:
                 res = turn_names.get(lang, '')
-        logger.debug(f"say_turn result: {res}")
+        logger.debug(f'say_turn result: {res}')
         return res
 
     def say_reason(self, reason, lang='ru'):
-        logger.debug(f"say_reason received: {reason}, {lang}")
+        logger.debug(f'say_reason received: {reason}, {lang}')
         res = ''
         reasons = self.gameover_reasons.get(reason, None)
         if reasons is not None:
             res = reasons.get(lang, '')
-        logger.debug(f"say_reason result: {res}")
+        logger.debug(f'say_reason result: {res}')
         return res

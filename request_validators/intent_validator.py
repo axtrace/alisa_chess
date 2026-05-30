@@ -58,7 +58,6 @@ class IntentValidator(BaseValidator):
         """Проверяет, является ли запрос просьбой повторить последний ход."""
         return self._has_intent('REPEAT_LAST_MOVE')
 
-
     def validate_repeat(self) -> bool:
         """Проверяет, является ли запрос просьбой повторить."""
         return self._has_intent('YANDEX.REPEAT')
@@ -91,20 +90,22 @@ class IntentValidator(BaseValidator):
 
     def validate(self) -> bool:
         """Проверяет наличие любого из известных интентов."""
-        return any([
-            self.validate_new_session(),
-            self.validate_yes(),
-            self.validate_no(),
-            self.validate_help(),
-            self.validate_whatcanyoudo(),
-            self.validate_draw(),
-            self.validate_resign(),
-            self.validate_new_game(),
-            self.validate_undo(),
-            self.validate_repeat_last_move(),
-            self.validate_set_skill_level(),
-            self.validate_set_time_level(),
-            self.validate_get_skill_level(),
-            self.validate_show_board(),
-            self.validate_repeat()
-        ])
+        return any(
+            [
+                self.validate_new_session(),
+                self.validate_yes(),
+                self.validate_no(),
+                self.validate_help(),
+                self.validate_whatcanyoudo(),
+                self.validate_draw(),
+                self.validate_resign(),
+                self.validate_new_game(),
+                self.validate_undo(),
+                self.validate_repeat_last_move(),
+                self.validate_set_skill_level(),
+                self.validate_set_time_level(),
+                self.validate_get_skill_level(),
+                self.validate_show_board(),
+                self.validate_repeat(),
+            ]
+        )

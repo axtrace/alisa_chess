@@ -1,7 +1,9 @@
-import texts
-from .base_confirmation_handler import BaseConfirmationHandler
-from skill_state import SkillState
 import logging
+
+import texts
+from skill_state import SkillState
+
+from .base_confirmation_handler import BaseConfirmationHandler
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +28,7 @@ class WaitingNewgameConfirmHandler(BaseConfirmationHandler):
         self.game.set_skill_state(SkillState.WAITING_COLOR)
 
     def handle(self):
-        logger.info(f"WaitingNewgameConfirmHandler.handle. Запрос: {self.request}")
+        logger.info(f'WaitingNewgameConfirmHandler.handle. Запрос: {self.request}')
         if self.intent_validator.validate_yes():
             self.on_accept()
             state_text = texts.state_texts.get(self.game.get_skill_state(), '')

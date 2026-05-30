@@ -1,12 +1,15 @@
+import logging
+
 import texts
-from .base_handler import BaseHandler
 from move_extractor import MoveExtractor
 from request_validators.intent_validator import IntentValidator
 from skill_state import SkillState
 from tts_builder import TtsBuilder
-import logging
+
+from .base_handler import BaseHandler
 
 logger = logging.getLogger(__name__)
+
 
 class SpecialIntentHandler(BaseHandler):
     """Обработчик специальных намерений."""
@@ -33,14 +36,14 @@ class SpecialIntentHandler(BaseHandler):
         ]
 
     def handle(self):
-        logger.info(f"SpecialIntentHandler. handle. Проверяем запрос: {self.request}")
+        logger.info(f'SpecialIntentHandler. handle. Проверяем запрос: {self.request}')
         for validator_name, handler_method in self._intent_registry:
             validator = getattr(self.intent_validator, validator_name, None)
             if validator is None:
-                logger.warning(f"SpecialIntentHandler. Валидатор {validator_name} не найден в IntentValidator")
+                logger.warning(f'SpecialIntentHandler. Валидатор {validator_name} не найден в IntentValidator')
                 continue
             if validator():
-                logger.info(f"SpecialIntentHandler. {validator_name}. Запрос: {self.request}")
+                logger.info(f'SpecialIntentHandler. {validator_name}. Запрос: {self.request}')
                 return handler_method()
         return None
 
@@ -51,12 +54,19 @@ class SpecialIntentHandler(BaseHandler):
             last_move = self.game.get_last_move()
             comp_color = self.game.get_comp_color()
             if last_move:
-                text, text_tts = self.prep_text_to_say(comp_move=last_move, prev_turn=comp_color, text_to_show=self.game.get_board(), text_to_say='')
+                text, text_tts = self.prep_text_to_say(
+                    comp_move=last_move, prev_turn=comp_color, text_to_show=self.game.get_board(), text_to_say=''
+                )
                 text = texts.resume_text + '\n' + text + '\nВаш ход!'
                 text_tts = texts.resume_text + '\n' + text_tts + '\nВаш ход!'
             else:
                 text = texts.resume_text + '\n' + self.game.get_board() + '\nВаш ход!'
-                text_tts = texts.resume_text + '\n' + TtsBuilder.with_silence_suffix('Показала доску на экране.') + '\nВаш ход!'
+                text_tts = (
+                    texts.resume_text
+                    + '\n'
+                    + TtsBuilder.with_silence_suffix('Показала доску на экране.')
+                    + '\nВаш ход!'
+                )
             return self.say(text, tts=text_tts)
         else:
             state_text = texts.state_texts.get(self.game.get_skill_state(), '')
@@ -89,7 +99,9 @@ class SpecialIntentHandler(BaseHandler):
     def _handle_undo(self):
         if self.game.undo_move():
             comp_color = self.game.get_comp_color()
-            text, text_tts = self.prep_text_to_say(comp_move='', prev_turn=comp_color, text_to_show=self.game.get_board(), text_to_say='')
+            text, text_tts = self.prep_text_to_say(
+                comp_move='', prev_turn=comp_color, text_to_show=self.game.get_board(), text_to_say=''
+            )
             text = texts.undo_text + '\n' + text
             text_tts = texts.undo_text + '\n' + text_tts
             return self.say(text, tts=text_tts)
@@ -102,13 +114,15 @@ class SpecialIntentHandler(BaseHandler):
         if isinstance(prev_response, dict) and 'text' in prev_response:
             return prev_response
         # Если previous_response некорректен, возвращаем сообщение об ошибке
-        return self.say("Не могу повторить предыдущее сообщение. Попробуйте другой запрос.")
+        return self.say('Не могу повторить предыдущее сообщение. Попробуйте другой запрос.')
 
     def _handle_repeat_last_move(self):
         last_move = self.game.get_last_move()
         comp_color = self.game.get_comp_color()
         if last_move:
-            text, text_tts = self.prep_text_to_say(comp_move=last_move, prev_turn=comp_color, text_to_show=self.game.get_board(), text_to_say='')
+            text, text_tts = self.prep_text_to_say(
+                comp_move=last_move, prev_turn=comp_color, text_to_show=self.game.get_board(), text_to_say=''
+            )
             return self.say(text, tts=text_tts)
         return self.say(texts.no_moves_text)
 
@@ -124,6 +138,11 @@ class SpecialIntentHandler(BaseHandler):
     def _handle_show_board(self):
         last_move = self.game.get_last_move()
         comp_color = self.game.get_comp_color()
-        add_text = self.game.get_board() + '\n'*2 + 'FEN: ' + self.game.board.fen() + '\n'
-        text, text_tts = self.prep_text_to_say(comp_move=last_move, prev_turn=comp_color, text_to_show=add_text, text_to_say=TtsBuilder.with_silence_suffix('Показала доску в чате.'))
+        add_text = self.game.get_board() + '\n' * 2 + 'FEN: ' + self.game.board.fen() + '\n'
+        text, text_tts = self.prep_text_to_say(
+            comp_move=last_move,
+            prev_turn=comp_color,
+            text_to_show=add_text,
+            text_to_say=TtsBuilder.with_silence_suffix('Показала доску в чате.'),
+        )
         return self.say(text, tts=text_tts)

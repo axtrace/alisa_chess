@@ -3,6 +3,7 @@ from enum import Enum
 
 class SkillState(str, Enum):
     """Состояния навыка шахмат."""
+
     INITIATED = 'INITIATED'
     WAITING_CONFIRM = 'WAITING_CONFIRM'
     WAITING_COLOR = 'WAITING_COLOR'

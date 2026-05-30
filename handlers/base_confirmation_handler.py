@@ -1,7 +1,9 @@
-import texts
-from .base_handler import BaseHandler
-from request_validators.intent_validator import IntentValidator
 import logging
+
+import texts
+from request_validators.intent_validator import IntentValidator
+
+from .base_handler import BaseHandler
 
 logger = logging.getLogger(__name__)
 

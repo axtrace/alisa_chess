@@ -16,18 +16,37 @@ import json
 import logging
 import os
 from contextvars import ContextVar
-from typing import Any, Dict, Optional
+from typing import Any
 
 # Контекст текущего запроса. Заполняется в начале обработки в
 # `bind_request_context()` и автоматически подмешивается в каждую запись.
-_request_context: ContextVar[Dict[str, Any]] = ContextVar('alisa_chess_request_context', default={})
+_request_context: ContextVar[dict[str, Any]] = ContextVar('alisa_chess_request_context', default=None)
 
 # Поля LogRecord, которые не нужно дублировать в "extra".
 _RESERVED_LOG_RECORD_FIELDS = {
-    'name', 'msg', 'args', 'levelname', 'levelno', 'pathname', 'filename',
-    'module', 'exc_info', 'exc_text', 'stack_info', 'lineno', 'funcName',
-    'created', 'msecs', 'relativeCreated', 'thread', 'threadName',
-    'processName', 'process', 'message', 'asctime', 'taskName',
+    'name',
+    'msg',
+    'args',
+    'levelname',
+    'levelno',
+    'pathname',
+    'filename',
+    'module',
+    'exc_info',
+    'exc_text',
+    'stack_info',
+    'lineno',
+    'funcName',
+    'created',
+    'msecs',
+    'relativeCreated',
+    'thread',
+    'threadName',
+    'processName',
+    'process',
+    'message',
+    'asctime',
+    'taskName',
 }
 
 
@@ -39,7 +58,7 @@ class JsonFormatter(logging.Formatter):
     """
 
     def format(self, record: logging.LogRecord) -> str:
-        payload: Dict[str, Any] = {
+        payload: dict[str, Any] = {
             'ts': self.formatTime(record, '%Y-%m-%dT%H:%M:%S'),
             'level': record.levelname,
             'logger': record.name,
@@ -64,7 +83,7 @@ class JsonFormatter(logging.Formatter):
         return json.dumps(payload, ensure_ascii=False, default=str)
 
 
-def setup_logging(level: Optional[str] = None) -> None:
+def setup_logging(level: str | None = None) -> None:
     """Инициализирует корневой логгер один раз за процесс.
 
     Параметры:
@@ -97,7 +116,11 @@ def bind_request_context(**fields: Any) -> None:
 
     Поля попадут в каждую последующую запись логов до сброса/перезаписи.
     """
-    current = dict(_request_context.get())
+    current = _request_context.get()
+    if current is None:
+        current = {}
+    else:
+        current = dict(current)
     current.update({k: v for k, v in fields.items() if v is not None})
     _request_context.set(current)
 
@@ -107,6 +130,9 @@ def clear_request_context() -> None:
     _request_context.set({})
 
 
-def get_request_context() -> Dict[str, Any]:
+def get_request_context() -> dict[str, Any]:
     """Возвращает копию текущего request-контекста (для диагностики)."""
-    return dict(_request_context.get())
+    context = _request_context.get()
+    if context is None:
+        return {}
+    return dict(context)

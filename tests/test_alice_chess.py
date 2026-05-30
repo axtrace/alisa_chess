@@ -1,5 +1,6 @@
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
 from alice_chess import AliceChess
 from game import Game
 
@@ -10,48 +11,30 @@ class TestAliceChess(unittest.TestCase):
     def setUp(self):
         """Подготовка базового запроса для тестов."""
         self.event = {
-            "meta": {
-                "locale": "ru-RU",
-                "timezone": "UTC",
-                "client_id": "ru.yandex.searchplugin/7.16",
-                "interfaces": {
-                    "screen": {},
-                    "payments": {},
-                    "account_linking": {}
-                }
+            'meta': {
+                'locale': 'ru-RU',
+                'timezone': 'UTC',
+                'client_id': 'ru.yandex.searchplugin/7.16',
+                'interfaces': {'screen': {}, 'payments': {}, 'account_linking': {}},
             },
-            "session": {
-                "message_id": 0,
-                "session_id": "test-session-id",
-                "skill_id": "test-skill-id",
-                "user": {
-                    "user_id": "test-user-id"
-                },
-                "application": {
-                    "application_id": "test-app-id"
-                },
-                "user_id": "test-user-id",
-                "new": False
+            'session': {
+                'message_id': 0,
+                'session_id': 'test-session-id',
+                'skill_id': 'test-skill-id',
+                'user': {'user_id': 'test-user-id'},
+                'application': {'application_id': 'test-app-id'},
+                'user_id': 'test-user-id',
+                'new': False,
             },
-            "request": {
-                "command": "",
-                "original_utterance": "",
-                "nlu": {
-                    "tokens": [],
-                    "entities": [],
-                    "intents": {}
-                },
-                "markup": {
-                    "dangerous_context": False
-                },
-                "type": "SimpleUtterance"
+            'request': {
+                'command': '',
+                'original_utterance': '',
+                'nlu': {'tokens': [], 'entities': [], 'intents': {}},
+                'markup': {'dangerous_context': False},
+                'type': 'SimpleUtterance',
             },
-            "state": {
-                "session": {},
-                "user": {},
-                "application": {}
-            },
-            "version": "1.0"
+            'state': {'session': {}, 'user': {}, 'application': {}},
+            'version': '1.0',
         }
         self.alice = AliceChess()
 
@@ -98,7 +81,7 @@ class TestAliceChess(unittest.TestCase):
         alice = AliceChess()
         # Устанавливаем состояние игры в WAITING_MOVE
         alice.game = mock_game_instance
-        print(f"alice.game.get_skill_state(): {alice.game.get_skill_state()}")
+        print(f'alice.game.get_skill_state(): {alice.game.get_skill_state()}')
 
         event = self.event.copy()
         event['request']['command'] = 'д2д5'  # Некорректный ход
@@ -136,6 +119,7 @@ class TestAliceChess(unittest.TestCase):
     def test_handle_request_promotion(self, mock_game):
         """Тест обработки запроса с превращением пешки."""
         import chess
+
         # Настраиваем мок для игры
         mock_game_instance = MagicMock()
         mock_game_instance.get_skill_state.return_value = 'WAITING_MOVE'
@@ -148,6 +132,7 @@ class TestAliceChess(unittest.TestCase):
         # Настраиваем user_move
         def mock_user_move(move):
             return True
+
         mock_game_instance.user_move.side_effect = mock_user_move
 
         # Настраиваем who для возврата текущего хода
@@ -174,29 +159,13 @@ class TestAliceChess(unittest.TestCase):
             'intents': {
                 'CHESS_MOVE': {
                     'slots': {
-                        'piece': {
-                            'type': 'ChessPiece',
-                            'tokens': {'start': 0, 'end': 1},
-                            'value': 'pawn'
-                        },
-                        'file_to': {
-                            'type': 'ChessFile',
-                            'tokens': {'start': 1, 'end': 2},
-                            'value': 'a'
-                        },
-                        'rank_to': {
-                            'type': 'ChessRank',
-                            'tokens': {'start': 2, 'end': 3},
-                            'value': '8'
-                        },
-                        'promotion_piece': {
-                            'type': 'ChessPiece',
-                            'tokens': {'start': 3, 'end': 4},
-                            'value': 'rook'
-                        }
+                        'piece': {'type': 'ChessPiece', 'tokens': {'start': 0, 'end': 1}, 'value': 'pawn'},
+                        'file_to': {'type': 'ChessFile', 'tokens': {'start': 1, 'end': 2}, 'value': 'a'},
+                        'rank_to': {'type': 'ChessRank', 'tokens': {'start': 2, 'end': 3}, 'value': '8'},
+                        'promotion_piece': {'type': 'ChessPiece', 'tokens': {'start': 3, 'end': 4}, 'value': 'rook'},
                     }
                 }
-            }
+            },
         }
         event['state']['user'] = {
             'game_state': {
@@ -205,21 +174,20 @@ class TestAliceChess(unittest.TestCase):
                 'prev_skill_state': 'WAITING_MOVE',
                 'user_color': 'WHITE',
                 'comp_color': 'BLACK',
-                'current_turn': 'White'
+                'current_turn': 'White',
             }
         }
 
         # Добавляем отладочную информацию
-        print("Before handle_request:")
-        print(f"Game state: {mock_game_instance.get_skill_state()}")
-
+        print('Before handle_request:')
+        print(f'Game state: {mock_game_instance.get_skill_state()}')
 
         response = alice.handle_request(event)
 
         # Добавляем отладочную информацию
-        print("After handle_request:")
-        print(f"Game state: {mock_game_instance.get_skill_state()}")
-        print(f"set_skill_state calls: {mock_game_instance.set_skill_state.call_args_list}")
+        print('After handle_request:')
+        print(f'Game state: {mock_game_instance.get_skill_state()}')
+        print(f'set_skill_state calls: {mock_game_instance.set_skill_state.call_args_list}')
 
         # Проверяем ответ
         self.assertIn('text', response)
@@ -238,30 +206,13 @@ class TestAliceChess(unittest.TestCase):
             'current_turn': 'BLACK',
             'time_level': 0.1,
             'skill_level': 1,
-            'last_move': 'e4'
+            'last_move': 'e4',
         }
 
         test_request = {
-            'session': {
-                'new': True,
-                'message_id': 0,
-                'session_id': 'test-session-id',
-                'user_id': 'test-user-id'
-            },
-            'state': {
-                'user': {
-                    'game_state': saved_game_state
-                }
-            },
-            'request': {
-                'command': '',
-                'original_utterance': '',
-                'nlu': {
-                    'tokens': [],
-                    'entities': [],
-                    'intents': {}
-                }
-            }
+            'session': {'new': True, 'message_id': 0, 'session_id': 'test-session-id', 'user_id': 'test-user-id'},
+            'state': {'user': {'game_state': saved_game_state}},
+            'request': {'command': '', 'original_utterance': '', 'nlu': {'tokens': [], 'entities': [], 'intents': {}}},
         }
 
         # Вызываем обработку запроса
@@ -279,24 +230,9 @@ class TestAliceChess(unittest.TestCase):
     def test_new_session_without_saved_state(self):
         """Тест обработки новой сессии без сохраненного состояния."""
         test_request = {
-            'session': {
-                'new': True,
-                'message_id': 0,
-                'session_id': 'test-session-id',
-                'user_id': 'test-user-id'
-            },
-            'state': {
-                'user': {}
-            },
-            'request': {
-                'command': '',
-                'original_utterance': '',
-                'nlu': {
-                    'tokens': [],
-                    'entities': [],
-                    'intents': {}
-                }
-            }
+            'session': {'new': True, 'message_id': 0, 'session_id': 'test-session-id', 'user_id': 'test-user-id'},
+            'state': {'user': {}},
+            'request': {'command': '', 'original_utterance': '', 'nlu': {'tokens': [], 'entities': [], 'intents': {}}},
         }
 
         # Вызываем обработку запроса

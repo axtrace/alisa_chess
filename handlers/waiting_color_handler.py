@@ -1,10 +1,13 @@
-import texts
-from .base_handler import BaseHandler
-from move_extractor import MoveExtractor
-from skill_state import SkillState
 import logging
 
+import texts
+from move_extractor import MoveExtractor
+from skill_state import SkillState
+
+from .base_handler import BaseHandler
+
 logger = logging.getLogger(__name__)
+
 
 class WaitingColorHandler(BaseHandler):
     """Обработчик состояния ожидания выбора цвета."""
@@ -15,7 +18,7 @@ class WaitingColorHandler(BaseHandler):
 
     def handle(self):
         """Обрабатывает запрос в состоянии ожидания выбора цвета."""
-        logger.info(f"WaitingColorHandler. handle. Запрос: {self.request}")
+        logger.info(f'WaitingColorHandler. handle. Запрос: {self.request}')
         is_color_defined, user_color = self.move_ext.extract_color(self.request)
         if not is_color_defined:
             return self.say(texts.not_get_turn_text)
@@ -27,8 +30,15 @@ class WaitingColorHandler(BaseHandler):
         if user_color == 'BLACK':
             comp_color = self.game.get_comp_color()
             comp_move = self.game.comp_move()
-            text, text_tts = self.prep_text_to_say(comp_move=comp_move, prev_turn=comp_color, text_to_show=self.game.get_board() + '\nВаш ход!', text_to_say='')
+            text, text_tts = self.prep_text_to_say(
+                comp_move=comp_move,
+                prev_turn=comp_color,
+                text_to_show=self.game.get_board() + '\nВаш ход!',
+                text_to_say='',
+            )
             return self.say(text, tts=text_tts)
 
-        text, text_tts = self.prep_text_to_say(comp_move='', prev_turn='', text_to_show=self.game.get_board() + '\nВаш ход!', text_to_say='')
+        text, text_tts = self.prep_text_to_say(
+            comp_move='', prev_turn='', text_to_show=self.game.get_board() + '\nВаш ход!', text_to_say=''
+        )
         return self.say(text, tts=text_tts)

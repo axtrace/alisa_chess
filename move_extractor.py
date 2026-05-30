@@ -1,12 +1,14 @@
-import re
 import logging
+import re
 
 logger = logging.getLogger(__name__)
 
-class MoveExtractor(object):
+
+class MoveExtractor:
     """
     Class for extract move from user speech
     """
+
     file_map = {
         # allowed low register only
         # анна, борис и прочее - из официального фонетического алфавита
@@ -17,7 +19,7 @@ class MoveExtractor(object):
         'e': {'e', 'е', 'ee', 'и', 'echo', 'елена'},
         'f': {'f', 'ef', 'фе', 'фи', 'фэ', 'ф', 'эф', 'foxtrot', 'федор'},
         'g': {'g', 'gee', 'je', 'г', 'гэ', 'ге', 'ж', 'жи', 'же', 'жэ', 'джи', 'golf', 'женя'},
-        'h': {'h', 'aitch', 'аш', 'ш', 'эйч', 'x', 'xa', 'xe', 'xэ', 'hotel', 'шура'}
+        'h': {'h', 'aitch', 'аш', 'ш', 'эйч', 'x', 'xa', 'xe', 'xэ', 'hotel', 'шура'},
     }
 
     # rank_map = {
@@ -37,16 +39,38 @@ class MoveExtractor(object):
         'Q': {'queen', 'ферзь', 'королева', 'квин', 'ферз'},
         'R': {'rook', 'ладья', 'ура', 'тура', 'лада'},
         'N': {'knight', 'конь', 'лошадь', 'кон'},
-        'B': {'bishop', 'слон', 'офицер', 'сон', 'салон','fou','loper'},
-        'p': {'pawn', 'пешка'}
+        'B': {'bishop', 'слон', 'офицер', 'сон', 'салон', 'fou', 'loper'},
+        'p': {'pawn', 'пешка'},
     }
 
     castling_map = {
-        'O-O': {'короткая рокировка', 'два нуля', 'два ноля', 'ноль ноль', '00', 'kingside castling',
-                'castling short', 'short castling', '0-0', 'O-O', 'О-О'},
-        'O-O-O': {'длинная рокировка', 'три нуля', 'три ноля', 'ноль ноль ноль', '000', 'queenside castling',
-                  'castling long', 'long castling', '0-0-0', 'O-O-O', 'О-О-О',
-                  'трио'}
+        'O-O': {
+            'короткая рокировка',
+            'два нуля',
+            'два ноля',
+            'ноль ноль',
+            '00',
+            'kingside castling',
+            'castling short',
+            'short castling',
+            '0-0',
+            'O-O',
+            'О-О',
+        },
+        'O-O-O': {
+            'длинная рокировка',
+            'три нуля',
+            'три ноля',
+            'ноль ноль ноль',
+            '000',
+            'queenside castling',
+            'castling long',
+            'long castling',
+            '0-0-0',
+            'O-O-O',
+            'О-О-О',
+            'трио',
+        },
     }
 
     def __init__(self):
@@ -88,27 +112,27 @@ class MoveExtractor(object):
     def extract_move(self, request, board):
         """Извлекает ход из запроса пользователя."""
         # Проверяем рокировку
-        logger.debug(f"Extracting move from request: {request}")
+        logger.debug(f'Extracting move from request: {request}')
         castling_move, castling_type = self._extract_castling_move(request)
         if castling_move:
-            logger.info(f"Castling move found: {castling_type}")
+            logger.info(f'Castling move found: {castling_type}')
             return [castling_type], castling_type
 
         # Пробуем извлечь ход из интентов
         extracted_move_structure = self._extract_move_from_intents(request)
-        logger.debug(f"Extracted move from intents: {extracted_move_structure}")
+        logger.debug(f'Extracted move from intents: {extracted_move_structure}')
 
         if not extracted_move_structure:
             # Если интенты не помогли, пробуем извлечь из текста
             extracted_move_structure = self._extract_move_from_text(request)
-            logger.debug(f"Extracted move from text: {extracted_move_structure}")
+            logger.debug(f'Extracted move from text: {extracted_move_structure}')
 
         if not extracted_move_structure:
-            logger.info(f"No move found in request command: {request.get('request', {}).get('command', '')}")
+            logger.info(f'No move found in request command: {request.get("request", {}).get("command", "")}')
             return None, None
         extracted_move = extracted_move_structure.get('move', '')
         matching_moves = self._find_matching_moves(board, extracted_move_structure)
-        logger.info(f"Matching moves: {matching_moves}")
+        logger.info(f'Matching moves: {matching_moves}')
         return matching_moves, extracted_move
 
     def _extract_move_from_intents(self, request):
@@ -137,17 +161,14 @@ class MoveExtractor(object):
                     'file_to': file_to,
                     'rank_to': rank_to,
                     'move': move,
-                    'promotion_piece': promotion_piece
+                    'promotion_piece': promotion_piece,
                 }
 
         # Проверяем интент PIECE
         elif 'PIECE' in intents:
             piece = self._get_piece_from_intent(intents['PIECE']['slots']['piece']['value'])
             if piece:
-                move_structure = {
-                    'piece': piece,
-                    'move': piece
-                }
+                move_structure = {'piece': piece, 'move': piece}
 
         return move_structure
 
@@ -252,7 +273,7 @@ class MoveExtractor(object):
             'file_to': file_to,
             'rank_to': rank_to,
             'promotion_piece': promotion_piece,
-            'move': move
+            'move': move,
         }
         return move_structure
 
@@ -290,10 +311,10 @@ class MoveExtractor(object):
         return False, None
 
     def _find_matching_moves(self, board, move_structure):
-        logger.debug(f"_find_matching_moves received: {move_structure}")
+        logger.debug(f'_find_matching_moves received: {move_structure}')
 
         legal_moves = [board.san(m) for m in board.legal_moves]
-        logger.debug(f"legal_moves: {legal_moves}")
+        logger.debug(f'legal_moves: {legal_moves}')
 
         # extract from user pronounced move
         file_to = move_structure.get('file_to', '')
@@ -311,22 +332,23 @@ class MoveExtractor(object):
 
         # оставим только ходы с file_to и rank_to в составе
         if file_to and rank_to:
-            candidate_moves = [move for move in candidate_moves if file_to+rank_to in move]
+            candidate_moves = [move for move in candidate_moves if file_to + rank_to in move]
 
         if promotion_piece:
             candidate_moves = [move for move in candidate_moves if '=' + promotion_piece in move]
-            logger.info(f"candidate_moves filtered by promotion: {candidate_moves}")
+            logger.info(f'candidate_moves filtered by promotion: {candidate_moves}')
         else:
             # Если фигура превращения не указана, но все кандидаты — варианты превращения,
             # выбираем ферзя по умолчанию
             promotion_candidates = [move for move in candidate_moves if '=' in move]
             if promotion_candidates and len(promotion_candidates) == len(candidate_moves):
                 candidate_moves = [move for move in candidate_moves if '=Q' in move]
-                logger.info(f"candidate_moves: promotion piece not specified, defaulting to queen: {candidate_moves}")
+                logger.info(f'candidate_moves: promotion piece not specified, defaulting to queen: {candidate_moves}')
 
-        logger.info(f"candidate_moves: {candidate_moves}")
+        logger.info(f'candidate_moves: {candidate_moves}')
 
-        pattern = re.compile(r'''
+        pattern = re.compile(
+            r"""
             ^
             (?P<piece>[KQRBN])?      # Фигура (K, Q, R, B, N) - опционально
             (?P<file_from>[a-h])?    # Исходная вертикаль (a-h) - опционально
@@ -337,12 +359,14 @@ class MoveExtractor(object):
             (?:=?(?P<promotion_piece>[QRBN]))?  # Превращение (Q, R, B, N) - опционально
             [\+#\!\?]?               # Символы шаха, мата, оценки - опционально
             $
-        ''', re.VERBOSE)
+        """,
+            re.VERBOSE,
+        )
 
         matching_moves = []
 
         for m in candidate_moves:
-            logger.debug(f"Checking move: {m}")
+            logger.debug(f'Checking move: {m}')
             match = pattern.fullmatch(m)
             if not match:
                 continue
@@ -367,6 +391,6 @@ class MoveExtractor(object):
 
             matching_moves.append(m)
 
-        logger.info(f"_find_matching_moves result: {matching_moves}")
+        logger.info(f'_find_matching_moves result: {matching_moves}')
 
         return matching_moves

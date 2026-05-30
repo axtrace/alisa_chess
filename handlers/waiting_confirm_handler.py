@@ -1,10 +1,13 @@
-import texts
-from .base_handler import BaseHandler
-from request_validators.intent_validator import IntentValidator
-from skill_state import SkillState
 import logging
 
+import texts
+from request_validators.intent_validator import IntentValidator
+from skill_state import SkillState
+
+from .base_handler import BaseHandler
+
 logger = logging.getLogger(__name__)
+
 
 class WaitingConfirmHandler(BaseHandler):
     """Обработчик состояния ожидания подтверждения начала игры."""
@@ -15,7 +18,7 @@ class WaitingConfirmHandler(BaseHandler):
 
     def handle(self):
         """Обрабатывает запрос в состоянии ожидания подтверждения."""
-        logger.info(f"WaitingConfirmHandler. handle. Запрос: {self.request}")
+        logger.info(f'WaitingConfirmHandler. handle. Запрос: {self.request}')
         if self.validator.validate_yes():
             self.game.set_skill_state(SkillState.WAITING_COLOR)
             text, text_tts = self.text_preparer.say_choose_color()

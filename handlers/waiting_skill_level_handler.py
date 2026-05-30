@@ -1,7 +1,9 @@
-from .base_handler import BaseHandler
-from request_validators.intent_validator import IntentValidator
-import texts
 import logging
+
+import texts
+from request_validators.intent_validator import IntentValidator
+
+from .base_handler import BaseHandler
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +21,7 @@ class WaitingSkillLevelHandler(BaseHandler):
 
     def handle(self):
         """Обрабатывает запрос в состоянии ожидания выбора уровня сложности."""
-        logger.info(f"WaitingSkillLevelHandler.handle. Запрос: {self.request}")
+        logger.info(f'WaitingSkillLevelHandler.handle. Запрос: {self.request}')
 
         # Проверяем отказ
         if self.intent_validator.validate_no():

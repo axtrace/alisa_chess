@@ -1,18 +1,20 @@
-from game import Game
-from skill_state import SkillState
-from handlers.initiated_handler import InitiatedHandler
-from handlers.waiting_confirm_handler import WaitingConfirmHandler
-from handlers.waiting_color_handler import WaitingColorHandler
-from handlers.waiting_move_handler import WaitingMoveHandler
-from handlers.waiting_draw_confirm_handler import WaitingDrawConfirmHandler
-from handlers.waiting_resign_confirm_handler import WaitingResignConfirmHandler
-from handlers.game_over_handler import GameOverHandler
-from handlers.special_intent_handler import SpecialIntentHandler
-from handlers.waiting_newgame_confirm_handler import WaitingNewgameConfirmHandler
-from handlers.waiting_skill_level_handler import WaitingSkillLevelHandler
 import logging
 
+from game import Game
+from handlers.game_over_handler import GameOverHandler
+from handlers.initiated_handler import InitiatedHandler
+from handlers.special_intent_handler import SpecialIntentHandler
+from handlers.waiting_color_handler import WaitingColorHandler
+from handlers.waiting_confirm_handler import WaitingConfirmHandler
+from handlers.waiting_draw_confirm_handler import WaitingDrawConfirmHandler
+from handlers.waiting_move_handler import WaitingMoveHandler
+from handlers.waiting_newgame_confirm_handler import WaitingNewgameConfirmHandler
+from handlers.waiting_resign_confirm_handler import WaitingResignConfirmHandler
+from handlers.waiting_skill_level_handler import WaitingSkillLevelHandler
+from skill_state import SkillState
+
 logger = logging.getLogger(__name__)
+
 
 class AliceChess:
     """Основной класс для обработки запросов к навыку шахмат."""
@@ -38,7 +40,7 @@ class AliceChess:
 
     def get_game_state(self):
         if self.game is None:
-            return ""
+            return ''
         return self.game.serialize_state()
 
     def get_session_state(self):
@@ -55,7 +57,7 @@ class AliceChess:
             Ответ для Алисы.
         """
 
-        logger.info(f"handle_request. Запрос: {request}")
+        logger.info(f'handle_request. Запрос: {request}')
 
         # Проверка идемпотентности по message_id
         current_message_id = request.get('session', {}).get('message_id')
@@ -63,19 +65,15 @@ class AliceChess:
         last_message_id = session_state.get('last_message_id')
 
         if current_message_id and last_message_id and current_message_id == last_message_id:
-            logger.info(f"Идемпотентность: пропускаем дублирующий запрос message_id={current_message_id}")
+            logger.info(f'Идемпотентность: пропускаем дублирующий запрос message_id={current_message_id}')
             # Возвращаем предыдущий ответ из session_state
             previous_response = session_state.get('previous_response', {})
             if previous_response:
                 return previous_response
             else:
-                return {
-                    'text': 'Повторный запрос пропущен',
-                    'tts': 'Повторный запрос пропущен',
-                    'end_session': False
-                }
+                return {'text': 'Повторный запрос пропущен', 'tts': 'Повторный запрос пропущен', 'end_session': False}
 
-        state = request.get('state',{}).get('user',{}).get('game_state', {})
+        state = request.get('state', {}).get('user', {}).get('game_state', {})
 
         self.game = Game(game_state=state)
 
@@ -111,7 +109,7 @@ class AliceChess:
         elif state == SkillState.WAITING_SKILL_LEVEL:
             handler = WaitingSkillLevelHandler(self.game, request)
         else:
-            raise ValueError(f"Неизвестное состояние игры: {state}")
+            raise ValueError(f'Неизвестное состояние игры: {state}')
 
         handler_result = handler.safe_handle()
 
