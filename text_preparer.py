@@ -3,7 +3,6 @@ from speaker import Speaker
 import logging
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
 
 class TextPreparer(object):
     """

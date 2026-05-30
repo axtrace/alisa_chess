@@ -3,10 +3,12 @@ from .base_handler import BaseHandler
 from move_extractor import MoveExtractor
 from request_validators.intent_validator import IntentValidator
 from text_preparer import TextPreparer
+from skill_state import SkillState
+from tts_builder import TtsBuilder
+from metrics import emit_counter
 import logging
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
 
 class WaitingMoveHandler(BaseHandler):
     """Обработчик состояния ожидания хода пользователя."""
@@ -79,6 +81,7 @@ class WaitingMoveHandler(BaseHandler):
             return user_move, "INVALID"
 
         logger.info(f"WaitingMoveHandler._handle_user_move. Ход сделан: {user_move}")
+        emit_counter('skill.move.ok')
         return user_move, "OK"
 
     def _check_game_state(self, current_move, prev_turn=''):
@@ -93,7 +96,7 @@ class WaitingMoveHandler(BaseHandler):
         """
         # Проверяем на недостаточность материала
         if self.game.is_insufficient_material():
-            self.game.set_skill_state('GAME_OVER')
+            self.game.set_skill_state(SkillState.GAME_OVER)
             text, text_tts = self.prep_text_to_say(comp_move=current_move, prev_turn=prev_turn, text_to_show=self.game.get_board(), text_to_say='')
             text += '\n' + texts.insufficient_material_text
             text_tts += '\n' + texts.insufficient_material_text
@@ -101,7 +104,7 @@ class WaitingMoveHandler(BaseHandler):
 
         # Проверяем на пятикратное повторение
         if self.game.is_fivefold_repetition():
-            self.game.set_skill_state('GAME_OVER')
+            self.game.set_skill_state(SkillState.GAME_OVER)
             text, text_tts = self.prep_text_to_say(comp_move=current_move, prev_turn=prev_turn, text_to_show=self.game.get_board(), text_to_say='')
             text += '\n' + texts.fivefold_repetition_text
             text_tts += '\n' + texts.fivefold_repetition_text
@@ -109,16 +112,16 @@ class WaitingMoveHandler(BaseHandler):
 
         # Проверяем на мат
         if self.game.is_checkmate():
-            self.game.set_skill_state('GAME_OVER')
+            self.game.set_skill_state(SkillState.GAME_OVER)
             text, text_tts = self.prep_text_to_say(comp_move=current_move, prev_turn=prev_turn, text_to_show=self.game.get_board(), text_to_say='')
             text += '\n' + texts.checkmate_text
             text_tts += '\n' + texts.checkmate_text
-            text_tts = '<speaker audio=\"alice-sounds-game-win-1.opus\">' + text_tts
+            text_tts = TtsBuilder.with_sound_prefix(TtsBuilder.SOUND_GAME_WIN, text_tts)
             return self.say(text, tts=text_tts)
 
         # Проверяем на пат
         if self.game.is_stalemate():
-            self.game.set_skill_state('GAME_OVER')
+            self.game.set_skill_state(SkillState.GAME_OVER)
             text, text_tts = self.prep_text_to_say(comp_move=current_move, prev_turn=prev_turn, text_to_show=self.game.get_board(), text_to_say='')
             text += '\n' + texts.stalemate_text
             text_tts += '\n' + texts.stalemate_text
@@ -137,6 +140,7 @@ class WaitingMoveHandler(BaseHandler):
     def _reason_handler(self, reason_type, user_move):
         """Обрабатывает причину некорректного хода."""
         logger.info(f"WaitingMoveHandler._reason_handler. reason_type: {reason_type}, user_move: {user_move}")
+        emit_counter('skill.move.' + reason_type.lower())
         if reason_type == "NOT_DEFINED":
             command_text = self.request.get('request', {}).get('command', '')
             text, text_tts = self.text_preparer.say_do_not_get(command_text=command_text)

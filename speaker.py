@@ -2,7 +2,6 @@ import re
 import logging
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
 
 class Speaker(object):
     """
