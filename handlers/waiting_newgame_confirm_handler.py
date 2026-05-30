@@ -1,12 +1,12 @@
 import texts
-from .waiting_confirmation_handler import WaitingConfirmationHandler
+from .base_confirmation_handler import BaseConfirmationHandler
+from skill_state import SkillState
 import logging
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
 
 
-class WaitingNewgameConfirmHandler(WaitingConfirmationHandler):
+class WaitingNewgameConfirmHandler(BaseConfirmationHandler):
     """Обработчик состояния ожидания подтверждения новой игры."""
 
     @property
@@ -23,7 +23,7 @@ class WaitingNewgameConfirmHandler(WaitingConfirmationHandler):
 
     def on_accept(self):
         self.reset_game()
-        self.game.set_skill_state('WAITING_COLOR')
+        self.game.set_skill_state(SkillState.WAITING_COLOR)
 
     def handle(self):
         logger.info(f"WaitingNewgameConfirmHandler.handle. Запрос: {self.request}")

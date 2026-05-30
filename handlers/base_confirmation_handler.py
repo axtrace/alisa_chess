@@ -4,10 +4,9 @@ from request_validators.intent_validator import IntentValidator
 import logging
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
 
 
-class WaitingConfirmationHandler(BaseHandler):
+class BaseConfirmationHandler(BaseHandler):
     """Базовый класс для хендлеров, ожидающих подтверждения (да/нет)."""
 
     def __init__(self, game, request):

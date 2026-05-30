@@ -1,12 +1,12 @@
 import texts
-from .waiting_confirmation_handler import WaitingConfirmationHandler
+from .base_confirmation_handler import BaseConfirmationHandler
+from skill_state import SkillState
 import logging
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
 
 
-class WaitingDrawConfirmHandler(WaitingConfirmationHandler):
+class WaitingDrawConfirmHandler(BaseConfirmationHandler):
     """Обработчик состояния ожидания подтверждения ничьей."""
 
     @property
@@ -22,7 +22,7 @@ class WaitingDrawConfirmHandler(WaitingConfirmationHandler):
         return texts.waiting_draw_confirm_text
 
     def on_accept(self):
-        self.game.set_skill_state('INITIATED')
+        self.game.set_skill_state(SkillState.INITIATED)
 
     def handle(self):
         logger.info(f"WaitingDrawConfirmHandler.handle. Запрос: {self.request}")

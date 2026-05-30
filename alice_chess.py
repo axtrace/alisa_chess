@@ -13,13 +13,23 @@ from handlers.waiting_skill_level_handler import WaitingSkillLevelHandler
 import logging
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
 
 class AliceChess:
     """Основной класс для обработки запросов к навыку шахмат."""
 
     def __init__(self):
         self.game = Game()
+        self.session_state = {}
+
+    def __enter__(self):
+        """Контекстный менеджер для делегирования Game."""
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Гарантированное закрытие Game при выходе из контекста."""
+        if hasattr(self, 'game') and self.game is not None:
+            self.game.quit()
+        return False  # Не подавляем исключения
 
     def set_game_state(self, skill_state):
         if self.game is not None:
@@ -30,6 +40,10 @@ class AliceChess:
         if self.game is None:
             return ""
         return self.game.serialize_state()
+
+    def get_session_state(self):
+        """Возвращает накопленное session_state для записи в ответ Алисе."""
+        return self.session_state
 
     def handle_request(self, request):
         """Обрабатывает входящий запрос.
@@ -42,14 +56,37 @@ class AliceChess:
         """
 
         logger.info(f"handle_request. Запрос: {request}")
+
+        # Проверка идемпотентности по message_id
+        current_message_id = request.get('session', {}).get('message_id')
+        session_state = request.get('state', {}).get('session', {})
+        last_message_id = session_state.get('last_message_id')
+
+        if current_message_id and last_message_id and current_message_id == last_message_id:
+            logger.info(f"Идемпотентность: пропускаем дублирующий запрос message_id={current_message_id}")
+            # Возвращаем предыдущий ответ из session_state
+            previous_response = session_state.get('previous_response', {})
+            if previous_response:
+                return previous_response
+            else:
+                return {
+                    'text': 'Повторный запрос пропущен',
+                    'tts': 'Повторный запрос пропущен',
+                    'end_session': False
+                }
+
         state = request.get('state',{}).get('user',{}).get('game_state', {})
 
         self.game = Game(game_state=state)
 
         # Сначала проверяем специальные интенты, не зависящие от состояния
         special_intent_handler = SpecialIntentHandler(self.game, request)
-        special_intent_result = special_intent_handler.handle()
+        special_intent_result = special_intent_handler.safe_handle()
         if special_intent_result:
+            self.session_state = {
+                'last_message_id': current_message_id,
+                'previous_response': special_intent_result,
+            }
             return special_intent_result
 
         # Затем обрабатываем запрос в зависимости от состояния игры
@@ -76,4 +113,10 @@ class AliceChess:
         else:
             raise ValueError(f"Неизвестное состояние игры: {state}")
 
-        return handler.handle()
+        handler_result = handler.safe_handle()
+
+        self.session_state = {
+            'last_message_id': current_message_id,
+            'previous_response': handler_result,
+        }
+        return handler_result

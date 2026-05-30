@@ -1,12 +1,12 @@
 import texts
-from .waiting_confirmation_handler import WaitingConfirmationHandler
+from .base_confirmation_handler import BaseConfirmationHandler
+from skill_state import SkillState
 import logging
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
 
 
-class WaitingResignConfirmHandler(WaitingConfirmationHandler):
+class WaitingResignConfirmHandler(BaseConfirmationHandler):
     """Обработчик состояния ожидания подтверждения сдачи."""
 
     @property
@@ -22,7 +22,7 @@ class WaitingResignConfirmHandler(WaitingConfirmationHandler):
         return texts.waiting_resign_confirm_text
 
     def on_accept(self):
-        self.game.set_skill_state('INITIATED')
+        self.game.set_skill_state(SkillState.INITIATED)
 
     def handle(self):
         logger.info(f"WaitingResignConfirmHandler.handle. Запрос: {self.request}")

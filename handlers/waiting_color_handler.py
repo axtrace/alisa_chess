@@ -1,10 +1,10 @@
 import texts
 from .base_handler import BaseHandler
 from move_extractor import MoveExtractor
+from skill_state import SkillState
 import logging
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
 
 class WaitingColorHandler(BaseHandler):
     """Обработчик состояния ожидания выбора цвета."""
@@ -21,7 +21,7 @@ class WaitingColorHandler(BaseHandler):
             return self.say(texts.not_get_turn_text)
 
         self.game.set_user_color(user_color)
-        self.game.set_skill_state('WAITING_MOVE')
+        self.game.set_skill_state(SkillState.WAITING_MOVE)
 
         # Если пользователь играет черными, делаем первый ход
         if user_color == 'BLACK':

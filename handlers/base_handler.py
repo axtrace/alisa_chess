@@ -1,7 +1,9 @@
 from abc import ABC, abstractmethod
+import logging
 from game import Game
 from speaker import Speaker
 from text_preparer import TextPreparer
+from skill_state import SkillState
 
 
 class BaseHandler(ABC):
@@ -26,6 +28,31 @@ class BaseHandler(ABC):
         """Обрабатывает запрос в текущем состоянии."""
         pass
 
+    def safe_handle(self):
+        """
+        Безопасная обработка запроса с двухуровневым exception handling.
+
+        Возвращает:
+            dict: Ответ в формате Яндекс Диалогов или сообщение об ошибке
+        """
+        logger = logging.getLogger(__name__)
+
+        try:
+            # Основная логика обработки
+            result = self.handle()
+            return result
+
+        except Exception as e:
+            # Логируем ошибку с контекстом
+            logger.exception(f"Ошибка в {self.__class__.__name__}: {e}")
+
+            # Возвращаем сообщение об ошибке пользователю
+            return self.say(
+                text="Произошла ошибка при обработке запроса. Попробуйте еще раз.",
+                tts="Произошла ошибка при обработке запроса. Попробуйте еще раз.",
+                end_session=False
+            )
+
     def _has_intent(self, intent_name):
         """Проверяет наличие интента в запросе."""
         nlu = self.request.get('request', {}).get('nlu', {})
@@ -39,7 +66,7 @@ class BaseHandler(ABC):
     def reset_game(self):
         """Сбрасывает игру."""
         self.game.reset_board()
-        self.game.set_skill_state('INITIATED')
+        self.game.set_skill_state(SkillState.INITIATED)
         return None
 
     def prep_text_to_say(self, comp_move, prev_turn, text_to_show, text_to_say, lang='ru'):
