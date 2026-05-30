@@ -1,0 +1,119 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "alisa-chess"
+version = "0.2.0"
+description = "Голосовой шахматный навык для Яндекс.Алисы (Stockfish + python-chess), деплоится в Yandex Cloud Function"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.9"
+authors = [
+    { name = "Sofin Matvey", email = "Sofinma@ya.ru" },
+    { name = "Varkasha", email = "" },
+]
+keywords = ["alice", "yandex", "chess", "stockfish", "serverless", "skill"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Games/Entertainment :: Board Games",
+]
+dependencies = [
+    "python-chess",
+    "pydantic>=2.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-subtests",
+    "ruff",
+    "mypy",
+    "pre-commit",
+]
+
+[project.urls]
+Repository = "https://github.com/Sofinma/alisa_chess"
+
+[tool.setuptools]
+py-modules = [
+    "alice_chess",
+    "alice_serverless",
+    "game",
+    "game_state",
+    "move_extractor",
+    "skill_state",
+    "speaker",
+    "text_preparer",
+    "texts",
+    "tts_builder",
+]
+
+[tool.setuptools.packages.find]
+include = ["handlers*", "request_validators*"]
+exclude = ["tests*", "docs*", "intents*", "junk*", ".github*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-v"
+
+[tool.ruff]
+line-length = 120
+target-version = "py39"
+extend-exclude = [
+    "junk",
+    "_prev-stable",
+    "stockfish",
+]
+
+[tool.ruff.lint]
+# Включаем безопасный базовый набор. Перечень намеренно консервативный —
+# проект мигрируется постепенно, чтобы не плодить шум в одном PR.
+select = [
+    "E",   # pycodestyle errors
+    "F",   # pyflakes
+    "W",   # pycodestyle warnings
+    "I",   # isort
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+]
+ignore = [
+    "E501",  # длина строки — пока не форсим
+    "B008",  # function calls in argument defaults — ok для FastAPI-стиля
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["B", "E", "F401"]
+"__init__.py" = ["F401"]
+
+[tool.ruff.format]
+quote-style = "single"
+indent-style = "space"
+
+[tool.mypy]
+python_version = "3.9"
+# Постепенная миграция: начинаем мягко, чтобы CI не падал на каждом файле.
+ignore_missing_imports = true
+follow_imports = "silent"
+warn_redundant_casts = true
+warn_unused_ignores = true
+no_implicit_optional = true
+check_untyped_defs = false
+disallow_untyped_defs = false
+exclude = [
+    "tests/",
+    "junk/",
+    "_prev-stable/",
+]
+
+[[tool.mypy.overrides]]
+# Эти модули уже относительно типизированы — для них включаем строже.
+module = ["game_state", "skill_state", "tts_builder"]
+disallow_untyped_defs = true
+check_untyped_defs = true
