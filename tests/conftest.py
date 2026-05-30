@@ -7,10 +7,15 @@
 переопределить патч локально (через `@patch('chess.engine.SimpleEngine.popen_uci')`).
 """
 
+import sys
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import chess
 import pytest
+
+# Добавляем корневой каталог проекта в sys.path для корректного импорта модулей
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 
 def _build_fake_engine():
