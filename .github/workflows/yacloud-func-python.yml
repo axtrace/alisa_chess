@@ -31,7 +31,6 @@ jobs:
         memory: '2048Mb'
         entrypoint: 'alice_serverless.handler'
         environment: |
-          CHESS_API_KEY=${{ secrets.CHESS_API_KEY }}
           DEBUG=True
           COUNT=1
         include: |

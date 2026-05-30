@@ -1,4 +1,4 @@
-name: Auto Deploy to TESTING YaCloud Functions
+name: Auto Deploy 2 TESTING YaCloud Functions
 
 on:
   push:
