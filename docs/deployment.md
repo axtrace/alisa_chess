@@ -48,25 +48,19 @@ exclude: |
   .gitignore
   LICENSE
 
-## Планируемые изменения после одобрения модератора
+## Изменения после одобрения модератора
 
-После получения одобрения модератора будут внесены следующие изменения в процессы деплоя:
+После получения одобрения модератора внесены следующие изменения в процессы деплоя:
 
-### Удаляемые процессы:
+### Удалены процессы:
 - `Manual Deploy to TESTING YaCloud Functions` (yacloud-func-python.yml)
 - `Manual Deploy to PROD YaCloud Functions` (yacloud-func-python prod.yml)
 
-### Остающиеся процессы:
+### Остались процессы:
 - `Manual Deploy 2 PROD YaCloud Functions` (yacloud-func-python-prod-pp.yml)
 - `Auto Deploy 2 TESTING YaCloud Functions` (yacloud-func-python-testing.yml)
 
-### Переименование переменных:
-Следующие переменные будут переименованы с удалением постфикса `_2`:
-- `YC_SA_JSON_CREDENTIALS_2` → `YC_SA_JSON_CREDENTIALS`
-- `BUCKET_NAME_2` → `BUCKET_NAME`
-- `FOLDER_ID_2` → `FOLDER_ID`
-
-Эти изменения позволят упростить конфигурацию и убрать дублирующие процессы.
+Переменные оставлены с постфиксом `_2` для совместимости с существующей конфигурацией.
 ```
 
 ## Процесс деплоя
