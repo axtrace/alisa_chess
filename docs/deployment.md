@@ -7,8 +7,8 @@
 ## Конфигурация
 
 ### 1. Тестовая среда
-- Файл: `.github/workflows/yacloud-func-python.yml`
-- Триггер: push в master/main или pull request
+- Файл: `.github/workflows/yacloud-func-python-testing.yml`
+- Триггер: ручной запуск (workflow_dispatch)
 - Имя функции: `alice-chess-testing`
 - Память: 2048MB
 
