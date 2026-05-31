@@ -197,6 +197,43 @@ class TestGame(unittest.TestCase):
         self.assertGreater(len(board_text), 10)  # должно быть достаточно символов
         self.assertIn('♙', board_text)  # должны быть символы фигур
         self.assertIn('♖', board_text)
+        # Должны быть метки файлов и рангов
+        for letter in 'abcdefgh':
+            self.assertIn(letter, board_text)
+        for rank in '12345678':
+            self.assertIn(rank, board_text)
+
+    def test_get_board_perspective_black(self):
+        """Доска для чёрных перевёрнута: файлы идут от h к a."""
+        self.game.set_user_color('BLACK')
+        board_text = self.game.get_board()
+        # Нижняя строка должна начинаться с h, а не с a
+        footer = [line for line in board_text.splitlines() if 'a' in line and 'h' in line][0]
+        self.assertLess(footer.index('h'), footer.index('a'))
+
+    def test_get_board_highlights_last_move(self):
+        """После хода клетка, откуда ушла фигура, помечена символом ∙."""
+        self.game.user_move('e4')
+        board_text = self.game.get_board()
+        self.assertIn('∙', board_text)
+
+    def test_get_board_shows_check(self):
+        """При шахе под доской выводится пометка."""
+        import chess
+
+        # 1. f3 e5 2. g4 — позиция для классической ловушки «мат за два хода».
+        self.game.board = chess.Board('rnbqkbnr/pppp1ppp/8/4p3/6P1/5P2/PPPPP2P/RNBQKBNR b KQkq - 0 2')
+        self.game.board.push_san('Qh4+')  # шах + мат белому королю
+        board_text = self.game.get_board()
+        # Это мат, а не «голый» шах, поэтому пометки быть не должно.
+        self.assertNotIn('Шах', board_text)
+
+        # Простая позиция: чёрный король под шахом ферзём по e-вертикали, мата нет.
+        self.game.board = chess.Board('4k3/8/8/8/8/8/8/4Q2K b - - 0 1')
+        self.assertTrue(self.game.board.is_check())
+        self.assertFalse(self.game.board.is_checkmate())
+        board_text = self.game.get_board()
+        self.assertIn('Шах', board_text)
 
     def test_who(self):
         """Тест определения цвета хода"""

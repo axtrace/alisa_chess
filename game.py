@@ -227,8 +227,68 @@ class Game:
             return 'White'
         return 'Black'
 
-    def get_board(self):
-        return self.board.unicode() + '\n'
+    # Символы для текстового рендера доски.
+    _BOARD_FILES = 'abcdefgh'
+    _PIECE_UNICODE = {
+        'P': '♙',
+        'N': '♘',
+        'B': '♗',
+        'R': '♖',
+        'Q': '♕',
+        'K': '♔',
+        'p': '♟',
+        'n': '♞',
+        'b': '♝',
+        'r': '♜',
+        'q': '♛',
+        'k': '♚',
+    }
+    _EMPTY_SQUARE = '·'
+    _LAST_MOVE_FROM_MARK = '∙'  # клетка, откуда ушла фигура в последнем ходе
+
+    def get_board(self, perspective=None):
+        """Возвращает текстовое представление доски с метками файлов/рангов.
+
+        Особенности рендера:
+        - метки рангов слева (1–8) и файлов снизу (a–h);
+        - ориентация по цвету игрока (если задан `user_color`), иначе белые снизу;
+        - клетки шахматной нотации не «плывут» — все символы одинаковой ширины;
+        - подсветка клетки, откуда был сделан последний ход, символом `∙`;
+        - пометка шаха строкой `— Шах!` под доской.
+
+        :param perspective: 'white' или 'black' — принудительная ориентация.
+            По умолчанию подбирается из `self.user_color` (BLACK → переворот).
+        """
+        if perspective is None:
+            perspective = 'black' if self.user_color == 'BLACK' else 'white'
+        flipped = perspective == 'black'
+
+        last_move = self.board.move_stack[-1] if self.board.move_stack else None
+
+        files_order = range(7, -1, -1) if flipped else range(8)
+        ranks_order = range(1, 9) if flipped else range(8, 0, -1)
+
+        lines = []
+        for r in ranks_order:
+            cells = [str(r)]
+            for f in files_order:
+                sq = chess.square(f, r - 1)
+                piece = self.board.piece_at(sq)
+                if piece:
+                    cells.append(self._PIECE_UNICODE[piece.symbol()])
+                elif last_move is not None and sq == last_move.from_square:
+                    cells.append(self._LAST_MOVE_FROM_MARK)
+                else:
+                    cells.append(self._EMPTY_SQUARE)
+            lines.append(' '.join(cells))
+
+        file_letters = self._BOARD_FILES[::-1] if flipped else self._BOARD_FILES
+        footer = '  ' + ' '.join(file_letters)
+
+        result = '\n'.join(lines + [footer])
+        if self.board.is_check() and not self.board.is_checkmate():
+            result += '\n— Шах!'
+        return result + '\n'
 
     def gameover_reason(self):
         # returns a code for reason of game ends
