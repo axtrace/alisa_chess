@@ -20,6 +20,7 @@
 | F-06 | Не озвучивает, что услышала (02.11.2021) | [`text_preparer.say_do_not_get(command_text=…)`](../handlers/waiting_move_handler.py:163) | При NOT_DEFINED в ответ включается услышанная фраза |
 | F-07 | Нет отмены хода / отображения доски (общие жалобы) | [`intents/UNDO.yaml`](../intents/UNDO.yaml), [`intents/SHOW_BOARD.yaml`](../intents/SHOW_BOARD.yaml); хендлеры [`_handle_undo`](../handlers/special_intent_handler.py:99), [`_handle_show_board`](../handlers/special_intent_handler.py:138) | |
 | F-08 | Падал «диалог не отвечает» / терялась партия (05.01.2022, 28.05.2021) | Идемпотентность по `message_id` + `session_state.previous_response`; снимок state в catch-all [`alice_serverless.handler`](../alice_serverless.py:1) (инварианты №3, №5, №6 в [`AGENTS.md`](../AGENTS.md)) | Требует регресс-проверки (см. T-04) |
+| F-09 (быв. T-01) | Не работает взятие пешки на проходе (27.09.2023, 09.01.2023) | Фильтр по `file_to`/`rank_to` в [`MoveExtractor._find_matching_moves`](../move_extractor.py:313) корректно ловит SAN `exd6`/`dxc3`, т.к. python-chess формирует ep-ходы как обычные взятия пешки | Аудит 2026-05-31: код ошибок не содержит. Проверены варианты ввода «d6», «e d6», «e5 d6», «пешка e d6», а также ep за чёрных. Покрытие — [`tests/test_matching_move.py`](../tests/test_matching_move.py) кейсы 12–16 |
 
 ---
 
@@ -29,7 +30,6 @@
 
 | # | Жалоба (даты) | Гипотеза | Что проверить | Где |
 |---|---|---|---|---|
-| T-01 | Не работает взятие пешки на проходе (27.09.2023, 09.01.2023) | `_find_matching_moves` не находит ep-ход или фильтр по `file_to`/`rank_to` срезает его | Прогнать партию `e2e4 a7a6 e4e5 d7d5 e5xd6` и аналог для чёрных | [`move_extractor.py`](../move_extractor.py:313), тесты [`tests/test_matching_move.py`](../tests/test_matching_move.py) |
 | T-02 | Не объявляет ничью по троекратному повторению / правилу 50 ходов (03.06.2024) | В [`WaitingMoveHandler._check_game_state`](../handlers/waiting_move_handler.py:97) проверяется только `is_insufficient_material`, `is_fivefold_repetition`, мат и пат | Добавить/проверить `can_claim_threefold_repetition` и `can_claim_fifty_moves` | [`handlers/waiting_move_handler.py`](../handlers/waiting_move_handler.py:97) |
 | T-03 | «Алиса жульничает» / забирает фигуру, которую увели из-под боя (19.04.2026, 29.07.2025, 02.06.2024) | Расхождение между объявленным SAN и фактически применённым `chess.Move` (например, при AMBIGUOUS выбирается первый ход) | Залогировать `extracted_move` vs `user_move`; проверить порядок `matching_moves` и реальный board после хода | [`WaitingMoveHandler._handle_user_move`](../handlers/waiting_move_handler.py:70) |
 | T-04 | Партия сбрасывается после ~30 ходов / при таймауте (03.06.2022, 24.04.2024, 28.05.2021, 13.09.2025) | Долгий cold start Stockfish, потеря `user_state_update` при ошибке, либо ограничение размера state Алисы | Прогнать golden-партию ≥40 ходов; проверить, что catch-all всегда возвращает `user_state_update`; замерить размер state | [`alice_serverless.py`](../alice_serverless.py:1), [`alice_chess.py`](../alice_chess.py:1), [`tests/test_golden_games.py`](../tests/test_golden_games.py) |
@@ -64,7 +64,8 @@
           Покрытие: F-04.
 [ ] R-05. REPEAT_LAST_MOVE сразу после хода компьютера; после старта новой сессии.
           Покрытие: F-05.
-[ ] R-06. En passant: e2e4 → ... → e5xd6 ep. Покрытие: T-01.
+[x] R-06. En passant: e2e4 → ... → e5xd6 ep. Покрытие: F-09 (быв. T-01).
+          Закрыто unit-тестами в tests/test_matching_move.py (кейсы 12–16), аудит 2026-05-31.
 [ ] R-07. Троекратное повторение и 50 ходов без взятий. Покрытие: T-02.
 [ ] R-08. Долгая партия 40+ ходов с сериализацией/десериализацией state.
           Покрытие: T-04.

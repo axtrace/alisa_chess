@@ -171,6 +171,77 @@ class TestFindMatchingMovesRealBoard(unittest.TestCase):
                 },
                 'matching_moves': ['a8=Q'],
             },
+            # 12. En passant за белых: после 1.e4 a6 2.e5 d5 белая пешка e5 берёт d6 на проходе.
+            #     Пользователь называет только клетку назначения «d6». Покрытие: T-01.
+            {
+                'board': 'rnbqkbnr/1pp1pppp/p7/3pP3/8/8/PPPP1PPP/RNBQKBNR w KQkq d6 0 3',
+                'move_structure': {
+                    'piece': '',
+                    'file_from': '',
+                    'rank_from': '',
+                    'file_to': 'd',
+                    'rank_to': '6',
+                    'move': 'd6',
+                    'promotion_piece': '',
+                },
+                'matching_moves': ['exd6'],
+            },
+            # 13. En passant за белых: с указанием исходной вертикали («e d6»).
+            {
+                'board': 'rnbqkbnr/1pp1pppp/p7/3pP3/8/8/PPPP1PPP/RNBQKBNR w KQkq d6 0 3',
+                'move_structure': {
+                    'piece': '',
+                    'file_from': 'e',
+                    'rank_from': '',
+                    'file_to': 'd',
+                    'rank_to': '6',
+                    'move': 'ed6',
+                    'promotion_piece': '',
+                },
+                'matching_moves': ['exd6'],
+            },
+            # 14. En passant за белых: с полной парой клеток («e5 d6»).
+            {
+                'board': 'rnbqkbnr/1pp1pppp/p7/3pP3/8/8/PPPP1PPP/RNBQKBNR w KQkq d6 0 3',
+                'move_structure': {
+                    'piece': '',
+                    'file_from': 'e',
+                    'rank_from': '5',
+                    'file_to': 'd',
+                    'rank_to': '6',
+                    'move': 'e5d6',
+                    'promotion_piece': '',
+                },
+                'matching_moves': ['exd6'],
+            },
+            # 15. En passant за белых: с явным указанием пешки («пешка e d6»).
+            {
+                'board': 'rnbqkbnr/1pp1pppp/p7/3pP3/8/8/PPPP1PPP/RNBQKBNR w KQkq d6 0 3',
+                'move_structure': {
+                    'piece': 'p',
+                    'file_from': 'e',
+                    'rank_from': '',
+                    'file_to': 'd',
+                    'rank_to': '6',
+                    'move': 'ped6',
+                    'promotion_piece': '',
+                },
+                'matching_moves': ['exd6'],
+            },
+            # 16. En passant за чёрных: после 1.a3 d5 2.a4 d4 3.c4 чёрная пешка d4 берёт c3 ep.
+            {
+                'board': 'rnbqkbnr/ppp1pppp/8/8/2Pp4/P7/1P1PPPPP/RNBQKBNR b KQkq c3 0 3',
+                'move_structure': {
+                    'piece': '',
+                    'file_from': '',
+                    'rank_from': '',
+                    'file_to': 'c',
+                    'rank_to': '3',
+                    'move': 'c3',
+                    'promotion_piece': '',
+                },
+                'matching_moves': ['dxc3'],
+            },
         ]
         for i, case in enumerate(cases, 1):
             with self.subTest(case=i):
