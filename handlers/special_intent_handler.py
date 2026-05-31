@@ -50,6 +50,10 @@ class SpecialIntentHandler(BaseHandler):
     def _handle_new_session(self):
         # Если пользователь начал новую сессию, то проверяем, не ждём ли мы хода с предыдущей сессии
         if self.game.get_skill_state() == SkillState.WAITING_MOVE:
+            # Если в первом запросе новой сессии уже пришёл ход — не показываем приветственное
+            # сообщение, а сразу передаём управление штатному WaitingMoveHandler, чтобы применить ход.
+            if self._has_move_in_request():
+                return None
             # Если ждём, то показываем доску и предыдущий ход
             last_move = self.game.get_last_move()
             comp_color = self.game.get_comp_color()
@@ -75,6 +79,19 @@ class SpecialIntentHandler(BaseHandler):
             if self.game.get_skill_state() == SkillState.WAITING_SKILL_LEVEL:
                 state_text = state_text.format(self.game.get_skill_level())
             return self.say(state_text)
+
+    def _has_move_in_request(self) -> bool:
+        """Возвращает True, если в запросе пользователя есть распознаваемый шахматный ход.
+
+        Используется для случая, когда новая сессия открывается сразу с ходом
+        (player продолжает партию и присылает ход в первом же запросе).
+        """
+        try:
+            _, extracted_move = self.move_ext.extract_move(self.request, self.game.board)
+        except Exception as e:
+            logger.warning(f'SpecialIntentHandler._has_move_in_request. Ошибка извлечения хода: {e}')
+            return False
+        return extracted_move is not None
 
     def _handle_help(self):
         state_text = texts.state_texts.get(self.game.get_skill_state(), '')

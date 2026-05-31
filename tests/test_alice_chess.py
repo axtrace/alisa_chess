@@ -245,5 +245,36 @@ class TestAliceChess(unittest.TestCase):
         self.assertIn('готова сыграть с вами в шахматы вслепую.', response['text'])
 
 
+    def test_new_session_with_move_applies_move(self):
+        """Если новая сессия открывается сразу с ходом — ход должен быть применён,
+        а не показано приветственное сообщение о продолжении игры."""
+        saved_game_state = {
+            'board_state': 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+            'skill_state': 'WAITING_MOVE',
+            'prev_skill_state': 'WAITING_COLOR',
+            'user_color': 'WHITE',
+            'current_turn': 'WHITE',
+            'time_level': 0.1,
+            'skill_level': 1,
+            'last_move': '',
+        }
+
+        test_request = {
+            'session': {'new': True, 'message_id': 0, 'session_id': 'test-session-id', 'user_id': 'test-user-id'},
+            'state': {'user': {'game_state': saved_game_state}},
+            'request': {
+                'command': 'e2e4',
+                'original_utterance': 'e2e4',
+                'nlu': {'tokens': ['e2e4'], 'entities': [], 'intents': {'CHESS_MOVE': {'slots': {}}}},
+            },
+        }
+
+        response = self.alice.handle_request(test_request)
+
+        # Приветственное сообщение «Продолжим нашу игру» НЕ должно появиться —
+        # ход обрабатывается штатным WaitingMoveHandler.
+        self.assertNotIn('Продолжим нашу игру', response['text'])
+
+
 if __name__ == '__main__':
     unittest.main()

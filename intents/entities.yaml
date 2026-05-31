@@ -9,19 +9,20 @@ entity ChessPiece:
             квин
             фэрз
             ферз
-            Q 
+            Q
         king:
             %lemma
             king
             король
             кинг
-            K 
+            K
         rook:
             %lemma
             rook
             ладья
+            ладьа
             тура
-            R 
+            R
         knight:
             %lemma
             knight
@@ -40,7 +41,7 @@ entity ChessPiece:
             гонец
             салон
             сон
-            B 
+            B
         pawn:
             %lemma
             pawn
@@ -98,7 +99,7 @@ entity ChessFile:
             цэ
             це
             си
-            с 
+            с
             charlie
             цапля
         d:
@@ -106,7 +107,7 @@ entity ChessFile:
             dee
             di
             de
-            д 
+            д
             дэ
             ди
             де
@@ -118,7 +119,7 @@ entity ChessFile:
         e:
             e
             е
-            е 
+            е
             ee
             и
             echo
@@ -129,7 +130,7 @@ entity ChessFile:
             фе
             фи
             фэ
-            ф 
+            ф
             эф
             foxtrot
             федор
