@@ -22,6 +22,7 @@
 | F-08 | Падал «диалог не отвечает» / терялась партия (05.01.2022, 28.05.2021) | Идемпотентность по `message_id` + `session_state.previous_response`; снимок state в catch-all [`alice_serverless.handler`](../alice_serverless.py:1) (инварианты №3, №5, №6 в [`AGENTS.md`](../AGENTS.md)) | Требует регресс-проверки (см. T-04) |
 | F-09 (быв. T-01) | Не работает взятие пешки на проходе (27.09.2023, 09.01.2023) | Фильтр по `file_to`/`rank_to` в [`MoveExtractor._find_matching_moves`](../move_extractor.py:313) корректно ловит SAN `exd6`/`dxc3`, т.к. python-chess формирует ep-ходы как обычные взятия пешки | Аудит 2026-05-31: код ошибок не содержит. Проверены варианты ввода «d6», «e d6», «e5 d6», «пешка e d6», а также ep за чёрных. Покрытие — [`tests/test_matching_move.py`](../tests/test_matching_move.py) кейсы 12–16 |
 | F-10 (быв. T-02) | Не объявляет ничью по троекратному повторению / правилу 50 ходов (03.06.2024) | Добавлены проверки `can_claim_threefold_repetition` и `can_claim_fifty_moves` в [`WaitingMoveHandler._check_game_state`](../handlers/waiting_move_handler.py:97), новые тексты [`threefold_repetition_text`/`fifty_moves_text`](../texts.py:166), методы-обёртки в [`Game`](../game.py:298) | Аудит 2026-05-31: гипотеза подтверждена, исправление внесено. Покрытие — [`tests/test_handlers.py::TestCheckGameStateDraws`](../tests/test_handlers.py) (3 кейса) |
+| F-11 (быв. T-03) | «Алиса жульничает» / забирает фигуру, которую увели из-под боя (19.04.2026, 29.07.2025, 02.06.2024) | [`WaitingMoveHandler._handle_user_move`](../handlers/waiting_move_handler.py:70) корректно возвращает `AMBIGUOUS` при нескольких кандидатах (доска не модифицируется), при единственном совпадении применяет ровно тот SAN, который вернул `board.san(...)`; [`Game.comp_move`](../game.py:128) формирует SAN до `board.push(...)` из одного и того же `chess.Move` | Аудит 2026-05-31: гипотеза о «выборе первого хода при AMBIGUOUS» не подтверждена — этот код-путь возвращает список ходов и переспрашивает игрока, доска остаётся нетронутой. Расхождения SAN/доски при единичном совпадении нет (применяется именно `matching_moves[0]`, полученный из `board.san`). Покрытие — [`tests/test_handlers.py::TestUserMoveIntegrity`](../tests/test_handlers.py) (3 кейса: AMBIGUOUS без модификации доски, FEN == push_san(returned), уход фигуры из-под боя). Скорее всего исходные жалобы — это TTS-описание (см. T-10) или ошибка восприятия игроком озвученного хода |
 
 ---
 
@@ -31,7 +32,6 @@
 
 | # | Жалоба (даты) | Гипотеза | Что проверить | Где |
 |---|---|---|---|---|
-| T-03 | «Алиса жульничает» / забирает фигуру, которую увели из-под боя (19.04.2026, 29.07.2025, 02.06.2024) | Расхождение между объявленным SAN и фактически применённым `chess.Move` (например, при AMBIGUOUS выбирается первый ход) | Залогировать `extracted_move` vs `user_move`; проверить порядок `matching_moves` и реальный board после хода | [`WaitingMoveHandler._handle_user_move`](../handlers/waiting_move_handler.py:70) |
 | T-04 | Партия сбрасывается после ~30 ходов / при таймауте (03.06.2022, 24.04.2024, 28.05.2021, 13.09.2025) | Долгий cold start Stockfish, потеря `user_state_update` при ошибке, либо ограничение размера state Алисы | Прогнать golden-партию ≥40 ходов; проверить, что catch-all всегда возвращает `user_state_update`; замерить размер state | [`alice_serverless.py`](../alice_serverless.py:1), [`alice_chess.py`](../alice_chess.py:1), [`tests/test_golden_games.py`](../tests/test_golden_games.py) |
 | T-05 | Путает буквы «a» и «h»/«аш» при распознавании речи (09.09.2025, 14.03.2026) | `file_map` в [`MoveExtractor`](../move_extractor.py:12) не покрывает все варианты ASR | Прогнать кейсы «эйч», «аш», «ш», «ха», «alpha»/«hotel»; добавить unit-тесты на спорные пары | [`move_extractor.py`](../move_extractor.py:12) |
 | T-06 | Триггерится на посторонний разговор и теряет контекст игры (13.09.2025) | В `WAITING_MOVE` любой нераспознанный запрос идёт по ветке `NOT_DEFINED` и сессия может закрыться | Проверить, что `end_session=False` в catch-all и что состояние сохраняется при «болтовне» | [`alice_serverless.py`](../alice_serverless.py:1), [`SpecialIntentHandler`](../handlers/special_intent_handler.py:14) |
@@ -71,8 +71,12 @@
           Закрыто unit-тестами в tests/test_handlers.py::TestCheckGameStateDraws, аудит 2026-05-31.
 [ ] R-08. Долгая партия 40+ ходов с сериализацией/десериализацией state.
           Покрытие: T-04.
+[x] R-09a. AMBIGUOUS не модифицирует доску; FEN после OK-хода совпадает с
+          push_san(returned_san); фигура, уведённая из-под боя, реально
+          ушла с исходной клетки. Покрытие: F-11 (быв. T-03).
+          Закрыто unit-тестами в tests/test_handlers.py::TestUserMoveIntegrity, аудит 2026-05-31.
 [ ] R-09. Идемпотентность: два запроса с одинаковым message_id → один ход
-          компьютера. Покрытие: T-03, T-04, инвариант №3.
+          компьютера. Покрытие: T-04, инвариант №3.
 [ ] R-10. ASR-кейсы для буквы h: «эйч», «аш», «ш», «hotel», «ха».
           Покрытие: T-05.
 [ ] R-11. Болтовня в WAITING_MOVE: «расскажи анекдот» → state сохранён,

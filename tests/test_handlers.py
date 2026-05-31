@@ -165,5 +165,136 @@ class TestCheckGameStateDraws(unittest.TestCase):
         self.assertEqual(self.game.get_skill_state(), 'WAITING_MOVE')
 
 
+class TestUserMoveIntegrity(unittest.TestCase):
+    """Регресс-тесты T-03: «Алиса жульничает» / забирает уведённую из-под боя фигуру.
+
+    Проверяемые инварианты:
+      1. При AMBIGUOUS доска НЕ модифицируется (нет молчаливого выбора первого хода).
+      2. При успешном ходе фактический FEN доски строго соответствует возвращённому SAN.
+      3. После ухода фигуры из-под боя ход пользователя действительно применяется
+         к доске: «съеденной» фигуры уже нет на исходной клетке, и компьютер
+         оперирует обновлённой позицией.
+    """
+
+    def setUp(self):
+        self.game = Game()
+        self.game.set_skill_state('WAITING_MOVE')
+        self.game.user_color = 'WHITE'
+
+    def _make_handler(self, command, intents=None):
+        request = {
+            'request': {
+                'command': command,
+                'nlu': {'intents': intents or {}, 'tokens': command.lower().split()},
+            }
+        }
+        return WaitingMoveHandler(self.game, request)
+
+    def test_ambiguous_move_does_not_modify_board(self):
+        """T-03: при AMBIGUOUS доска должна остаться нетронутой."""
+        # Оба коня (b1 и g1 в стартовой позиции — нет; ставим вручную)
+        # Позиция: два коня могут пойти на e4 → ход «конь на e4» неоднозначен.
+        # 8/8/8/8/8/2N1N3/8/8 w - - 0 1 — кони c3 и e3 (c3 ходит Ne4, e3 ходит Ne4? нет).
+        # Проще: кони на c3 и g3, оба могут пойти на e4.
+        self.game.board = chess.Board('4k3/8/8/8/8/2N3N1/8/4K3 w - - 0 1')
+
+        legal_to_e4 = [m for m in self.game.board.legal_moves if self.game.board.san(m).endswith('e4')]
+        # Должно быть как минимум два кандидата — Nce4 и Nge4
+        self.assertGreaterEqual(len(legal_to_e4), 2)
+
+        fen_before = self.game.board.fen()
+
+        handler = self._make_handler(
+            'конь на e4',
+            intents={
+                'CHESS_MOVE': {
+                    'slots': {
+                        'piece': {'value': 'конь'},
+                        'file_to': {'value': 'e'},
+                        'rank_to': {'value': '4'},
+                    }
+                }
+            },
+        )
+        user_moves, reason_type = handler._handle_user_move()
+
+        self.assertEqual(reason_type, 'AMBIGUOUS')
+        self.assertIsInstance(user_moves, list)
+        self.assertGreaterEqual(len(user_moves), 2)
+        # Главный инвариант: доска не изменилась.
+        self.assertEqual(self.game.board.fen(), fen_before)
+
+    def test_successful_move_board_matches_returned_san(self):
+        """T-03: после OK-хода FEN доски совпадает с FEN, который даёт push_san(returned_san)."""
+        # Берём стартовую позицию, ход e2-e4 однозначен.
+        handler = self._make_handler(
+            'e2 e4',
+            intents={
+                'CHESS_MOVE': {
+                    'slots': {
+                        'file_from': {'value': 'e'},
+                        'rank_from': {'value': '2'},
+                        'file_to': {'value': 'e'},
+                        'rank_to': {'value': '4'},
+                    }
+                }
+            },
+        )
+
+        # Эталон: применяем тот же SAN к чистой доске.
+        reference_board = chess.Board()
+        user_move, reason_type = handler._handle_user_move()
+        self.assertEqual(reason_type, 'OK')
+        self.assertIsInstance(user_move, str)
+        reference_board.push_san(user_move)
+
+        self.assertEqual(self.game.board.fen(), reference_board.fen())
+
+    def test_piece_moved_out_of_attack_engine_sees_updated_board(self):
+        """T-03: пользователь уводит фигуру из-под боя — на исходной клетке её больше нет.
+
+        Сценарий: чёрная ладья на e5 под боем белой ладьи e1. Ход пользователя (за чёрных)
+        Re5-a5 уводит ладью из-под боя. После применения хода:
+          * на e5 — пусто;
+          * белая ладья e1 не может «съесть» ничего на e5, потому что там пусто.
+        """
+        # Сначала за чёрных делает ход пользователь.
+        # Чёрный король на a8 (вне линии e), чтобы уход ладьи с e5 был легален.
+        self.game.user_color = 'BLACK'
+        self.game.board = chess.Board('k7/8/8/4r3/8/8/8/4R2K b - - 0 1')
+
+        handler = self._make_handler(
+            'ладья e5 a5',
+            intents={
+                'CHESS_MOVE': {
+                    'slots': {
+                        'piece': {'value': 'ладья'},
+                        'file_from': {'value': 'e'},
+                        'rank_from': {'value': '5'},
+                        'file_to': {'value': 'a'},
+                        'rank_to': {'value': '5'},
+                    }
+                }
+            },
+        )
+
+        user_move, reason_type = handler._handle_user_move()
+        self.assertEqual(reason_type, 'OK')
+        self.assertEqual(user_move, 'Ra5')
+
+        # На e5 не должно остаться чёрной ладьи (фигура ушла).
+        self.assertIsNone(self.game.board.piece_at(chess.E5))
+        # На a5 теперь чёрная ладья.
+        piece_a5 = self.game.board.piece_at(chess.A5)
+        self.assertIsNotNone(piece_a5)
+        self.assertEqual(piece_a5.symbol(), 'r')
+
+        # Дополнительная проверка: легальные ходы для белой ладьи e1 не включают «взятие» e5.
+        legal_sans = [self.game.board.san(m) for m in self.game.board.legal_moves]
+        self.assertNotIn('Rxe5', legal_sans)
+        self.assertNotIn('Rxe5+', legal_sans)
+        self.assertNotIn('Rxe5#', legal_sans)
+
+
 if __name__ == '__main__':
     unittest.main()
