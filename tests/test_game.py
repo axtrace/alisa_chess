@@ -212,10 +212,12 @@ class TestGame(unittest.TestCase):
         self.assertLess(footer.index('h'), footer.index('a'))
 
     def test_get_board_highlights_last_move(self):
-        """После хода клетка, откуда ушла фигура, помечена символом ∙."""
+        """После хода клетка, откуда ушла фигура, помечена отдельным символом."""
         self.game.user_move('e4')
         board_text = self.game.get_board()
-        self.assertIn('∙', board_text)
+        self.assertIn(Game._LAST_MOVE_FROM_MARK, board_text)
+        # И этот символ отличается от обычной пустой клетки.
+        self.assertNotEqual(Game._LAST_MOVE_FROM_MARK, Game._EMPTY_SQUARE)
 
     def test_get_board_shows_check(self):
         """При шахе под доской выводится пометка."""
