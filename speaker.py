@@ -46,6 +46,8 @@ class Speaker:
         '#': {'ru': 'мат', 'en': 'mate'},
         '=': {'ru': 'пат', 'en': 'stalemate'},
         '5': {'ru': 'ничья из-за 5 повторов', 'en': 'fivefold repetition'},
+        '3': {'ru': 'ничья из-за троекратного повторения', 'en': 'threefold repetition'},
+        '50': {'ru': 'ничья по правилу 50 ходов', 'en': 'fifty-move rule'},
         'insufficient': {'ru': 'ничья из-за недостаточности материала', 'en': 'draw due to insufficient material'},
     }
 

@@ -21,6 +21,7 @@
 | F-07 | Нет отмены хода / отображения доски (общие жалобы) | [`intents/UNDO.yaml`](../intents/UNDO.yaml), [`intents/SHOW_BOARD.yaml`](../intents/SHOW_BOARD.yaml); хендлеры [`_handle_undo`](../handlers/special_intent_handler.py:99), [`_handle_show_board`](../handlers/special_intent_handler.py:138) | |
 | F-08 | Падал «диалог не отвечает» / терялась партия (05.01.2022, 28.05.2021) | Идемпотентность по `message_id` + `session_state.previous_response`; снимок state в catch-all [`alice_serverless.handler`](../alice_serverless.py:1) (инварианты №3, №5, №6 в [`AGENTS.md`](../AGENTS.md)) | Требует регресс-проверки (см. T-04) |
 | F-09 (быв. T-01) | Не работает взятие пешки на проходе (27.09.2023, 09.01.2023) | Фильтр по `file_to`/`rank_to` в [`MoveExtractor._find_matching_moves`](../move_extractor.py:313) корректно ловит SAN `exd6`/`dxc3`, т.к. python-chess формирует ep-ходы как обычные взятия пешки | Аудит 2026-05-31: код ошибок не содержит. Проверены варианты ввода «d6», «e d6», «e5 d6», «пешка e d6», а также ep за чёрных. Покрытие — [`tests/test_matching_move.py`](../tests/test_matching_move.py) кейсы 12–16 |
+| F-10 (быв. T-02) | Не объявляет ничью по троекратному повторению / правилу 50 ходов (03.06.2024) | Добавлены проверки `can_claim_threefold_repetition` и `can_claim_fifty_moves` в [`WaitingMoveHandler._check_game_state`](../handlers/waiting_move_handler.py:97), новые тексты [`threefold_repetition_text`/`fifty_moves_text`](../texts.py:166), методы-обёртки в [`Game`](../game.py:298) | Аудит 2026-05-31: гипотеза подтверждена, исправление внесено. Покрытие — [`tests/test_handlers.py::TestCheckGameStateDraws`](../tests/test_handlers.py) (3 кейса) |
 
 ---
 
@@ -30,7 +31,6 @@
 
 | # | Жалоба (даты) | Гипотеза | Что проверить | Где |
 |---|---|---|---|---|
-| T-02 | Не объявляет ничью по троекратному повторению / правилу 50 ходов (03.06.2024) | В [`WaitingMoveHandler._check_game_state`](../handlers/waiting_move_handler.py:97) проверяется только `is_insufficient_material`, `is_fivefold_repetition`, мат и пат | Добавить/проверить `can_claim_threefold_repetition` и `can_claim_fifty_moves` | [`handlers/waiting_move_handler.py`](../handlers/waiting_move_handler.py:97) |
 | T-03 | «Алиса жульничает» / забирает фигуру, которую увели из-под боя (19.04.2026, 29.07.2025, 02.06.2024) | Расхождение между объявленным SAN и фактически применённым `chess.Move` (например, при AMBIGUOUS выбирается первый ход) | Залогировать `extracted_move` vs `user_move`; проверить порядок `matching_moves` и реальный board после хода | [`WaitingMoveHandler._handle_user_move`](../handlers/waiting_move_handler.py:70) |
 | T-04 | Партия сбрасывается после ~30 ходов / при таймауте (03.06.2022, 24.04.2024, 28.05.2021, 13.09.2025) | Долгий cold start Stockfish, потеря `user_state_update` при ошибке, либо ограничение размера state Алисы | Прогнать golden-партию ≥40 ходов; проверить, что catch-all всегда возвращает `user_state_update`; замерить размер state | [`alice_serverless.py`](../alice_serverless.py:1), [`alice_chess.py`](../alice_chess.py:1), [`tests/test_golden_games.py`](../tests/test_golden_games.py) |
 | T-05 | Путает буквы «a» и «h»/«аш» при распознавании речи (09.09.2025, 14.03.2026) | `file_map` в [`MoveExtractor`](../move_extractor.py:12) не покрывает все варианты ASR | Прогнать кейсы «эйч», «аш», «ш», «ха», «alpha»/«hotel»; добавить unit-тесты на спорные пары | [`move_extractor.py`](../move_extractor.py:12) |
@@ -46,6 +46,7 @@
 | T-15 | Уровень игры низкий / нет дебютной книги (29.08.2022, 06.01.2024, 03.02.2024, 15.12.2023) | Stockfish-движок без книги дебютов; уровень по умолчанию — низкий | Проверить дефолтный `skill_level` и добавить упоминание в [`texts.help_text`](../texts.py) | [`game.py`](../game.py:1), [`texts.py`](../texts.py) |
 | T-16 | Регресс на колонке Mini Lite — перестал делать ходы (09.09.2025) | Платформенная проблема (TTS не проигрывается) или зацикливание state | Воспроизвести на устройстве, проверить логи [`metrics.py`](../metrics.py) | [`alice_serverless.py`](../alice_serverless.py:1) |
 | T-17 | Регресс «23.11.2022: добавили уточнение хода коня в вариантах» | Старая жалоба на введённый AMBIGUOUS-флоу; нужно оценить UX подсказки | Проверить тексты в [`text_preparer.say_ambiguous_move`](../text_preparer.py) | [`text_preparer.py`](../text_preparer.py) |
+| T-18 | Ничья по 3-fold / 50 ходов объявляется автоматически, а не по требованию игрока (UX-вопрос, появился вместе с F-10) | По правилам FIDE 9.2/9.3 эти ничьи объявляются **по требованию игрока** (`can_claim_*` в python-chess), а не автоматически как 5-fold (9.6) или 75-ходов. Сейчас навык завершает партию без переспроса | Решить продуктово: (а) оставить автоматическое объявление (текущее поведение, отвечает ожиданиям из жалобы 03.06.2024), (б) добавить информационное сообщение «можете объявить ничью, скажите ‘ничья’», (в) ввести состояние `WAITING_DRAW_BY_RULE_CONFIRM` и переспрашивать | [`handlers/waiting_move_handler.py`](../handlers/waiting_move_handler.py:127), [`skill_state.py`](../skill_state.py:1) |
 
 ---
 
@@ -66,7 +67,8 @@
           Покрытие: F-05.
 [x] R-06. En passant: e2e4 → ... → e5xd6 ep. Покрытие: F-09 (быв. T-01).
           Закрыто unit-тестами в tests/test_matching_move.py (кейсы 12–16), аудит 2026-05-31.
-[ ] R-07. Троекратное повторение и 50 ходов без взятий. Покрытие: T-02.
+[x] R-07. Троекратное повторение и 50 ходов без взятий. Покрытие: F-10 (быв. T-02).
+          Закрыто unit-тестами в tests/test_handlers.py::TestCheckGameStateDraws, аудит 2026-05-31.
 [ ] R-08. Долгая партия 40+ ходов с сериализацией/десериализацией state.
           Покрытие: T-04.
 [ ] R-09. Идемпотентность: два запроса с одинаковым message_id → один ход

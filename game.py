@@ -240,6 +240,10 @@ class Game:
             return '5'
         elif self.board.is_insufficient_material():
             return 'insufficient'
+        elif self.board.can_claim_threefold_repetition():
+            return '3'
+        elif self.board.can_claim_fifty_moves():
+            return '50'
         return ''
 
     def reset_board(self):
@@ -298,3 +302,11 @@ class Game:
     def is_fivefold_repetition(self):
         """Проверяет пятикратное повторение позиции."""
         return self.board.is_fivefold_repetition()
+
+    def can_claim_threefold_repetition(self):
+        """Проверяет, можно ли требовать ничью по троекратному повторению позиции."""
+        return self.board.can_claim_threefold_repetition()
+
+    def can_claim_fifty_moves(self):
+        """Проверяет, можно ли требовать ничью по правилу 50 ходов."""
+        return self.board.can_claim_fifty_moves()

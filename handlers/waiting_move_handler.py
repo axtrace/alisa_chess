@@ -124,6 +124,26 @@ class WaitingMoveHandler(BaseHandler):
             text_tts += '\n' + texts.fivefold_repetition_text
             return self.say(text, tts=text_tts)
 
+        # Проверяем на троекратное повторение (правило ничьей по требованию)
+        if self.game.can_claim_threefold_repetition():
+            self.game.set_skill_state(SkillState.GAME_OVER)
+            text, text_tts = self.prep_text_to_say(
+                comp_move=current_move, prev_turn=prev_turn, text_to_show=self.game.get_board(), text_to_say=''
+            )
+            text += '\n' + texts.threefold_repetition_text
+            text_tts += '\n' + texts.threefold_repetition_text
+            return self.say(text, tts=text_tts)
+
+        # Проверяем на правило 50 ходов
+        if self.game.can_claim_fifty_moves():
+            self.game.set_skill_state(SkillState.GAME_OVER)
+            text, text_tts = self.prep_text_to_say(
+                comp_move=current_move, prev_turn=prev_turn, text_to_show=self.game.get_board(), text_to_say=''
+            )
+            text += '\n' + texts.fifty_moves_text
+            text_tts += '\n' + texts.fifty_moves_text
+            return self.say(text, tts=text_tts)
+
         # Проверяем на мат
         if self.game.is_checkmate():
             self.game.set_skill_state(SkillState.GAME_OVER)
