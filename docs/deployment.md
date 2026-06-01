@@ -40,9 +40,7 @@ include: |
 exclude: |
   **/*.ts
   **/tests/**
-  **/_prev-stable/**
   tests/
-  _prev-stable/
   .github/**
   venv/**
   .gitignore
