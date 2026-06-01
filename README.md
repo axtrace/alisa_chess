@@ -166,6 +166,15 @@ python3 -m unittest discover tests
 
 Подробности: [`docs/architecture.md`](docs/architecture.md), диаграммы состояний и последовательности в [`docs/diagrams/`](docs/diagrams/).
 
+## Планы развития
+
+Два крупных проекта для оптимизации производительности:
+
+- **Кэш позиций в Redis** ([ADR-0004](docs/adr/0004-position-cache-redis.md)) — ускорение повторных позиций в 50–100x раз
+- **Stockfish микросервис** ([ADR-0005](docs/adr/0005-stockfish-microservice.md)) — исключение холодного старта, persistent engine с fallback
+
+Полный roadmap с графиком и задачами: [`docs/ROADMAP.md`](docs/ROADMAP.md).
+
 ## Технические детали
 
 - Шахматный движок: Stockfish, локальный бинарь, UCI-протокол через [python-chess](https://github.com/niklasf/python-chess).

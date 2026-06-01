@@ -25,7 +25,7 @@ jobs:
         folder-id: ${{ secrets.FOLDER_ID_2 }}
         function-name: 'alice-chess-stable'
         runtime: 'python314'
-        memory: '4096Mb'
+        memory: '8192Mb'
         entrypoint: 'alice_serverless.handler'
         environment: |
           DEBUG=True
