@@ -238,8 +238,8 @@ class TestAliceChess(unittest.TestCase):
         # Вызываем обработку запроса
         response = self.alice.handle_request(test_request)
 
-        # Проверяем, что игра инициализирована с начальным состоянием
-        self.assertEqual(self.alice.game.get_skill_state(), 'INITIATED')
+        # Проверяем, что обычный обработчик начального состояния запросил подтверждение игры
+        self.assertEqual(self.alice.game.get_skill_state(), 'WAITING_CONFIRM')
 
         # Проверяем, что ответ содержит приветственное сообщение
         self.assertIn('готова сыграть с вами в шахматы вслепую.', response['text'])
