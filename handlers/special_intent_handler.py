@@ -21,9 +21,9 @@ class SpecialIntentHandler(BaseHandler):
         # Реестр: (имя_валидатора, имя_метода_обработчика).
         # Порядок важен — проверяем интенты в этой последовательности.
         self._intent_registry = [
-            ('validate_new_session', self._handle_new_session),
             ('validate_help', self._handle_help),
             ('validate_whatcanyoudo', self._handle_whatcanyoudo),
+            ('validate_new_session', self._handle_new_session),
             ('validate_new_game', self._handle_new_game),
             ('validate_draw', self._handle_draw),
             ('validate_resign', self._handle_resign),
@@ -73,6 +73,8 @@ class SpecialIntentHandler(BaseHandler):
                 )
             return self.say(text, tts=text_tts)
         else:
+            if self.game.get_skill_state() == SkillState.INITIATED:
+                self.game.set_skill_state(SkillState.WAITING_CONFIRM)
             state_text = texts.state_texts.get(self.game.get_skill_state(), '')
             if not state_text:
                 state_text = texts.hi_text

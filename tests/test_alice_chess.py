@@ -105,6 +105,38 @@ class TestAliceChess(unittest.TestCase):
         self.assertFalse(response['end_session'])
         self.assertIn('помощь', response['text'].lower())
 
+    def test_help_command_on_new_session_returns_instruction(self):
+        """Команда помощи при запуске навыка имеет приоритет над приветствием."""
+        event = self.event.copy()
+        event['session'] = {**self.event['session'], 'new': True}
+        event['request'] = {
+            **self.event['request'],
+            'command': 'помощь',
+            'original_utterance': 'помощь',
+            'nlu': {**self.event['request']['nlu'], 'intents': {}},
+        }
+
+        response = self.alice.handle_request(event)
+
+        self.assertIn('новая игра', response['text'].lower())
+        self.assertIn('е четыре', response['text'].lower())
+
+    def test_what_can_you_do_command_on_new_session_returns_instruction(self):
+        """Команда о возможностях работает при запуске даже без NLU-интента."""
+        event = self.event.copy()
+        event['session'] = {**self.event['session'], 'new': True}
+        event['request'] = {
+            **self.event['request'],
+            'command': 'что ты умеешь',
+            'original_utterance': 'что ты умеешь',
+            'nlu': {**self.event['request']['nlu'], 'intents': {}},
+        }
+
+        response = self.alice.handle_request(event)
+
+        self.assertIn('новая игра', response['text'].lower())
+        self.assertIn('помощь', response['text'].lower())
+
     def test_handle_request_new_game_intent(self):
         """Тест обработки запроса с намерением новой игры."""
         event = self.event.copy()
@@ -239,10 +271,11 @@ class TestAliceChess(unittest.TestCase):
         response = self.alice.handle_request(test_request)
 
         # Проверяем, что игра инициализирована с начальным состоянием
-        self.assertEqual(self.alice.game.get_skill_state(), 'INITIATED')
+        self.assertEqual(self.alice.game.get_skill_state(), 'WAITING_CONFIRM')
 
         # Проверяем, что ответ содержит приветственное сообщение
-        self.assertIn('готова сыграть с вами в шахматы вслепую.', response['text'])
+        self.assertIn('навык "Шахматы вслепую"', response['text'])
+        self.assertIn('скажите "Да"', response['text'])
 
     def test_new_session_with_move_applies_move(self):
         """Если новая сессия открывается сразу с ходом — ход должен быть применён,
