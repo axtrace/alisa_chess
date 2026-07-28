@@ -1,14 +1,29 @@
+# Интент: изменение уровня сложности
 root:
     %lemma
-    [поставь уровень]
-    [выбери уровень]
-    [задай уровень]
-    [сделай уровень]
-    [измени уровень]
-    [set level]
-    [set skill level]
-    [change level]
-    [change skill level]
-    [установи уровень]
+    $ChangeLevel $LevelLemma
+    $LevelLemma $ChangeLevel
+    $ChangeLevel $Level $LevelLemma
+    $ChangeLevel $LevelLemma (на)? $Level
+    $ChangeLevel (на)? $Level $LevelLemma
+    $LevelLemma (на)? $Level
+
+
+slots:
+    level:
+        type: YANDEX.NUMBER
+        source: $Level
+
+$ChangeLevel:
+    %lemma
+    измени | поставь | выбери | задай | сделай | установи | поменяй | set | change
+
+$LevelLemma:
+    %lemma
+    уровень | уровень сложности | сложность | level | skill level
+
+$Level:
+    $YANDEX.NUMBER
+
 filler:
-    пожалуйста | ну | эй | давай | поставь | выбери | задай | сделай | поменяй | измени
+    пожалуйста | ну | на | эй | давай | сложности

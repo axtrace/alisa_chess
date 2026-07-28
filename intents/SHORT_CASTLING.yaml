@@ -1,19 +1,19 @@
 root:
     %lemma
-    O O
-    короткая рокировка
-    два нуля
     два ноля
+    два нуля
     два о
     двао
-    2 нуля
+    короткая рокировка
     2 ноля
-    kingside castling
+    2 нуля
+    2 zero
     castle kingside
     castling short
+    kingside castling
+    O O
     short castling
-    zero zero
     two zero
-    2 zero
+    zero zero
 filler:
     сделай | давай | забабахай | вжарь | make | take
