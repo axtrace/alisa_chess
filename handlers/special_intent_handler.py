@@ -49,7 +49,8 @@ class SpecialIntentHandler(BaseHandler):
 
     def _handle_new_session(self):
         # Если пользователь начал новую сессию, то проверяем, не ждём ли мы хода с предыдущей сессии
-        if self.game.get_skill_state() == SkillState.WAITING_MOVE:
+        skill_state = self.game.get_skill_state()
+        if skill_state == SkillState.WAITING_MOVE:
             # Если в первом запросе новой сессии уже пришёл ход — не показываем приветственное
             # сообщение, а сразу передаём управление штатному WaitingMoveHandler, чтобы применить ход.
             if self._has_move_in_request():
@@ -72,11 +73,14 @@ class SpecialIntentHandler(BaseHandler):
                     + '\nВаш ход!'
                 )
             return self.say(text, tts=text_tts)
-        if self.game.get_skill_state() == SkillState.WAITING_SKILL_LEVEL:
-            state_text = texts.state_texts.get(self.game.get_skill_state(), '')
+        if skill_state in (SkillState.INITIATED, ''):
+            return None
+        state_text = texts.state_texts.get(skill_state, '')
+        if not state_text:
+            state_text = texts.hi_text
+        if skill_state == SkillState.WAITING_SKILL_LEVEL:
             state_text = state_text.format(self.game.get_skill_level())
-            return self.say(state_text)
-        return None
+        return self.say(state_text)
 
     def _has_move_in_request(self) -> bool:
         """Возвращает True, если в запросе пользователя есть распознаваемый шахматный ход.

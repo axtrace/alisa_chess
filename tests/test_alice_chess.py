@@ -244,6 +244,46 @@ class TestAliceChess(unittest.TestCase):
         # Проверяем, что ответ содержит приветственное сообщение
         self.assertIn('готова сыграть с вами в шахматы вслепую.', response['text'])
 
+    def test_new_session_waiting_confirm_repeats_prompt(self):
+        """Новая сессия в ожидании подтверждения повторяет приветствие, а не обрабатывает пустой ответ."""
+        saved_game_state = {
+            'skill_state': 'WAITING_CONFIRM',
+            'time_level': 0.1,
+            'skill_level': 1,
+        }
+
+        test_request = {
+            'session': {'new': True, 'message_id': 0, 'session_id': 'test-session-id', 'user_id': 'test-user-id'},
+            'state': {'user': {'game_state': saved_game_state}},
+            'request': {'command': '', 'original_utterance': '', 'nlu': {'tokens': [], 'entities': [], 'intents': {}}},
+        }
+
+        response = self.alice.handle_request(test_request)
+
+        self.assertEqual(self.alice.game.get_skill_state(), 'WAITING_CONFIRM')
+        self.assertIn('готова сыграть с вами в шахматы вслепую.', response['text'])
+        self.assertNotIn('не совсем поняла ваш ответ', response['text'])
+
+    def test_new_session_waiting_color_repeats_prompt(self):
+        """Новая сессия в ожидании цвета повторяет выбор цвета, а не обрабатывает пустой ответ."""
+        saved_game_state = {
+            'skill_state': 'WAITING_COLOR',
+            'time_level': 0.1,
+            'skill_level': 1,
+        }
+
+        test_request = {
+            'session': {'new': True, 'message_id': 0, 'session_id': 'test-session-id', 'user_id': 'test-user-id'},
+            'state': {'user': {'game_state': saved_game_state}},
+            'request': {'command': '', 'original_utterance': '', 'nlu': {'tokens': [], 'entities': [], 'intents': {}}},
+        }
+
+        response = self.alice.handle_request(test_request)
+
+        self.assertEqual(self.alice.game.get_skill_state(), 'WAITING_COLOR')
+        self.assertIn('Вы будете играть белыми или черными?', response['text'])
+        self.assertNotIn('не поняла ваш выбор', response['text'])
+
     def test_new_session_with_move_applies_move(self):
         """Если новая сессия открывается сразу с ходом — ход должен быть применён,
         а не показано приветственное сообщение о продолжении игры."""
