@@ -1,187 +1,189 @@
 # AGENTS.md
 
-Инструкции для LLM-агентов (Codex, Cursor, Cline, Continue, Claude Code и др.), работающих с репозиторием `alisa_chess`. Цель документа — задать единые правила игры, перечислить инварианты проекта и помочь агенту сразу попасть в актуальный контекст без длинной разведки.
+Instructions for LLM agents (Codex, Cursor, Cline, Continue, Claude Code, etc.) working with the `alisa_chess` repository. The goal of this document is to set common rules of the game, list project invariants, and help the agent get into the current context without lengthy exploration.
+
+> **Note:** The project's [`README.md`](README.md) is written in **Russian**. Keep it in Russian when updating.
 
 ---
 
-## 1. О проекте в одном абзаце
+## 1. About the project in one paragraph
 
-`alisa_chess` — голосовой шахматный навык для Яндекс.Алисы. Развёртывается как Yandex Cloud Function ([`alice_serverless.handler`](alice_serverless.py:7)). Ходы движка вычисляет локальный бинарь Stockfish, поднимаемый по UCI через [python-chess](https://github.com/niklasf/python-chess). Состояние игры передаётся между запросами через `state.user.game_state` (схема описана в [`game_state.py`](game_state.py:1)).
-
----
-
-## 2. Жёсткие инварианты (НЕ нарушать без явного обсуждения)
-
-Это контракты, которые ломать НЕЛЬЗЯ. Если кажется, что задача требует нарушить — сначала спроси.
-
-1. **Stockfish инициализируется лениво** ([`Game.engine`](game.py:58)). Не делай `popen_uci` в `__init__` без оглядки на холодный старт serverless.
-2. **`engine.quit()` обязателен**. Текущее решение — [`Game.__exit__`](game.py:179) и `with AliceChess() as alice` в [`alice_serverless.handler`](alice_serverless.py:18). Любая ветка кода, открывающая движок, должна гарантировать его закрытие.
-3. **Идемпотентность по `message_id`**. Повторный запрос с тем же `message_id` обязан вернуть `previous_response` из `session_state` без второго хода движка.
-4. **`YANDEX.REPEAT` живёт через `session_state.previous_response`**, а не через `user_state_update`.
-5. **`user_state_update` сохраняется ВСЕГДА**, в том числе в catch-all. Никогда не возвращай ответ без `user_state_update` при наличии state — это потеряет партию игрока.
-6. **Сессия НЕ закрывается на ошибке хендлера**. `end_session: True` — только в катастрофическом catch в [`alice_serverless`](alice_serverless.py:34) и при `GAME_OVER`.
-7. **Сериализация состояния — через Pydantic** ([`GameStateV2`](game_state.py:60)) с версионированием (`_version`) и graceful миграцией V1→V2.
-8. **`SkillState` — это enum** ([`skill_state.py`](skill_state.py:4)). При сравнении состояний предпочитай `SkillState.WAITING_MOVE`, а не строку `'WAITING_MOVE'` (миграция в процессе — задача №11).
-9. **Тесты должны оставаться зелёными**. Сейчас 49/49 passed. Любое изменение, ломающее тесты, требует одновременного обновления тестов с объяснением, почему ассертион устарел.
-10. **Stockfish бинарь НЕ коммитим**, он добавляется отдельно. Любые упоминания в `.gitignore` не трогать без согласования.
+`alisa_chess` is a voice chess skill for Yandex Alice. It is deployed as a Yandex Cloud Function ([`alice_serverless.handler`](alice_serverless.py:7)). Engine moves are computed by a local Stockfish binary launched via UCI using [python-chess](https://github.com/niklasf/python-chess). Game state is passed between requests via `state.user.game_state` (the schema is described in [`game_state.py`](game_state.py:1)).
 
 ---
 
-## 3. Архитектура и где что лежит
+## 2. Strict invariants (do NOT violate without explicit discussion)
 
-| Слой | Файлы | Назначение |
+These are contracts that must NOT be broken. If it seems a task requires breaking one — ask first.
+
+1. **Stockfish is initialized lazily** ([`Game.engine`](game.py:58)). Do not call `popen_uci` in `__init__` without considering serverless cold start.
+2. **`engine.quit()` is mandatory**. The current solution is [`Game.__exit__`](game.py:179) and `with AliceChess() as alice` in [`alice_serverless.handler`](alice_serverless.py:18). Any code path that opens the engine must guarantee it is closed.
+3. **Idempotency by `message_id`**. A repeated request with the same `message_id` must return `previous_response` from `session_state` without a second engine move.
+4. **`YANDEX.REPEAT` lives in `session_state.previous_response`**, not in `user_state_update`.
+5. **`user_state_update` is ALWAYS saved**, including in the catch-all. Never return a response without `user_state_update` when state exists — this would lose the player's game.
+6. **The session is NOT closed on a handler error**. `end_session: True` — only in the catastrophic catch in [`alice_serverless`](alice_serverless.py:34) and on `GAME_OVER`.
+7. **State serialization is via Pydantic** ([`GameStateV2`](game_state.py:60)) with versioning (`_version`) and graceful V1→V2 migration.
+8. **`SkillState` is an enum** ([`skill_state.py`](skill_state.py:4)). When comparing states, prefer `SkillState.WAITING_MOVE` over the string `'WAITING_MOVE'` (migration in progress — task №11).
+9. **Tests must stay green**. Currently 49/49 passed. Any change that breaks tests requires updating the tests in the same PR with an explanation of why the assertion is outdated.
+10. **The Stockfish binary is NOT committed**, it is added separately. Do not touch any mentions of it in `.gitignore` without coordination.
+
+---
+
+## 3. Architecture and where things are
+
+| Layer | Files | Purpose |
 |---|---|---|
-| Точка входа (Cloud Function) | [`alice_serverless.py`](alice_serverless.py:1) | `handler(event, context)`, catch-all, формирование response |
-| Координатор | [`alice_chess.py`](alice_chess.py:1) | `AliceChess`, маршрутизация по `SkillState`, идемпотентность, `session_state` |
-| Игровая модель | [`game.py`](game.py:1) | `Game`: обёртка `chess.Board` + UCI, ленивый движок |
-| Состояние | [`game_state.py`](game_state.py:1) | Pydantic-схемы V1/V2, миграции, (de)serialize |
-| Enum состояний | [`skill_state.py`](skill_state.py:1) | `SkillState` |
-| Хендлеры | [`handlers/`](handlers/) | По одному файлу на состояние, наследуют [`BaseHandler`](handlers/base_handler.py:8) |
-| Парсер ходов | [`move_extractor.py`](move_extractor.py:1) | Извлекает ход из интентов и текста (RU/EN, SAN, длинная нотация) |
-| Тексты/TTS | [`text_preparer.py`](text_preparer.py:1), [`speaker.py`](speaker.py:1), [`texts.py`](texts.py:1) | Сборка `text`/`tts` ответа |
-| Валидаторы | [`request_validators/`](request_validators/) | Проверка интентов |
-| Интенты Алисы | [`intents/*.yaml`](intents/) | Описание NLU |
-| Тесты | [`tests/`](tests/) | pytest/unittest |
-| Документация | [`docs/`](docs/) | Архитектура, deployment, диаграммы |
+| Entry point (Cloud Function) | [`alice_serverless.py`](alice_serverless.py:1) | `handler(event, context)`, catch-all, response building |
+| Coordinator | [`alice_chess.py`](alice_chess.py:1) | `AliceChess`, routing by `SkillState`, idempotency, `session_state` |
+| Game model | [`game.py`](game.py:1) | `Game`: `chess.Board` wrapper + UCI, lazy engine |
+| State | [`game_state.py`](game_state.py:1) | Pydantic schemas V1/V2, migrations, (de)serialize |
+| State enum | [`skill_state.py`](skill_state.py:1) | `SkillState` |
+| Handlers | [`handlers/`](handlers/) | One file per state, inherit [`BaseHandler`](handlers/base_handler.py:8) |
+| Move parser | [`move_extractor.py`](move_extractor.py:1) | Extracts a move from intents and text (RU/EN, SAN, long notation) |
+| Texts/TTS | [`text_preparer.py`](text_preparer.py:1), [`speaker.py`](speaker.py:1), [`texts.py`](texts.py:1) | Building the response `text`/`tts` |
+| Validators | [`request_validators/`](request_validators/) | Intent validation |
+| Alice intents | [`intents/*.yaml`](intents/) | NLU description |
+| Tests | [`tests/`](tests/) | pytest/unittest |
+| Documentation | [`docs/`](docs/) | Architecture, deployment, diagrams |
 
-Диаграмма состояний: [`docs/diagrams/state_diagram.md`](docs/diagrams/state_diagram.md).
-Sequence-диаграмма обработки запроса: [`docs/diagrams/sd_request_processing.md`](docs/diagrams/sd_request_processing.md).
+State diagram: [`docs/diagrams/state_diagram.md`](docs/diagrams/state_diagram.md).
+Request processing sequence diagram: [`docs/diagrams/sd_request_processing.md`](docs/diagrams/sd_request_processing.md).
 
 ---
 
-## 4. Команды агенту
+## 4. Commands for the agent
 
-### Запуск тестов
+### Running tests
 
 ```bash
 python3 -m pytest tests/ -v
 ```
 
-Минимальная норма перед коммитом — все тесты зелёные. Не пушь красные тесты.
+The minimum requirement before a commit is all tests green. Do not push red tests.
 
-### Только один файл / один тест
+### A single file / single test
 
 ```bash
 python3 -m pytest tests/test_alice_chess.py::TestAliceChess::test_handle_request_promotion -v
 ```
 
-### Линт / форматирование
+### Lint / formatting
 
 ```bash
-ruff check .          # проверка стиля
-ruff format .         # автоматическое форматирование
-mypy .                # проверка типов (постепенно внедряется)
-pre-commit run --all-files  # запуск всех pre-commit хуков
+ruff check .          # style check
+ruff format .         # automatic formatting
+mypy .                # type checking (gradually adopted)
+pre-commit run --all-files  # run all pre-commit hooks
 ```
 
-Настроены в рамках задачи №17: `ruff` (lint+format), `mypy` (постепенно), `pre-commit` + CI-чек.
+Configured as part of task №17: `ruff` (lint+format), `mypy` (gradual), `pre-commit` + CI check.
 
-### Локальный прогон handler
+### Local handler run
 
-Stockfish бинарь нужно положить в корень как `./stockfish` и `chmod +x`. Без него инициализация движка упадёт при реальном ходе компьютера.
-
----
-
-## 5. Стиль и соглашения
-
-- Язык кода: **Python 3.9+** (Yandex Cloud Functions runtime).
-- Запятые — пробел после, операторы (`=`, `==`, `>`, `<`, `||` и т. д.) — пробелы вокруг.
-- Имена: `snake_case` для функций/файлов/переменных, `PascalCase` для классов, `UPPER_SNAKE` для констант.
-- Логирование — через `logging` (модульный logger), без `print` в продакшен-коде. `print` в тестах допустимо как отладка, но лучше убирать перед мержем.
-- Pydantic v2: `@field_validator` + `@classmethod`, `model_dump()` вместо `.dict()`.
-- Markdown в YAML/документации — корректные ссылки и блоки кода с указанием языка.
-
-### Сообщения коммитов
-
-- Система контроля версий: git.
-- Краткое описание на русском или английском.
-- Один коммит — одна логическая идея.
-- Размер PR — до ~650 строк изменений ([`coding-standard.md`](.roo/rules/coding-standard.md)).
+Place the Stockfish binary at the project root as `./stockfish` and run `chmod +x` on it. Without it, engine initialization will fail on a real computer move.
 
 ---
 
-## 6. Стратегия изменений
+## 5. Style and conventions
 
-### Минимальная инвазивность
+- Code language: **Python 3.14+** (Yandex Cloud Functions runtime).
+- Commas — a space after, operators (`=`, `==`, `>`, `<`, `||`, etc.) — spaces around.
+- Names: `snake_case` for functions/files/variables, `PascalCase` for classes, `UPPER_SNAKE` for constants.
+- Logging — via `logging` (a module-level logger), no `print` in production code. `print` in tests is acceptable for debugging but should preferably be removed before merge.
+- Pydantic v2: `@field_validator` + `@classmethod`, `model_dump()` instead of `.dict()`.
+- Markdown in YAML/docs — correct links and code blocks with a language specified.
 
-Не делай лишний рефакторинг, если задача не требует. Сохраняй существующий стиль и структуру. Если видишь возможность улучшения, не относящегося к задаче — **отдельный PR**.
+### Commit messages
+
+- Version control system: git.
+- Short description in Russian or English.
+- One commit — one logical idea.
+- PR size — up to ~650 lines of changes ([`coding-standard.md`](.roo/rules/coding-standard.md)).
+
+---
+
+## 6. Change strategy
+
+### Minimal invasiveness
+
+Do not do extra refactoring unless the task requires it. Preserve the existing style and structure. If you see an improvement opportunity unrelated to the task — **a separate PR**.
 
 ### Test-aware
 
-Перед изменением логики проверь, какие тесты её покрывают:
+Before changing logic, check which tests cover it:
 
 ```bash
-grep -rn "<имя_функции>" tests/
+grep -rn "<function_name>" tests/
 ```
 
-Если меняешь публичный контракт класса — обновляй тесты в том же PR, объясняя в описании, почему ассертион устарел.
+If you change a class's public contract — update the tests in the same PR, explaining in the description why the assertion is outdated.
 
 ### Fact-based
 
-Не предполагай существование файлов/функций, которых нет в репозитории. Перед использованием функции/метода в новом коде — открой исходник и проверь сигнатуру.
+Do not assume the existence of files/functions that are not in the repository. Before using a function/method in new code — open the source and check the signature.
 
-### Контракты Алисы
+### Alice contracts
 
-Любые поля ответа (`response.text`, `response.tts`, `end_session`, `buttons`) и поля state (`game_state`, `session_state`) — это контракт с платформой. Перед изменением — проверь [официальные доки Алисы](https://yandex.ru/dev/dialogs/alice/doc/protocol.html) и существующие тесты.
+Any response fields (`response.text`, `response.tts`, `end_session`, `buttons`) and state fields (`game_state`, `session_state`) are a contract with the platform. Before changing — check the [official Alice docs](https://yandex.ru/dev/dialogs/alice/doc/protocol.html) and existing tests.
 
 ---
 
-## 7. Типичные ловушки
+## 7. Common pitfalls
 
-| Симптом | Причина | Решение |
+| Symptom | Cause | Solution |
 |---|---|---|
-| Тест с моком `Game` пытается запустить реальный Stockfish | `@patch('game.Game')` не патчит импорт `from game import Game` в [`alice_chess.py`](alice_chess.py:1) | Использовать `@patch('alice_chess.Game')` |
-| Мок `AliceChess` не срабатывает в тесте serverless | Код использует `with AliceChess() as alice:`, фактический объект — это `__enter__()` | `mock_instance.__enter__.return_value = mock_instance` |
-| `_find_matching_moves` возвращает пусто на моке | `board.legal_moves` у MagicMock — пустая коллекция | Подменить `game.board` настоящим `chess.Board(fen)` |
-| `previous_response` теряется между ходами | Пишется в `user_state_update`, а не в `session_state` | Хранить в `session_state.previous_response` |
-| Игра «забывает» партию после ошибки | `user_state_update` не передан в error-ответе | Снимок state на входе → катастрофический catch возвращает его |
+| A test with a `Game` mock tries to run the real Stockfish | `@patch('game.Game')` does not patch the `from game import Game` import in [`alice_chess.py`](alice_chess.py:1) | Use `@patch('alice_chess.Game')` |
+| An `AliceChess` mock does not work in the serverless test | The code uses `with AliceChess() as alice:`, the actual object is `__enter__()` | `mock_instance.__enter__.return_value = mock_instance` |
+| `_find_matching_moves` returns empty on a mock | `board.legal_moves` on a MagicMock is an empty collection | Replace `game.board` with a real `chess.Board(fen)` |
+| `previous_response` is lost between moves | It is written to `user_state_update` instead of `session_state` | Store it in `session_state.previous_response` |
+| The game "forgets" the match after an error | `user_state_update` is not passed in the error response | Snapshot the input state → the catastrophic catch returns it |
 
 ---
 
-## 8. Дорожная карта
+## 8. Roadmap
 
-*Будущие улучшения могут включать:*
-- Расширение golden-тестов более сложными сценариями
-- Добавление метрик производительности движка
-- Поддержка дополнительных голосовых платформ
-
----
-
-## 9. Чек-лист перед завершением задачи
-
-- [ ] Тесты зелёные: `python3 -m pytest tests/ -v`
-- [ ] Если изменён публичный контракт — обновлены тесты + объяснение в описании PR
-- [ ] Все инварианты из раздела 2 соблюдены
-- [ ] Нет `print()` и `setLevel()` в продакшен-коде (если только это не сознательное решение в рамках задачи)
-- [ ] `requirements.txt` синхронизирован, если добавлены/удалены зависимости
-- [ ] Документация ([`README.md`](README.md), [`docs/`](docs/)) актуализирована, если меняется API/поведение
-- [ ] Изменение умещается в одну логическую идею (PR ≤ ~650 строк)
+*Future improvements may include:*
+- Expanding golden tests with more complex scenarios
+- Adding engine performance metrics
+- Supporting additional voice platforms
 
 ---
 
-## 10. Что НЕ нужно делать без явного запроса
+## 9. Checklist before completing a task
 
-- Менять стиль форматирования кода.
-- Переименовывать публичные методы/классы.
-- Удалять «лишний» с твоей точки зрения код — он может быть нужен для совместимости со старым state в продакшене.
-- Менять формат текстов из [`texts.py`](texts.py:1) — это влияет на TTS, а значит на пользовательский опыт.
-- Добавлять новые зависимости в `requirements.txt` без обсуждения (cold start serverless).
-- Коммитить локальные конфиги: `.venv/`, `tokens.py`, `exp.py`, `stockfish` бинарь.
-- Запускать `git push` без явной команды владельца.
+- [ ] Tests are green: `python3 -m pytest tests/ -v`
+- [ ] If a public contract changed — tests updated + explanation in the PR description
+- [ ] All invariants from section 2 are respected
+- [ ] No `print()` and `setLevel()` in production code (unless a conscious decision within the task)
+- [ ] `requirements.txt` is synchronized if dependencies were added/removed
+- [ ] Documentation ([`README.md`](README.md), [`docs/`](docs/)) is updated if API/behavior changes
+- [ ] The change fits into one logical idea (PR ≤ ~650 lines)
 
 ---
 
-## 11. Полезные ссылки
+## 10. What NOT to do without an explicit request
 
-- README проекта: [`README.md`](README.md)
-- Архитектура: [`docs/architecture.md`](docs/architecture.md)
-- Деплой: [`docs/deployment.md`](docs/deployment.md)
-- API навыка: [`docs/api.md`](docs/api.md)
-- Описание навыка для каталога: [`docs/skill_description.md`](docs/skill_description.md)
-- Диаграммы: [`docs/diagrams/`](docs/diagrams/)
-- Протокол Алисы: https://yandex.ru/dev/dialogs/alice/doc/protocol.html
+- Change code formatting style.
+- Rename public methods/classes.
+- Delete "redundant" code from your point of view — it may be needed for compatibility with old state in production.
+- Change the text format from [`texts.py`](texts.py:1) — this affects TTS and therefore the user experience.
+- Add new dependencies to `requirements.txt` without discussion (serverless cold start).
+- Commit local configs: `.venv/`, `tokens.py`, `exp.py`, the `stockfish` binary.
+- Run `git push` without an explicit command from the owner.
+
+---
+
+## 11. Useful links
+
+- Project README: [`README.md`](README.md)
+- Architecture: [`docs/architecture.md`](docs/architecture.md)
+- Deployment: [`docs/deployment.md`](docs/deployment.md)
+- Skill API: [`docs/api.md`](docs/api.md)
+- Catalog skill description: [`docs/skill_description.md`](docs/skill_description.md)
+- Diagrams: [`docs/diagrams/`](docs/diagrams/)
+- Alice protocol: https://yandex.ru/dev/dialogs/alice/doc/protocol.html
 - python-chess: https://python-chess.readthedocs.io/
 
 ---
 
-*Если этот документ противоречит реальности кода — кодовая база авторитетнее. После обнаружения расхождения сразу обнови `AGENTS.md` в том же PR.*
+*If this document contradicts the code reality — the codebase is authoritative. After discovering a discrepancy, immediately update `AGENTS.md` in the same PR.*
