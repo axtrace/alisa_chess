@@ -54,7 +54,7 @@ class PositionCache:
 
     def _make_key(self, fen: str, skill_level: int) -> str:
         """Генерировать ключ Redis."""
-        return f"chess:move:{skill_level}:{hashlib.sha256(fen.encode()).hexdigest()}"
+        return f'chess:move:{skill_level}:{hashlib.sha256(fen.encode()).hexdigest()}'
 ```
 
 **Интеграция в `Game`:**
@@ -92,6 +92,7 @@ from position_cache import PositionCache
 
 cache = PositionCache(redis_url=os.getenv('REDIS_URL', 'redis://localhost:6379/0'))
 
+
 def handler(event, context):
     ...
     with AliceChess(cache=cache) as alice:
@@ -118,7 +119,7 @@ def handler(event, context):
 cache.redis.flushdb()
 
 # При изменении параметров движка
-cache.redis.delete(f"chess:move:{skill_level}:*")
+cache.redis.delete(f'chess:move:{skill_level}:*')
 ```
 
 ## Последствия

@@ -134,6 +134,7 @@ from stockfish_pb2_grpc import EngineServiceStub
 
 logger = logging.getLogger(__name__)
 
+
 class EngineClient:
     """Клиент для подключения к Stockfish микросервису с fallback на локальный движок."""
 
@@ -153,10 +154,7 @@ class EngineClient:
     def _connect(self) -> bool:
         """Подключиться к сервису. Возвращает True если успешно."""
         try:
-            self.channel = grpc.aio.secure_channel(
-                self.service_url,
-                grpc.ssl_channel_credentials()
-            )
+            self.channel = grpc.aio.secure_channel(self.service_url, grpc.ssl_channel_credentials())
             self.stub = EngineServiceStub(self.channel)
 
             # Проверить здоровье сервиса
@@ -182,11 +180,7 @@ class EngineClient:
         # Попытка 1: микросервис
         if self.stub:
             try:
-                request = BestMoveRequest(
-                    fen=fen,
-                    skill_level=skill_level,
-                    time_limit_seconds=time_limit
-                )
+                request = BestMoveRequest(fen=fen, skill_level=skill_level, time_limit_seconds=time_limit)
                 response = self.stub.BestMove(request, timeout=self.timeout_seconds)
                 logger.info(f'Got move from service: {response.move}')
                 emit_counter('skill.engine.remote', tags={'skill_level': str(skill_level)})
@@ -240,6 +234,7 @@ class Game:
 import os
 from engine_client import EngineClient
 
+
 def handler(event, context):
     global _COLD_START_PENDING
 
@@ -248,8 +243,7 @@ def handler(event, context):
     engine_client = None
     if service_url:
         engine_client = EngineClient(
-            service_url=service_url,
-            timeout_seconds=float(os.getenv('STOCKFISH_TIMEOUT', '5.0'))
+            service_url=service_url, timeout_seconds=float(os.getenv('STOCKFISH_TIMEOUT', '5.0'))
         )
 
     try:

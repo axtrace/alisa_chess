@@ -113,22 +113,12 @@ class Speaker:
 
 ### 1. Неверный ход
 ```python
-{
-    "response": {
-        "text": "Ход невозможен. Попробуйте другой ход.",
-        "end_session": false
-    }
-}
+{'response': {'text': 'Ход невозможен. Попробуйте другой ход.', 'end_session': false}}
 ```
 
 ### 2. Неверный формат
 ```python
-{
-    "response": {
-        "text": "Извините, я не поняла ваш ход. Пожалуйста, повторите.",
-        "end_session": false
-    }
-}
+{'response': {'text': 'Извините, я не поняла ваш ход. Пожалуйста, повторите.', 'end_session': false}}
 ```
 
 ## Примеры использования
@@ -136,16 +126,16 @@ class Speaker:
 ### 1. Сделать ход
 ```python
 game = ChessGame()
-move = "e4"
+move = 'e4'
 if game.make_move(move):
     response = speaker.generate_response(game.get_board_state())
 else:
-    response = "Ход невозможен"
+    response = 'Ход невозможен'
 ```
 
 ### 2. Проверить состояние игры
 ```python
 if game.is_game_over():
     result = game.get_game_result()
-    response = f"Игра окончена. Результат: {result}"
+    response = f'Игра окончена. Результат: {result}'
 ``` 
