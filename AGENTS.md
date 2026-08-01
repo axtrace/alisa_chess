@@ -24,7 +24,7 @@ These are contracts that must NOT be broken. If it seems a task requires breakin
 6. **The session is NOT closed on a handler error**. `end_session: True` — only in the catastrophic catch in [`alice_serverless`](alice_serverless.py:34) and on `GAME_OVER`.
 7. **State serialization is via Pydantic** ([`GameStateV2`](game_state.py:60)) with versioning (`_version`) and graceful V1→V2 migration.
 8. **`SkillState` is an enum** ([`skill_state.py`](skill_state.py:4)). When comparing states, prefer `SkillState.WAITING_MOVE` over the string `'WAITING_MOVE'` (migration in progress — task №11).
-9. **Tests must stay green**. Currently 49/49 passed. Any change that breaks tests requires updating the tests in the same PR with an explanation of why the assertion is outdated.
+9. **Tests must stay green**. Currently 69/69 passed. Any change that breaks tests requires updating the tests in the same PR with an explanation of why the assertion is outdated.
 10. **The Stockfish binary is NOT committed**, it is added separately. Do not touch any mentions of it in `.gitignore` without coordination.
 
 ---
