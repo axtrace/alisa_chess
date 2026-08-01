@@ -27,6 +27,8 @@ class WaitingMoveHandler(BaseHandler):
         logger.debug(f'WaitingMoveHandler.handle. Запрос: {self.request}')
 
         user_color = self.game.get_user_color()
+        board_before_turn = self.game.board.copy(stack=True)
+        last_move_before_turn = self.game.get_last_move()
 
         # Обработка и выполнение хода пользователя
         user_moves, reason_type = self._handle_user_move()
@@ -47,11 +49,20 @@ class WaitingMoveHandler(BaseHandler):
         if game_state:
             return game_state
 
-        # Делаем один ход компьютера
+        # Делаем один ход компьютера. Если движок не ответил, откатываем всю
+        # пару ходов, чтобы следующий запрос снова обрабатывался как ход игрока.
         comp_color = (
             self.game.who()
         )  # who возвращает сторону, которая делает ход. До хода компьютера - это и есть сторона компьютера
-        comp_move = self.game.comp_move()
+        try:
+            comp_move = self.game.comp_move()
+            if not comp_move:
+                raise RuntimeError('Stockfish не вернул ход')
+        except Exception:
+            self.game.board = board_before_turn
+            self.game.last_move = last_move_before_turn
+            logger.warning('Ход игрока отменён из-за ошибки Stockfish; состояние партии восстановлено')
+            raise
 
         # Если игра после хода КОМПЬЮТЕРА закончилась, то говорим об этом
         game_state = self._check_game_state(current_move=comp_move, prev_turn=comp_color)

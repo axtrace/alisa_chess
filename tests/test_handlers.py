@@ -56,6 +56,8 @@ class TestHandlers(unittest.TestCase):
         self.assertIn('text', response)
         self.assertIn('tts', response)
         self.assertIn('end_session', response)
+        self.assertIn('е четыре', response['tts'])
+        self.assertIn('конь эф три', response['tts'])
         self.assertEqual(self.game.get_skill_state(), 'WAITING_MOVE')
 
     def test_waiting_move_handler_help(self):
@@ -294,6 +296,47 @@ class TestUserMoveIntegrity(unittest.TestCase):
         self.assertNotIn('Rxe5', legal_sans)
         self.assertNotIn('Rxe5+', legal_sans)
         self.assertNotIn('Rxe5#', legal_sans)
+
+    def _assert_engine_failure_rolls_back_turn(self, *, engine_result=None, engine_error=None):
+        """Проверяет атомарность пары «ход игрока → ход Stockfish»."""
+        for san in ('Nf3', 'Nf6', 'Ng1', 'Ng8'):
+            self.game.board.push_san(san)
+        self.game.last_move = 'Ng8'
+
+        board_before = self.game.board.copy(stack=True)
+        self.game._engine = Mock()
+        if engine_error is not None:
+            self.game._engine.play.side_effect = engine_error
+        else:
+            self.game._engine.play.return_value = engine_result
+
+        handler = self._make_handler(
+            'e4',
+            intents={
+                'CHESS_MOVE': {
+                    'slots': {
+                        'file_to': {'value': 'e'},
+                        'rank_to': {'value': '4'},
+                    }
+                }
+            },
+        )
+        response = handler.safe_handle()
+
+        self.assertIn('ошибка', response['text'].lower())
+        self.assertFalse(response['end_session'])
+        self.assertEqual(self.game.board.fen(), board_before.fen())
+        self.assertEqual(self.game.board.move_stack, board_before.move_stack)
+        self.assertEqual(self.game.get_last_move(), 'Ng8')
+        self.assertEqual(self.game.who(), 'White')
+
+    def test_engine_exception_rolls_back_user_move(self):
+        """При исключении Stockfish ход игрока не сохраняется как незавершённый полуход."""
+        self._assert_engine_failure_rolls_back_turn(engine_error=RuntimeError('engine unavailable'))
+
+    def test_empty_engine_move_rolls_back_user_move(self):
+        """Пустой bestmove не оставляет доску на ходе компьютера."""
+        self._assert_engine_failure_rolls_back_turn(engine_result=Mock(move=None))
 
 
 if __name__ == '__main__':

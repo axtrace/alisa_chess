@@ -33,12 +33,15 @@ class WaitingColorHandler(BaseHandler):
             text, text_tts = self.prep_text_to_say(
                 comp_move=comp_move,
                 prev_turn=comp_color,
-                text_to_show=self.game.get_board() + '\nВаш ход!',
-                text_to_say='',
+                text_to_show=self.game.get_board() + texts.first_move_prompt_text,
+                text_to_say=texts.first_move_prompt_text,
             )
             return self.say(text, tts=text_tts)
 
         text, text_tts = self.prep_text_to_say(
-            comp_move='', prev_turn='', text_to_show=self.game.get_board() + '\nВаш ход!', text_to_say=''
+            comp_move='',
+            prev_turn='',
+            text_to_show=self.game.get_board() + texts.first_move_prompt_text,
+            text_to_say=texts.first_move_prompt_text,
         )
         return self.say(text, tts=text_tts)
