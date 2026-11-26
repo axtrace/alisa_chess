@@ -28,8 +28,11 @@ import logging
 import time
 from collections.abc import Mapping
 from contextlib import contextmanager
+from contextvars import ContextVar
 
 logger = logging.getLogger('alisa_chess.metrics')
+_request_tags: ContextVar[dict[str, str] | None] = ContextVar('chess_request_metric_tags', default=None)
+_first_request = True
 
 
 def emit_counter(name: str, value: int = 1, tags: Mapping[str, str] | None = None) -> None:
@@ -80,3 +83,31 @@ def measure_duration(name: str, tags: Mapping[str, str] | None = None):
     finally:
         elapsed_ms = (time.perf_counter() - started) * 1000.0
         emit_histogram(name, elapsed_ms, tags=tags)
+
+
+@contextmanager
+def measure_skill_request(entrypoint: str):
+    """Один замер на внешний вызов, включая делегирование из пилота в обычный навык."""
+    global _first_request
+    if _request_tags.get() is not None:
+        yield
+        return
+    tags = {'entrypoint': entrypoint, 'engine': 'no'}
+    token = _request_tags.set(tags)
+    try:
+        if _first_request:
+            emit_counter('skill.cold_start')
+            _first_request = False
+        emit_counter('skill.request')
+        with measure_duration('skill.handler.duration_ms', tags):
+            yield
+    finally:
+        _request_tags.reset(token)
+
+
+def measure_stockfish(phase: str):
+    """Отмечает фактическое обращение к движку, включая неудачную попытку."""
+    tags = _request_tags.get()
+    if tags is not None:
+        tags['engine'] = 'yes'
+    return measure_duration(f'skill.stockfish.{phase}_ms')

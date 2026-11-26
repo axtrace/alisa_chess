@@ -70,6 +70,7 @@ class GameStateV2(BaseModel):
     last_move: str = Field(default='', description='Последний ход в SAN-нотации')
     skill_level: int = Field(default=1, ge=1, le=20, description='Уровень сложности (1-20)')
     time_level: float = Field(default=0.1, ge=0.01, le=5.0, description='Время на ход в секундах')
+    prev_last_move: str = ''  # Последний ход компьютера в позиции до отменяемого хода.
     move_count: int = Field(default=0, ge=0, description='Количество сделанных ходов')
     game_start_time: Optional[str] = Field(default=None, description='Время начала игры (ISO формат)')
 
@@ -183,6 +184,7 @@ def create_game_state_from_game(game) -> GameState:
             prev_skill_state=SkillState(game.prev_skill_state) if game.prev_skill_state else SkillState.INITIATED,
             user_color=game.user_color,
             last_move=game.last_move,
+            prev_last_move=game.prev_last_move,
             skill_level=game.skill_level,
             time_level=game.time_level,
             move_count=getattr(game, 'move_count', 0),
@@ -246,6 +248,7 @@ def restore_game_from_state(game, game_state: GameState) -> None:
             game.time_level = 0.1
 
         game.last_move = data.last_move or ''
+        game.prev_last_move = data.prev_last_move
 
         # Новые поля (если есть)
         if hasattr(game, 'move_count'):
@@ -264,6 +267,7 @@ def restore_game_from_state(game, game_state: GameState) -> None:
         game.prev_skill_state = ''
         game.user_color = ''
         game.last_move = ''
+        game.prev_last_move = ''
         game.skill_level = 1
         game.time_level = 0.1
         if hasattr(game, 'move_count'):

@@ -6,13 +6,10 @@ from logging_config import (
     clear_request_context,
     setup_logging,
 )
-from metrics import emit_counter, measure_duration
+from metrics import emit_counter, measure_skill_request
 
 setup_logging()
 logger = logging.getLogger(__name__)
-
-# Признак холодного старта: модуль импортируется один раз на инстанс контейнера.
-_COLD_START_PENDING = True
 
 
 def _extract_request_ids(event):
@@ -43,15 +40,10 @@ def handler(event, context):
         context: Контекст выполнения
     """
 
-    global _COLD_START_PENDING
     bind_request_context(**_extract_request_ids(event))
-    if _COLD_START_PENDING:
-        emit_counter('skill.cold_start')
-        _COLD_START_PENDING = False
-    emit_counter('skill.request')
     alice = None
     try:
-        with measure_duration('skill.handler.duration_ms'):
+        with measure_skill_request('legacy'):
             # Инициализируем класс для обработки запросов с контекстным менеджером
             with AliceChess() as alice:
                 # Обрабатываем запрос, внутри восстанавливается состояние игры

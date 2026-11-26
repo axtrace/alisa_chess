@@ -47,6 +47,8 @@ class WaitingMoveHandler(BaseHandler):
         # Если игра после хода ПОЛЬЗОВАТЕЛЯ закончилась, то говорим об этом
         game_state = self._check_game_state(current_move=user_move, prev_turn=user_color)
         if game_state:
+            self.game.prev_board = board_before_turn.fen()
+            self.game.prev_last_move = last_move_before_turn
             return game_state
 
         # Делаем один ход компьютера. Если движок не ответил, откатываем всю
@@ -63,6 +65,9 @@ class WaitingMoveHandler(BaseHandler):
             self.game.last_move = last_move_before_turn
             logger.warning('Ход игрока отменён из-за ошибки Stockfish; состояние партии восстановлено')
             raise
+
+        self.game.prev_board = board_before_turn.fen()
+        self.game.prev_last_move = last_move_before_turn
 
         # Если игра после хода КОМПЬЮТЕРА закончилась, то говорим об этом
         game_state = self._check_game_state(current_move=comp_move, prev_turn=comp_color)
