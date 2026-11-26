@@ -102,7 +102,8 @@ quote-style = "single"
 indent-style = "space"
 
 [tool.mypy]
-python_version = "3.9"
+python_version = "3.14"
+explicit_package_bases = true
 # Постепенная миграция: начинаем мягко, чтобы CI не падал на каждом файле.
 ignore_missing_imports = true
 follow_imports = "silent"

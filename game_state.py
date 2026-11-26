@@ -9,12 +9,15 @@
 
 import json
 import logging
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 import chess
 from pydantic import BaseModel, Field, field_validator
 
 from skill_state import SkillState
+
+if TYPE_CHECKING:
+    from game import Game
 
 
 class GameStateV1(BaseModel):
@@ -31,7 +34,7 @@ class GameStateV1(BaseModel):
 
     @field_validator('board_state')
     @classmethod
-    def validate_board_state(cls, v):
+    def validate_board_state(cls, v: str) -> str:
         """Проверяет корректность FEN-строки."""
         if v and v != chess.STARTING_FEN:
             try:
@@ -42,7 +45,7 @@ class GameStateV1(BaseModel):
 
     @field_validator('skill_state')
     @classmethod
-    def validate_skill_state(cls, v):
+    def validate_skill_state(cls, v: str) -> str:
         """Проверяет корректность состояния навыка."""
         if v and v.upper() not in SkillState.__members__:
             raise ValueError(f'Некорректное состояние навыка: {v}')
@@ -50,7 +53,7 @@ class GameStateV1(BaseModel):
 
     @field_validator('user_color')
     @classmethod
-    def validate_user_color(cls, v):
+    def validate_user_color(cls, v: str) -> str:
         """Проверяет корректность цвета игрока (case-insensitive)."""
         if v and v.upper() not in ('WHITE', 'BLACK'):
             raise ValueError(f'Некорректный цвет игрока: {v}')
@@ -76,7 +79,7 @@ class GameStateV2(BaseModel):
 
     @field_validator('board_state')
     @classmethod
-    def validate_board_state(cls, v):
+    def validate_board_state(cls, v: str) -> str:
         """Проверяет корректность FEN-строки."""
         if v and v != chess.STARTING_FEN:
             try:
@@ -87,7 +90,7 @@ class GameStateV2(BaseModel):
 
     @field_validator('user_color')
     @classmethod
-    def validate_user_color(cls, v):
+    def validate_user_color(cls, v: str) -> str:
         """Проверяет корректность цвета игрока (case-insensitive)."""
         if v and v.upper() not in ('WHITE', 'BLACK'):
             raise ValueError(f'Некорректный цвет игрока: {v}')
@@ -173,7 +176,7 @@ class GameState(BaseModel):
 
 
 # Утилиты для работы с состоянием
-def create_game_state_from_game(game) -> GameState:
+def create_game_state_from_game(game: 'Game') -> GameState:
     """Создает GameState из объекта Game."""
     return GameState(
         version=2,
@@ -193,7 +196,7 @@ def create_game_state_from_game(game) -> GameState:
     )
 
 
-def restore_game_from_state(game, game_state: GameState) -> None:
+def restore_game_from_state(game: 'Game', game_state: GameState) -> None:
     """Восстанавливает состояние игры из GameState с обработкой ошибок."""
     logger = logging.getLogger(__name__)
 

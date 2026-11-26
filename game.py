@@ -49,12 +49,12 @@ class Game:
         self.prev_last_move = ''
         self.skill_level = skill_level
         self.time_level = time_level
-        self.skill_state = SkillState.INITIATED
+        self.skill_state: str = SkillState.INITIATED
         self.prev_skill_state = ''
         self.user_color = ''
         self.last_move = ''
         self.move_count = 0
-        self.game_start_time = None
+        self.game_start_time: str | None = None
 
     def _restore_from_game_state(self, game_state):
         """Восстанавливает состояние из GameState."""
