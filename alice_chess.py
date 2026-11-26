@@ -19,8 +19,9 @@ logger = logging.getLogger(__name__)
 class AliceChess:
     """Основной класс для обработки запросов к навыку шахмат."""
 
-    def __init__(self):
-        self.game = Game()
+    def __init__(self, game_factory=None):
+        self._game_factory = game_factory or Game
+        self.game = self._game_factory()
         self.session_state = {}
         self._replayed_game_state = None
 
@@ -80,7 +81,7 @@ class AliceChess:
             else:
                 return {'text': 'Повторный запрос пропущен', 'tts': 'Повторный запрос пропущен', 'end_session': False}
 
-        self.game = Game(game_state=state)
+        self.game = self._game_factory(game_state=state)
 
         # Сначала проверяем специальные интенты, не зависящие от состояния
         special_intent_handler = SpecialIntentHandler(self.game, request)

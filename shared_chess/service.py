@@ -9,6 +9,7 @@ import chess
 from pydantic import BaseModel, ConfigDict, Field
 
 from game import Game
+from game_state import GameState
 from shared_chess.moves import extract_move
 from shared_chess.repository import encode
 from shared_chess.state import SharedGameState
@@ -19,7 +20,7 @@ class Command(BaseModel):
     request_id: uuid.UUID
     game_id: str | None
     expected_revision: int | None = Field(ge=0)
-    type: Literal['move', 'move_text', 'new_game', 'undo', 'resign', 'set_level']
+    type: Literal['move', 'move_text', 'new_game', 'undo', 'resign', 'set_level', 'voice']
     payload: dict[str, Any] = Field(default_factory=dict)
 
 
@@ -100,6 +101,31 @@ class GameService:
     def current(self, owner):
         return self.repository.atomic(lambda tx: self._snapshot(tx, owner))
 
+    @staticmethod
+    def _dialog(player, record):
+        # Прежняя версия device API сохраняет поля игрока, меняя только партию.
+        if player.get('dialog_game_id') == player.get('game_id') and player.get('dialog_game_revision') == (
+            record['revision'] if record else None
+        ):
+            return player.get('dialog')
+        return None
+
+    def voice_snapshot(self, owner):
+        def read(tx):
+            current = self._snapshot(tx, owner)
+            player = tx.get('players', owner) or {}
+            record = tx.get('games', owner, current['game_id']) if current['game_id'] else None
+            snapshot = self._dialog(player, record)
+            if snapshot is None and current['game_id']:
+                snapshot = SharedGameState.model_validate(record['state']).legacy_snapshot()
+            return {
+                'snapshot': current,
+                'game_state': snapshot or {},
+                'dialog_revision': player.get('dialog_revision', 0),
+            }
+
+        return self.repository.atomic(read)
+
     def result(self, owner, operation_id):
         record = self.repository.atomic(lambda tx: tx.get('commands', owner, operation_id))
         return (
@@ -139,7 +165,9 @@ class GameService:
             game = tx.get('games', owner, player['game_id']) if player['game_id'] else None
             if command['expected_revision'] != (game['revision'] if game else None):
                 raise ServiceError('STALE_REVISION', 'Позиция изменилась. Повторите ход на обновлённой доске.')
-            if not game and command['type'] != 'new_game':
+            if command['type'] == 'voice' and command['payload']['dialog_revision'] != player.get('dialog_revision', 0):
+                raise ServiceError('STALE_REVISION', 'Диалог изменился. Повторите запрос.')
+            if not game and command['type'] not in ('new_game', 'voice'):
                 raise ServiceError('NO_GAME', 'Сначала начните новую партию.')
             attempt = (saved or {}).get('attempt', 0) + 1
             lease = now + 10
@@ -156,7 +184,7 @@ class GameService:
             player.update(operation=operation_id, lease_until=lease, attempt=attempt)
             tx.put('players', owner, '', player)
             tx.put('commands', owner, operation_id, entry)
-            return {'entry': entry, 'game': game}
+            return {'entry': entry, 'game': game, 'dialog': self._dialog(player, game)}
 
         reserved = self.repository.atomic(reserve)
         if 'recover' in reserved:
@@ -174,9 +202,18 @@ class GameService:
         entry, record = reserved['entry'], reserved['game']
         state = SharedGameState.model_validate(record['state']) if record else None
         before_state = state.model_copy(deep=True) if state else None
+        dialog, response = None, None
         code = 'OK'
         try:
-            state = self._apply(state, command)
+            if command['type'] == 'voice':
+                from shared_chess.dialog import play_dialog
+
+                snapshot = reserved['dialog']
+                if snapshot is None:
+                    snapshot = state.legacy_snapshot() if state else {}
+                state, dialog, response = play_dialog(state, snapshot, command['payload'], self.engine)
+            else:
+                state = self._apply(state, command)
         except ValueError as error:
             code = str(error).split(':', 1)[0]
             if code not in MESSAGES:
@@ -210,13 +247,28 @@ class GameService:
             ):
                 raise ServiceError('STALE_REVISION', 'Позиция изменилась во время расчёта.')
             if code == 'OK':
-                if command['type'] == 'new_game':
+                if command['type'] == 'voice' and state is None:
+                    player['game_id'] = None
+                elif command['type'] == 'new_game' or current is None:
                     player['game_id'] = entry['new_game_id']
                     player['generation'] += 1
                     revision = 1
-                else:
+                    tx.put('games', owner, player['game_id'], {'state': state.model_dump(), 'revision': revision})
+                elif state != before_state:
                     revision = current['revision'] + 1
-                tx.put('games', owner, player['game_id'], {'state': state.model_dump(), 'revision': revision})
+                    tx.put('games', owner, player['game_id'], {'state': state.model_dump(), 'revision': revision})
+                if command['type'] == 'voice':
+                    if player.get('dialog') != dialog:
+                        player['dialog_revision'] = player.get('dialog_revision', 0) + 1
+                    player['dialog'] = dialog
+                    player['dialog_game_id'] = player['game_id']
+                    written = tx.get('games', owner, player['game_id']) if player['game_id'] else None
+                    player['dialog_game_revision'] = written['revision'] if written else None
+                else:
+                    player.pop('dialog', None)
+                    player.pop('dialog_game_id', None)
+                    player.pop('dialog_game_revision', None)
+                    player['dialog_revision'] = player.get('dialog_revision', 0) + 1
             player.pop('operation', None)
             player.pop('lease_until', None)
             tx.put('players', owner, '', player)
@@ -231,7 +283,7 @@ class GameService:
             if context:
                 from shared_chess.replies import save_reply_in_transaction
 
-                result['alice_reply'] = save_reply_in_transaction(tx, owner, context, result, state)
+                result['alice_reply'] = save_reply_in_transaction(tx, owner, context, result, state, response)
             live.update(status='DONE', result=result)
             tx.put('commands', owner, operation_id, live)
             return result
@@ -289,15 +341,30 @@ class GameService:
         return state
 
     def import_legacy(self, owner, snapshot):
-        state = SharedGameState.import_legacy(snapshot)
+        dialog = GameState.from_dict(snapshot).to_dict()
+        state = SharedGameState.import_legacy(snapshot) if dialog['user_color'] else None
         game_id = str(uuid.uuid4())
 
         def migrate(tx):
             player = tx.get('players', owner)
             if player:
                 return self._snapshot(tx, owner)
-            tx.put('games', owner, game_id, {'state': state.model_dump(), 'revision': 1})
-            tx.put('players', owner, '', {'game_id': game_id, 'generation': 1, 'storage_mode': 'shared'})
+            if state:
+                tx.put('games', owner, game_id, {'state': state.model_dump(), 'revision': 1})
+            tx.put(
+                'players',
+                owner,
+                '',
+                {
+                    'game_id': game_id if state else None,
+                    'generation': 1 if state else 0,
+                    'storage_mode': 'shared',
+                    'dialog': dialog,
+                    'dialog_revision': 0,
+                    'dialog_game_id': game_id if state else None,
+                    'dialog_game_revision': 1 if state else None,
+                },
+            )
             return self._snapshot(tx, owner)
 
         return self.repository.atomic(migrate)

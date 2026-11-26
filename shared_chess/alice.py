@@ -4,11 +4,11 @@ import hashlib
 import re
 import uuid
 
-from position_query import position_query, position_response
-from shared_chess.replies import inline_state, reply_key, resolve_reply
+from position_query import position_query
+from request_validators.intent_validator import IntentValidator
+from shared_chess.replies import inline_state, resolve_reply
 from shared_chess.repository import encode
 from shared_chess.service import ServiceError
-from shared_chess.state import SharedGameState
 
 
 class SharedAlice:
@@ -49,11 +49,11 @@ class SharedAlice:
             if saved.get('last_message_id') is not None and saved['last_message_id'] == message_id and previous:
                 response = resolve_reply(self.service.repository, owner, context, previous)
                 return self._envelope(session, response, user, saved)
-            if 'YANDEX.REPEAT' in request.get('nlu', {}).get('intents', {}) or text in ('повтори', 'повторить'):
+            if previous and (
+                'YANDEX.REPEAT' in request.get('nlu', {}).get('intents', {}) or text in ('повтори', 'повторить')
+            ):
                 response = resolve_reply(self.service.repository, owner, context, previous)
-                return self._envelope(
-                    session, response, user, {'last_message_id': message_id, 'previous_response': previous}
-                )
+                return self._envelope(session, response, user, {**saved, 'last_message_id': message_id})
             operation_id = encode(['alice', context['skill_id'], context['session_id'], message_id])
             entry = self.service.repository.atomic(lambda tx: tx.get('commands', owner, operation_id))
             if entry:
@@ -62,11 +62,10 @@ class SharedAlice:
                 result = self.service.execute(owner, operation_id, entry['command'], entry.get('reply_context'))
                 if result['status'] == 'DONE':
                     reply = result['alice_reply']
-                    current = self.service.current(owner)
                     return self._envelope(
                         session,
                         reply['response'],
-                        self._user_state(owner, current, user),
+                        self._user_state(owner, user),
                         {'last_message_id': message_id, 'previous_response': reply['reference']},
                     )
                 response, state = inline_state(message_id, result['message'])
@@ -86,65 +85,59 @@ class SharedAlice:
                     message = 'Подключение отменено.'
                 response, state = inline_state(message_id, message)
                 return self._envelope(session, response, user, state)
-            current = self.service.current(owner)
-            if not current['game_id'] and user.get('game_ref'):
+            voice = self.service.voice_snapshot(owner)
+            if not voice['game_state'] and user.get('game_ref', {}).get('game_id'):
                 raise ServiceError('RESTORE_FAILED', 'Общая партия недоступна. Попробуйте позже.', 503)
-            if not current['game_id'] and user.get('game_state'):
-                try:
-                    current = self.service.import_legacy(owner, user['game_state'])
-                except ValueError:
-                    pass  # An unfinished legacy setup is not a ready match.
+            if not voice['game_state'] and user.get('game_state'):
+                self.service.import_legacy(owner, user['game_state'])
+                voice = self.service.voice_snapshot(owner)
+            current = voice['snapshot']
             expected = user.get('game_ref')
-            if text in ('новая игра', 'начать заново', 'сдаюсь', 'сдаться'):
-                response, state = inline_state(message_id, 'Подтвердите действие: скажите «да» или «нет».')
-                state['confirm'] = {
-                    'type': 'new_game' if 'игра' in text or 'заново' in text else 'resign',
-                    'game_id': current['game_id'],
-                    'revision': current['revision'],
-                }
-                return self._envelope(session, response, user, state)
-            confirmation = saved.get('confirm')
-            kind, payload = 'move_text', {'text': request.get('command', '')}
-            query = position_query(request)
-            if confirmation:
-                if text not in ('да', 'подтверждаю'):
-                    response, state = inline_state(message_id, 'Действие отменено.')
-                    return self._envelope(session, response, user, state)
-                if confirmation['game_id'] != current['game_id'] or confirmation['revision'] != current['revision']:
-                    raise ServiceError('STALE_REVISION', 'Позиция изменилась. Повторите действие.')
-                kind, payload = confirmation['type'], {}
-                if kind == 'new_game':
-                    payload = {
-                        'user_color': current.get('user_color', 'WHITE'),
-                        'skill_level': current.get('skill_level', 1),
-                    }
-            elif text in ('отмени ход', 'отмена хода', 'назад'):
-                kind, payload = 'undo', {}
-            elif re.fullmatch(r'(?:сложность|уровень)\s+\d{1,2}', text):
-                kind, payload = 'set_level', {'skill_level': int(text.split()[-1])}
-            elif query or not text or text in ('доска', 'покажи доску', 'продолжить', 'помощь'):
-                if not current['game_id']:
-                    response, state = inline_state(message_id, 'Начните партию на экране или скажите «новая игра».')
-                    return self._envelope(session, response, user, state)
-                return self._show_current(session, owner, context, current, query)
-            elif expected and (
-                expected['game_id'] != current['game_id'] or expected['revision'] != current['revision']
+            validator = IntentValidator(event)
+            reading = (
+                position_query(request)
+                or not text
+                or validator.validate_help()
+                or validator.validate_show_board()
+                or validator.validate_whatcanyoudo()
+                or text == 'продолжить'
+            )
+            if (
+                expected
+                and not reading
+                and (
+                    expected['game_id'] != current['game_id']
+                    or expected['revision'] != current['revision']
+                    or expected.get('dialog_revision', voice['dialog_revision']) != voice['dialog_revision']
+                )
             ):
-                raise ServiceError('STALE_REVISION', 'Доска изменилась на другом устройстве. Скажите «покажи доску».')
+                raise ServiceError('STALE_REVISION', 'Позиция изменилась на другом устройстве. Скажите «покажи доску».')
             command = {
                 'request_id': str(uuid.uuid5(uuid.NAMESPACE_URL, operation_id)),
                 'game_id': current['game_id'],
                 'expected_revision': current['revision'],
-                'type': kind,
-                'payload': payload,
+                'type': 'voice',
+                'payload': {
+                    'dialog_revision': voice['dialog_revision'],
+                    'request': request,
+                    'session': {'message_id': message_id, 'new': session.get('new', False)},
+                },
             }
+            confirmation = saved.get('confirm')  # Контекст прежней версии пилота.
+            if confirmation:
+                if (
+                    confirmation['game_id'] != current['game_id']
+                    or confirmation['revision'] != current['revision']
+                    or voice['game_state'].get('skill_state') != 'WAITING_MOVE'
+                ):
+                    raise ServiceError('STALE_REVISION', 'Позиция изменилась. Повторите действие.')
+                command['payload']['legacy_confirmation'] = confirmation['type']
             result = self.service.execute(owner, operation_id, command, context)
             if result['status'] != 'DONE':
                 response, state = inline_state(message_id, result['message'])
                 return self._envelope(session, response, user, state)
             reply = result['alice_reply']
-            snapshot = result['snapshot']
-            user = self._user_state(owner, snapshot, user)
+            user = self._user_state(owner, user)
             return self._envelope(
                 session,
                 reply['response'],
@@ -158,40 +151,18 @@ class SharedAlice:
             response, state = inline_state(message_id, 'Хранилище временно недоступно. Позиция сохранена.')
             return self._envelope(session, response, user, state)
 
-    def _show_current(self, session, owner, context, current, query):
-        from shared_chess.replies import response_text
-
-        record = self.service.repository.atomic(lambda tx: tx.get('games', owner, current['game_id']))
-        state = SharedGameState.model_validate(record['state'])
-        if query:
-            response = position_response(query, state.board(), state.user_color)
-        else:
-            response = response_text({'code': 'OK', 'message': 'Ваша очередь.'}, state)
-        user = {
-            'game_state': state.legacy_snapshot(),
-            'game_ref': {'game_id': current['game_id'], 'revision': record['revision']},
-        }
-        reply_id = hashlib.sha256(encode(context).encode()).hexdigest()[:32]
-        self.service.repository.atomic(
-            lambda tx: tx.put('replies', owner, reply_key(context, reply_id), {'response': response})
-        )
-        return self._envelope(
-            session,
-            response,
-            user,
-            {
-                'last_message_id': session['message_id'],
-                'previous_response': {'version': 1, 'kind': 'ydb_ref', 'reply_id': reply_id},
-            },
-        )
-
-    def _user_state(self, owner, snapshot, previous):
-        if not snapshot.get('game_id'):
+    def _user_state(self, owner, previous):
+        voice = self.service.voice_snapshot(owner)
+        if not voice['game_state']:
             return previous
-        record = self.service.repository.atomic(lambda tx: tx.get('games', owner, snapshot['game_id']))
+        current = voice['snapshot']
         return {
-            'game_state': SharedGameState.model_validate(record['state']).legacy_snapshot(),
-            'game_ref': {'game_id': snapshot['game_id'], 'revision': snapshot['revision']},
+            'game_state': voice['game_state'],
+            'game_ref': {
+                'game_id': current['game_id'],
+                'revision': current['revision'],
+                'dialog_revision': voice['dialog_revision'],
+            },
         }
 
     @staticmethod

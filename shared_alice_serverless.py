@@ -41,7 +41,7 @@ def _handle(event, context):
             'session': session,
             'response': previous['response'],
             'user_state_update': user,
-            'session_state': {'last_message_id': session.get('message_id'), 'previous_response': previous},
+            'session_state': {**session_state, 'last_message_id': session.get('message_id')},
         }
     access_token = (session.get('user') or {}).get('access_token', '')
     try:

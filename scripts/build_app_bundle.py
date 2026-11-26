@@ -36,10 +36,10 @@ def build(engine, destination, include_skill=False, *, target=None):
     if target != 'production':
         files.append(root / 'app_serverless.py')
         files.extend((root / 'shared_chess').glob('*.py'))
-    if target != 'api-testing':
-        files.extend(root / name for name in SKILL)
-        for directory in ('handlers', 'request_validators'):
-            files.extend((root / directory).glob('*.py'))
+    # Общий сервис использует штатный диалог и при авторизованном вызове /v1/skill.
+    files.extend(root / name for name in SKILL)
+    for directory in ('handlers', 'request_validators'):
+        files.extend((root / directory).glob('*.py'))
     if target == 'testing':
         files.append(root / 'shared_alice_serverless.py')
     if target == 'production':

@@ -2,6 +2,11 @@
 
 `alisa_chess` — голосовой шахматный навык для Яндекс.Алисы, развёрнутый как Yandex Cloud Function. Движок — локальный бинарь [Stockfish](https://stockfishchess.org/) (минимально совместимая версия — 14+), поднимаемый по UCI через [python-chess](https://github.com/niklasf/python-chess).
 
+Общий режим `shared_alice_serverless.handler` хранит партии и этап голосового диалога в YDB.
+Он исполняет штатные обработчики `AliceChess` через `shared_chess/dialog.py`.
+Голос и приложение используют общий протокол команд с проверкой ревизий.
+[Устройство и проверки голосового диалога с YDB](shared-voice-dialog.md) описаны отдельно.
+
 ## Основные компоненты
 
 ### 1. Точка входа (Cloud Function)

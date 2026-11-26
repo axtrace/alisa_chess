@@ -36,6 +36,8 @@ class ChessApi:
                 self.auth.revoke(token)
                 return 200, {'status': 'REVOKED'}
             if method == 'POST' and path == '/v1/commands':
+                if body.get('type') == 'voice':
+                    raise ServiceError('INVALID_REQUEST', 'Голосовой запрос требует авторизации навыка.', 400)
                 request_id = str(uuid.UUID(body['request_id']))
                 result = self.service.execute(owner, f'{device}:{request_id}', body)
                 return (202 if result['status'] == 'RUNNING' else 200), result
