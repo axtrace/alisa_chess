@@ -4,6 +4,7 @@ import chess
 import chess.engine
 import chess.pgn
 
+from metrics import measure_stockfish
 from skill_state import SkillState
 
 logger = logging.getLogger(__name__)
@@ -45,14 +46,15 @@ class Game:
         """Инициализирует состояние по умолчанию."""
         self.board = chess.Board()
         self.prev_board = ''
+        self.prev_last_move = ''
         self.skill_level = skill_level
         self.time_level = time_level
-        self.skill_state = SkillState.INITIATED
+        self.skill_state: str = SkillState.INITIATED
         self.prev_skill_state = ''
         self.user_color = ''
         self.last_move = ''
         self.move_count = 0
-        self.game_start_time = None
+        self.game_start_time: str | None = None
 
     def _restore_from_game_state(self, game_state):
         """Восстанавливает состояние из GameState."""
@@ -64,7 +66,8 @@ class Game:
     def engine(self):
         """Ленивая инициализация Stockfish engine."""
         if self._engine is None:
-            self._engine = chess.engine.SimpleEngine.popen_uci('./stockfish')
+            with measure_stockfish('startup'):
+                self._engine = chess.engine.SimpleEngine.popen_uci('./stockfish')
             # Конфигурируем уровень сложности при первом запуске
             self._engine.configure({'Skill Level': self.skill_level})
         return self._engine
@@ -90,6 +93,9 @@ class Game:
         if self.prev_board:
             self.board = chess.Board(self.prev_board)
             self.prev_board = ''
+            self.last_move, self.prev_last_move = self.prev_last_move, ''
+            if self.skill_state == SkillState.GAME_OVER:
+                self.set_skill_state(SkillState.WAITING_MOVE)
             return True
         else:
             return False
@@ -127,7 +133,8 @@ class Game:
 
     def comp_move(self):
         self.engine.configure({'Skill Level': self.skill_level})
-        result = self.engine.play(self.board, chess.engine.Limit(time=self.time_level))
+        with measure_stockfish('play'):
+            result = self.engine.play(self.board, chess.engine.Limit(time=self.time_level))
         if result.move:
             san = self.board.san(result.move)
             self.board.push(result.move)
@@ -312,6 +319,7 @@ class Game:
     def reset_board(self):
         self.board = chess.Board()
         self.prev_board = ''
+        self.prev_last_move = ''
         self.last_move = ''
         self.user_color = ''
         self.prev_skill_state = ''

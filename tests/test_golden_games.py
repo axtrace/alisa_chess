@@ -11,7 +11,11 @@ Stockfish заменён глобальной фикстурой в `tests/conft
 короткие, но информативные сценарии.
 """
 
+import json
 import unittest
+from unittest.mock import MagicMock, patch
+
+import chess
 
 from alice_serverless import handler
 from skill_state import SkillState
@@ -83,6 +87,7 @@ class GoldenSession:
             message_id=self.message_id,
             new=new,
         )
+        self.last_event = event
         response = handler(event, None)
         self.responses.append(response)
         self.user_state = (response.get('user_state_update') or {}).get('game_state')
@@ -93,14 +98,12 @@ class GoldenSession:
     def resend_last(self):
         """Повторяет последний запрос с тем же message_id (идемпотентность)."""
         last = self.responses[-1]
-        event = make_event(
-            '',
-            user_state=self.user_state,
-            session_state=self.session_state,
-            message_id=self.message_id - 1,
-        )
+        event = dict(self.last_event)
+        event['state'] = {'user': {'game_state': self.user_state}, 'session': self.session_state}
         response = handler(event, None)
         self.responses.append(response)
+        self.user_state = response['user_state_update']['game_state']
+        self.session_state = response['session_state']
         return response, last
 
 
@@ -169,15 +172,29 @@ class TestGoldenGames(unittest.TestCase):
     def test_idempotency_same_message_id(self):
         """Повтор запроса с тем же message_id возвращает кэшированный response."""
         session = GoldenSession()
-        session.send('')
-        session.send('да')
+        for command in ('', 'да'):
+            session.send(command)
+            repeat, original = session.resend_last()
+            self.assertEqual(repeat, original)
 
-        # Повторяем тот же запрос (тот же message_id, та же сессия)
-        repeat, original = session.resend_last()
-        self.assertEqual(repeat['response']['text'], original['response']['text'])
-        self.assertEqual(repeat['response']['tts'], original['response']['tts'])
-        # Состояние не должно «уйти» вперёд
-        self.assertEqual(session.user_state['skill_state'], SkillState.WAITING_COLOR.value)
+    def test_move_duplicate_undo_and_repeat(self):
+        session = GoldenSession()
+        for command in ('', 'да', 'белые'):
+            session.send(command)
+        before = session.user_state['board_state']
+        engine = MagicMock()
+        engine.play.return_value.move = chess.Move.from_uci('e7e5')
+        with patch('chess.engine.SimpleEngine.popen_uci', return_value=engine):
+            session.send('e4', {'CHESS_MOVE': {'slots': {'file_to': {'value': 'e'}, 'rank_to': {'value': '4'}}}})
+            self.assertEqual(session.user_state['last_move'], 'e5')
+            repeat, original = session.resend_last()
+            self.assertEqual(repeat, original)
+            session.send('отмени ход', {'UNDO': {}})
+            self.assertEqual(session.user_state['board_state'], before)
+            self.assertEqual(session.user_state['last_move'], '')
+            reply = session.send('повтори ход', {'REPEAT_LAST_MOVE': {}})
+            self.assertNotIn('e5', reply['response']['text'])
+            engine.play.assert_called_once()
 
     # ---------- Сценарий 4: помощь во время партии не ломает состояние ----------
 
@@ -240,6 +257,73 @@ class TestGoldenGames(unittest.TestCase):
         self.assertEqual(session.user_state['skill_state'], SkillState.WAITING_COLOR.value)
         # Доска сброшена
         self.assertTrue(session.user_state['board_state'].startswith('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR'))
+
+
+def test_spoken_position_repeats_and_fits_session_state(_stub_stockfish_engine):
+    session = GoldenSession()
+    for command in ('', 'да', 'белые'):
+        session.send(command)
+    before = session.user_state
+    response = session.send('назови позицию', new=True)['response']
+    assert 'кони b1, g1' in response['text']
+    assert 'кони бэ 8, же 8' in response['tts']
+    assert len(json.dumps(session.session_state, ensure_ascii=False).encode()) <= 1024
+    assert session.send('повтори', {'YANDEX.REPEAT': {}})['response'] == response
+    assert session.send('где мои кони?')['response']['text'] == 'Ваши кони на b1, g1.'
+    assert session.user_state == before
+    _stub_stockfish_engine.assert_not_called()
+
+
+def test_knights_follow_player_color_and_captures(_stub_stockfish_engine):
+    from game import Game
+
+    game = Game()
+    game.set_skill_state(SkillState.WAITING_MOVE)
+    game.set_user_color('BLACK')
+    game.board = chess.Board('3nk3/8/8/8/8/8/8/1N2K3 b - - 0 1')
+    session = GoldenSession()
+    session.user_state = game.serialize_state()
+    assert session.send('где мой конь')['response']['tts'] == 'Ваш конь на дэ 8.'
+    game.board.remove_piece_at(chess.D8)
+    session.user_state = game.serialize_state()
+    assert session.send('где мои кони')['response']['text'] == 'У вас не осталось коней.'
+    _stub_stockfish_engine.assert_not_called()
+
+
+def test_undo_restores_prior_engine_move_after_restart():
+    from game import Game
+
+    board = chess.Board()
+    for move in ('e4', 'e5'):
+        board.push_san(move)
+    session = GoldenSession()
+    game = Game()
+    game.board = board
+    game.set_user_color('WHITE')
+    game.set_skill_state(SkillState.WAITING_MOVE)
+    game.last_move = 'e5'
+    session.user_state = game.serialize_state()
+    session.user_state.pop('prev_last_move')  # Existing V2 game.
+    engine = MagicMock()
+    engine.play.return_value.move = chess.Move.from_uci('b8c6')
+    with patch('chess.engine.SimpleEngine.popen_uci', return_value=engine):
+        session.send(
+            'конь f3',
+            {
+                'CHESS_MOVE': {
+                    'slots': {
+                        'piece': {'value': 'конь'},
+                        'file_to': {'value': 'f'},
+                        'rank_to': {'value': '3'},
+                    }
+                }
+            },
+        )
+    assert session.user_state['last_move'] == 'Nc6'
+    session.send('отмена', {'UNDO': {}})
+    assert session.user_state['board_state'] == board.fen()
+    assert session.user_state['last_move'] == 'e5'
+    assert not session.user_state['prev_board_state']
 
 
 if __name__ == '__main__':

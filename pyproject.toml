@@ -29,6 +29,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+app = ["ydb==3.35.0"]
 dev = [
     "pytest",
     "pytest-subtests",
@@ -44,9 +45,14 @@ Repository = "https://github.com/Sofinma/alisa_chess"
 py-modules = [
     "alice_chess",
     "alice_serverless",
+    "app_serverless",
+    "shared_alice_serverless",
     "game",
     "game_state",
+    "logging_config",
+    "metrics",
     "move_extractor",
+    "position_query",
     "skill_state",
     "speaker",
     "text_preparer",
@@ -55,7 +61,7 @@ py-modules = [
 ]
 
 [tool.setuptools.packages.find]
-include = ["handlers*", "request_validators*"]
+include = ["handlers*", "request_validators*", "shared_chess*"]
 exclude = ["tests*", "docs*", "intents*", "junk*", ".github*"]
 
 [tool.pytest.ini_options]
@@ -96,7 +102,8 @@ quote-style = "single"
 indent-style = "space"
 
 [tool.mypy]
-python_version = "3.9"
+python_version = "3.14"
+explicit_package_bases = true
 # Постепенная миграция: начинаем мягко, чтобы CI не падал на каждом файле.
 ignore_missing_imports = true
 follow_imports = "silent"

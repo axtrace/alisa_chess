@@ -53,6 +53,8 @@ Request processing sequence diagram: [`docs/diagrams/sd_request_processing.md`](
 
 ## 4. Commands for the agent
 
+Release Cloud Function versions only through the GitHub Actions workflows documented in [docs/deployment.md](docs/deployment.md). Local bundle builds and read-only cloud verification are supported.
+
 ### Running tests
 
 ```bash

@@ -1,46 +1,17 @@
-name: Manual Deploy 2 PROD YaCloud Functions
+name: Deploy production skill
 
-on:
-  workflow_dispatch:
+on: workflow_dispatch
 
+permissions:
+  contents: read
 
 jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    - name: Download Stockfish
-      run: |
-        wget -q http://mirror.yandex.ru/ubuntu/pool/universe/s/stockfish/stockfish_14.1-1_amd64.deb
-        ar -x stockfish_14.1-1_amd64.deb
-        tar -xf $(ls data.tar.*)
-        cp ./usr/games/stockfish ./stockfish
-        chmod +x ./stockfish
-    - name: Deploy Function
-      id: sls-func
-      uses: yc-actions/yc-sls-function@v3
-      with:
-        yc-sa-json-credentials: ${{ secrets.YC_SA_JSON_CREDENTIALS_2 }}
-        bucket: ${{ secrets.BUCKET_NAME_2 }}
-        folder-id: ${{ secrets.FOLDER_ID_2 }}
-        function-name: 'alice-chess-stable'
-        runtime: 'python314'
-        memory: '8192Mb'
-        entrypoint: 'alice_serverless.handler'
-        environment: |
-          DEBUG=True
-          COUNT=1
-        include: |
-          *.py
-          handlers/*.py
-          request_validators/*.py
-          requirements.txt
-          stockfish
-        exclude: |
-          **/*.ts
-          **/tests/**
-          tests/
-          .github/**
-          venv/**
-          .gitignore
-          LICENSE
+  release:
+    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    uses: ./.github/workflows/release-function.yml
+    with:
+      target: production
+    secrets:
+      yc_key: ${{ secrets.YC_SA_JSON_CREDENTIALS_2 }}
+      folder: ${{ secrets.FOLDER_ID_2 }}
+      bucket: ${{ secrets.BUCKET_NAME_2 }}

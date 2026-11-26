@@ -2,6 +2,7 @@ import logging
 
 import texts
 from move_extractor import MoveExtractor
+from position_query import position_query, position_response
 from request_validators.intent_validator import IntentValidator
 from skill_state import SkillState
 from tts_builder import TtsBuilder
@@ -37,6 +38,9 @@ class SpecialIntentHandler(BaseHandler):
 
     def handle(self):
         logger.info(f'SpecialIntentHandler. handle. Проверяем запрос: {self.request}')
+        query = position_query(self.request.get('request', {}))
+        if query:
+            return position_response(query, self.game.board, self.game.get_user_color())
         for validator_name, handler_method in self._intent_registry:
             validator = getattr(self.intent_validator, validator_name, None)
             if validator is None:

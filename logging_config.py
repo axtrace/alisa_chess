@@ -69,7 +69,7 @@ class JsonFormatter(logging.Formatter):
 
         # Контекст запроса.
         ctx = _request_context.get()
-        if ctx:
+        if ctx and (record.name != 'alisa_chess.metrics' or logging.getLogger().isEnabledFor(logging.INFO)):
             payload['ctx'] = ctx
 
         # Поля из extra=...
@@ -96,6 +96,8 @@ def setup_logging(level: str | None = None) -> None:
 
     root = logging.getLogger()
     root.setLevel(resolved_level)
+    # При WARNING оставляем только структурированные INFO-метрики, без INFO-логов запросов.
+    logging.getLogger('alisa_chess.metrics').setLevel(logging.INFO if root.level == logging.WARNING else logging.NOTSET)
 
     # Если уже инициализирован нашим хендлером — не дублируем.
     for handler in root.handlers:

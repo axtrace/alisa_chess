@@ -22,6 +22,7 @@ class AliceChess:
     def __init__(self):
         self.game = Game()
         self.session_state = {}
+        self._replayed_game_state = None
 
     def __enter__(self):
         """Контекстный менеджер для делегирования Game."""
@@ -39,6 +40,8 @@ class AliceChess:
         return None
 
     def get_game_state(self):
+        if self._replayed_game_state is not None:
+            return self._replayed_game_state
         if self.game is None:
             return ''
         return self.game.serialize_state()
@@ -64,7 +67,11 @@ class AliceChess:
         session_state = request.get('state', {}).get('session', {})
         last_message_id = session_state.get('last_message_id')
 
-        if current_message_id and last_message_id and current_message_id == last_message_id:
+        state = request.get('state', {}).get('user', {}).get('game_state', {})
+        self._replayed_game_state = None
+        if current_message_id is not None and current_message_id == last_message_id:
+            self._replayed_game_state = state
+            self.session_state = session_state
             logger.info(f'Идемпотентность: пропускаем дублирующий запрос message_id={current_message_id}')
             # Возвращаем предыдущий ответ из session_state
             previous_response = session_state.get('previous_response', {})
@@ -72,8 +79,6 @@ class AliceChess:
                 return previous_response
             else:
                 return {'text': 'Повторный запрос пропущен', 'tts': 'Повторный запрос пропущен', 'end_session': False}
-
-        state = request.get('state', {}).get('user', {}).get('game_state', {})
 
         self.game = Game(game_state=state)
 

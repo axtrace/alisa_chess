@@ -9,12 +9,15 @@
 
 import json
 import logging
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 import chess
 from pydantic import BaseModel, Field, field_validator
 
 from skill_state import SkillState
+
+if TYPE_CHECKING:
+    from game import Game
 
 
 class GameStateV1(BaseModel):
@@ -31,7 +34,7 @@ class GameStateV1(BaseModel):
 
     @field_validator('board_state')
     @classmethod
-    def validate_board_state(cls, v):
+    def validate_board_state(cls, v: str) -> str:
         """Проверяет корректность FEN-строки."""
         if v and v != chess.STARTING_FEN:
             try:
@@ -42,7 +45,7 @@ class GameStateV1(BaseModel):
 
     @field_validator('skill_state')
     @classmethod
-    def validate_skill_state(cls, v):
+    def validate_skill_state(cls, v: str) -> str:
         """Проверяет корректность состояния навыка."""
         if v and v.upper() not in SkillState.__members__:
             raise ValueError(f'Некорректное состояние навыка: {v}')
@@ -50,7 +53,7 @@ class GameStateV1(BaseModel):
 
     @field_validator('user_color')
     @classmethod
-    def validate_user_color(cls, v):
+    def validate_user_color(cls, v: str) -> str:
         """Проверяет корректность цвета игрока (case-insensitive)."""
         if v and v.upper() not in ('WHITE', 'BLACK'):
             raise ValueError(f'Некорректный цвет игрока: {v}')
@@ -70,12 +73,13 @@ class GameStateV2(BaseModel):
     last_move: str = Field(default='', description='Последний ход в SAN-нотации')
     skill_level: int = Field(default=1, ge=1, le=20, description='Уровень сложности (1-20)')
     time_level: float = Field(default=0.1, ge=0.01, le=5.0, description='Время на ход в секундах')
+    prev_last_move: str = ''  # Последний ход компьютера в позиции до отменяемого хода.
     move_count: int = Field(default=0, ge=0, description='Количество сделанных ходов')
     game_start_time: Optional[str] = Field(default=None, description='Время начала игры (ISO формат)')
 
     @field_validator('board_state')
     @classmethod
-    def validate_board_state(cls, v):
+    def validate_board_state(cls, v: str) -> str:
         """Проверяет корректность FEN-строки."""
         if v and v != chess.STARTING_FEN:
             try:
@@ -86,7 +90,7 @@ class GameStateV2(BaseModel):
 
     @field_validator('user_color')
     @classmethod
-    def validate_user_color(cls, v):
+    def validate_user_color(cls, v: str) -> str:
         """Проверяет корректность цвета игрока (case-insensitive)."""
         if v and v.upper() not in ('WHITE', 'BLACK'):
             raise ValueError(f'Некорректный цвет игрока: {v}')
@@ -172,7 +176,7 @@ class GameState(BaseModel):
 
 
 # Утилиты для работы с состоянием
-def create_game_state_from_game(game) -> GameState:
+def create_game_state_from_game(game: 'Game') -> GameState:
     """Создает GameState из объекта Game."""
     return GameState(
         version=2,
@@ -183,6 +187,7 @@ def create_game_state_from_game(game) -> GameState:
             prev_skill_state=SkillState(game.prev_skill_state) if game.prev_skill_state else SkillState.INITIATED,
             user_color=game.user_color,
             last_move=game.last_move,
+            prev_last_move=game.prev_last_move,
             skill_level=game.skill_level,
             time_level=game.time_level,
             move_count=getattr(game, 'move_count', 0),
@@ -191,7 +196,7 @@ def create_game_state_from_game(game) -> GameState:
     )
 
 
-def restore_game_from_state(game, game_state: GameState) -> None:
+def restore_game_from_state(game: 'Game', game_state: GameState) -> None:
     """Восстанавливает состояние игры из GameState с обработкой ошибок."""
     logger = logging.getLogger(__name__)
 
@@ -246,6 +251,7 @@ def restore_game_from_state(game, game_state: GameState) -> None:
             game.time_level = 0.1
 
         game.last_move = data.last_move or ''
+        game.prev_last_move = data.prev_last_move
 
         # Новые поля (если есть)
         if hasattr(game, 'move_count'):
@@ -264,6 +270,7 @@ def restore_game_from_state(game, game_state: GameState) -> None:
         game.prev_skill_state = ''
         game.user_color = ''
         game.last_move = ''
+        game.prev_last_move = ''
         game.skill_level = 1
         game.time_level = 0.1
         if hasattr(game, 'move_count'):

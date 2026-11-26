@@ -1,0 +1,75 @@
+name: Release a verified function
+
+on:
+  workflow_call:
+    inputs:
+      target:
+        type: string
+        required: true
+    secrets:
+      yc_key:
+        required: true
+      folder:
+        required: true
+      bucket:
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+    with:
+      target: ${{ inputs.target }}
+
+  publish:
+    needs: ci
+    if: >-
+      github.repository == 'axtrace/alisa_chess' &&
+      github.ref == format('refs/heads/{0}', github.event.repository.default_branch) &&
+      (github.event_name == 'workflow_dispatch' ||
+       (github.event_name == 'push' && inputs.target == 'testing'))
+    runs-on: ubuntu-22.04
+    concurrency:
+      group: cloud-function-${{ inputs.target }}
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: function-${{ inputs.target }}-${{ github.sha }}
+          path: dist
+      - name: Verify artifact and install pinned yc CLI
+        run: |
+          (cd dist && sha256sum --check function.sha256)
+          curl --fail --silent --show-error --location --retry 3 \
+            https://storage.yandexcloud.net/yandexcloud-yc/release/1.47.0/linux/amd64/yc -o "$RUNNER_TEMP/yc"
+          echo "6499ad14c3248cf896e2f054968515f0dec72d09476256e01c69cbe764dd91c2  $RUNNER_TEMP/yc" | sha256sum --check
+          chmod 755 "$RUNNER_TEMP/yc"
+          echo "$RUNNER_TEMP" >> "$GITHUB_PATH"
+      - name: Reject superseded source revisions
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tip=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/$GITHUB_REF_NAME" --jq '.object.sha')
+          [[ "$tip" == "$GITHUB_SHA" ]] || { echo "::error::This commit is no longer the tip of the default branch"; exit 1; }
+      - name: Publish ZIP and verify active version
+        env:
+          TARGET: ${{ inputs.target }}
+          YC_KEY: ${{ secrets.yc_key }}
+          DEPLOY_FOLDER: ${{ secrets.folder }}
+          DEPLOY_BUCKET: ${{ secrets.bucket }}
+        run: |
+          set -euo pipefail
+          umask 077
+          key=$(mktemp)
+          trap 'rm -f "$key"; yc config unset service-account-key >/dev/null' EXIT
+          printf '%s' "$YC_KEY" > "$key"
+          unset YC_KEY
+          export DEPLOYER_ID
+          DEPLOYER_ID=$(jq -er '.service_account_id' "$key")
+          yc config set service-account-key "$key" >/dev/null
+          python3 .github/scripts/publish-function.py
