@@ -31,9 +31,10 @@ def response_text(result, state):
     }
 
 
-def save_reply_in_transaction(tx, owner, context, result, state):
+def save_reply_in_transaction(tx, owner, context, result, state, response=None):
     reply_id = hashlib.sha256(encode([context, result['request_id']]).encode()).hexdigest()[:32]
-    response = response_text(result, state)
+    if response is None:
+        response = response_text(result, state)
     tx.put('replies', owner, reply_key(context, reply_id), {'response': response})
     return {'response': response, 'reference': {'version': 1, 'kind': 'ydb_ref', 'reply_id': reply_id}}
 

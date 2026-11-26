@@ -24,8 +24,20 @@ These are contracts that must NOT be broken. If it seems a task requires breakin
 6. **The session is NOT closed on a handler error**. `end_session: True` — only in the catastrophic catch in [`alice_serverless`](alice_serverless.py:34) and on `GAME_OVER`.
 7. **State serialization is via Pydantic** ([`GameStateV2`](game_state.py:60)) with versioning (`_version`) and graceful V1→V2 migration.
 8. **`SkillState` is an enum** ([`skill_state.py`](skill_state.py:4)). When comparing states, prefer `SkillState.WAITING_MOVE` over the string `'WAITING_MOVE'` (migration in progress — task №11).
-9. **Tests must stay green**. Currently 69/69 passed. Any change that breaks tests requires updating the tests in the same PR with an explanation of why the assertion is outdated.
+9. **Tests must stay green**. Report the actual count from the current pytest run. Any change that breaks tests requires updating the tests in the same PR with an explanation of why the assertion is outdated.
 10. **The Stockfish binary is NOT committed**, it is added separately. Do not touch any mentions of it in `.gitignore` without coordination.
+
+---
+
+The optional shared mode in `shared_alice_serverless.handler` reuses `AliceChess` and the
+existing handlers through `shared_chess/dialog.py`. Player records in YDB persist the dialogue
+snapshot and its revision, including setup before a game exists. Voice and device commands
+use the same reservation/commit protocol. Complete replies are committed with state and replayed
+through a versioned `session_state.previous_response` reference or a short inline reply.
+Legacy response objects remain supported. A `game_ref` binds subsequent answers to both the game
+revision and `dialog_revision`. Dialogue snapshots are also bound to the game's ID and revision
+so older device API releases can safely update the same game. Comparative tests cover complete
+response payloads and positions. See [shared voice dialogue](docs/shared-voice-dialog.md).
 
 ---
 

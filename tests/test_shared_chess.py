@@ -399,3 +399,235 @@ def test_migrated_game_does_not_fall_back_to_context_without_auth(monkeypatch):
     assert reply['session_state']['previous_response']['kind'] == 'inline'
     repeated = shared_alice_serverless.handler(alice_event(1, 'повтори', user, reply['session_state']), None)
     assert repeated['response'] == reply['response']
+
+
+def test_voice_setup_survives_missing_context_and_replays_black_opening(core):
+    _, service, auth, calls = core
+    alice = SharedAlice(service, auth)
+    greeting = alice.handle(alice_event(0, ''), 'owner')
+    assert greeting['user_state_update']['game_state']['skill_state'] == 'WAITING_CONFIRM'
+    assert service.current('owner')['game_id'] is None
+    # Пришёл запрос из другой сессии без локальной копии партии.
+    choice = alice.handle(alice_event(1, 'да'), 'owner')
+    assert choice['user_state_update']['game_state']['skill_state'] == 'WAITING_COLOR'
+    event = alice_event(2, 'черные')
+    reply = alice.handle(event, 'owner')
+    assert reply['user_state_update']['game_state']['user_color'] == 'BLACK'
+    assert service.current('owner')['revision'] == 1
+    assert len(service.current('owner')['history_san']) == 1
+    assert not service.current('owner')['can_undo']
+    assert alice.handle(event, 'owner') == reply  # Ответ потерян до записи контекста.
+    for result in (greeting, choice, reply):
+        assert len(encode(result['session_state']).encode()) <= 1024
+        assert len(encode(result['user_state_update']).encode()) <= 1024
+    assert len(calls) == 1
+
+
+@pytest.mark.parametrize(
+    ('stage', 'answer', 'next_stage'),
+    [
+        ('WAITING_CONFIRM', 'да', 'WAITING_COLOR'),
+        ('WAITING_COLOR', 'белые', 'WAITING_MOVE'),
+    ],
+)
+def test_voice_import_keeps_unfinished_setup(core, stage, answer, next_stage):
+    _, service, auth, _ = core
+    alice = SharedAlice(service, auth)
+    event = alice_event(0, answer, {'game_state': {'skill_state': stage}})
+    response = alice.handle(event, 'owner')
+    assert response['user_state_update']['game_state']['skill_state'] == next_stage
+    assert service.voice_snapshot('owner')['game_state']['skill_state'] == next_stage
+
+
+def test_voice_engine_failure_keeps_color_question_and_allows_retry(core):
+    _, service, auth, calls = core
+    alice = SharedAlice(service, auth)
+    alice.handle(alice_event(0, ''), 'owner')
+    choice = alice.handle(alice_event(1, 'да'), 'owner')
+    engine = service.engine
+    service.engine = lambda *_: (_ for _ in ()).throw(RuntimeError('engine unavailable'))
+    failed = alice.handle(alice_event(2, 'черные', choice['user_state_update'], choice['session_state']), 'owner')
+    assert 'ошибка' in failed['response']['text']
+    assert not failed['response']['end_session']
+    assert failed['user_state_update'] == choice['user_state_update']
+    assert service.current('owner')['game_id'] is None
+    service.engine = engine
+    retry = alice.handle(alice_event(3, 'черные', failed['user_state_update'], failed['session_state']), 'owner')
+    assert retry['user_state_update']['game_state']['skill_state'] == 'WAITING_MOVE'
+    assert len(calls) == 1
+
+
+def test_voice_and_touch_preserve_history_and_undo_the_same_turn(core):
+    _, service, auth, calls = core
+    start(service)
+    alice = SharedAlice(service, auth)
+    first = alice.handle(alice_event(0, 'e2e4'), 'owner')
+    before_touch = service.current('owner')
+    touched = service.execute('owner', 'touch', command(service, 'move', {'uci': 'g1f3'}))['snapshot']
+    assert len(touched['history_san']) == 4
+    # Запрос позиции обновляет копию в Диалогах после касания.
+    latest = alice.handle(alice_event(1, 'назови позицию', first['user_state_update']), 'owner')
+    assert latest['user_state_update']['game_state']['board_state'] == touched['fen']
+    event = alice_event(2, 'отмени ход', latest['user_state_update'], latest['session_state'])
+    event['request']['nlu']['intents'] = {'UNDO': {}}
+    undone = alice.handle(event, 'owner')
+    assert 'Ход отменен' in undone['response']['text']
+    assert service.current('owner')['fen'] == before_touch['fen']
+    assert service.current('owner')['history_san'] == before_touch['history_san']
+    assert len(calls) == 2
+
+
+def test_missing_shared_record_is_not_reimported_from_old_context(core):
+    _, service, auth, _ = core
+    alice = SharedAlice(service, auth)
+    user = {
+        'game_ref': {'game_id': 'lost', 'revision': 2},
+        'game_state': {'board_state': chess.STARTING_FEN, 'user_color': 'WHITE'},
+    }
+    reply = alice.handle(alice_event(0, 'e2e4', user), 'owner')
+    assert 'недоступна' in reply['response']['text']
+    assert reply['user_state_update'] == user
+    assert service.current('owner')['game_id'] is None
+
+
+def test_device_cannot_submit_internal_voice_command(core):
+    _, service, auth, _ = core
+    token = 'd' * 43
+    auth.seed_test_session('owner', token, kind='device')
+    api = ChessApi(service, auth)
+    status, _ = api.dispatch('POST', '/v1/commands', command(service, 'voice'), 'Bearer ' + token)
+    assert status == 400
+    assert service.current('owner')['game_id'] is None
+
+
+def test_old_yes_cannot_confirm_a_different_voice_question(core):
+    _, service, auth, _ = core
+    start(service)
+    alice = SharedAlice(service, auth)
+    resign = alice.handle(alice_event(0, 'сдаюсь'), 'owner')
+    other_session = alice_event(0, 'новая игра')
+    other_session['session']['session_id'] = 'another-dialog'
+    alice.handle(other_session, 'owner')
+    reply = alice.handle(alice_event(1, 'да', resign['user_state_update'], resign['session_state']), 'owner')
+    assert 'Позиция изменилась' in reply['response']['text']
+    assert service.current('owner')['status'] == 'playing'
+    assert service.voice_snapshot('owner')['game_state']['skill_state'] == 'WAITING_NEWGAME_CONFIRM'
+
+
+def test_voice_engine_runs_outside_transaction_and_blocks_touch(core):
+    _, service, auth, _ = core
+    start(service)
+    entered, release = threading.Event(), threading.Event()
+
+    def engine(board, level):
+        assert service.current('owner')['busy']
+        entered.set()
+        assert release.wait(3)
+        return chess.Move.from_uci('e7e5')
+
+    service.engine = engine
+    alice = SharedAlice(service, auth)
+    with ThreadPoolExecutor() as pool:
+        future = pool.submit(alice.handle, alice_event(0, 'e2e4'), 'owner')
+        assert entered.wait(3)
+        try:
+            result = service.execute('owner', 'touch', command(service, 'move', {'uci': 'd2d4'}))
+            assert result['code'] == 'GAME_BUSY'
+        finally:
+            release.set()
+        reply = future.result()
+    assert reply['user_state_update']['game_ref']['revision'] == 2
+    assert service.current('owner')['history_san'] == ['e4', 'e5']
+
+
+@pytest.mark.parametrize(('kind', 'stage'), [('new_game', 'WAITING_COLOR'), ('resign', 'INITIATED')])
+def test_pending_confirmation_from_previous_pilot_version(core, kind, stage):
+    _, service, auth, _ = core
+    current = start(service)
+    user = {'game_ref': {'game_id': current['game_id'], 'revision': current['revision']}}
+    state = {'confirm': {'type': kind, 'game_id': current['game_id'], 'revision': current['revision']}}
+    reply = SharedAlice(service, auth).handle(alice_event(0, 'да', user, state), 'owner')
+    assert reply['user_state_update']['game_state']['skill_state'] == stage
+    if kind == 'new_game':
+        assert service.current('owner')['game_id'] is None
+    else:
+        assert service.current('owner')['status'] == 'finished'
+
+
+def test_repeat_keeps_pending_screen_pairing(core):
+    _, service, auth, _ = core
+    pair = auth.create_pairing('test-client')
+    alice = SharedAlice(service, auth)
+    question = alice.handle(alice_event(0, 'подключить экран ' + pair['code']), 'owner')
+    repeated = alice.handle(alice_event(1, 'повтори', state=question['session_state']), 'owner')
+    assert repeated['response'] == question['response']
+    alice.handle(alice_event(2, 'да', state=repeated['session_state']), 'owner')
+    assert auth.authenticate(pair['device_token'])['owner'] == 'owner'
+
+
+def test_voice_uses_shared_history_to_recognize_repetition(core):
+    repo, service, auth, calls = core
+    current = start(service)
+    state = SharedGameState(
+        moves_uci=['g1f3', 'g8f6', 'f3g1', 'f6g8'] * 2,
+        turn_starts=[0, 2, 4, 6],
+    )
+    repo.atomic(lambda tx: tx.put('games', 'owner', current['game_id'], {'state': state.model_dump(), 'revision': 5}))
+    event = alice_event(0, 'конь f3')
+    event['request']['nlu']['intents'] = {
+        'CHESS_MOVE': {'slots': {'piece': {'value': 'конь'}, 'file_to': {'value': 'f'}, 'rank_to': {'value': '3'}}},
+    }
+    reply = SharedAlice(service, auth).handle(event, 'owner')
+    assert reply['user_state_update']['game_state']['skill_state'] == 'GAME_OVER'
+    assert service.current('owner')['result'] == '1/2-1/2'
+    assert not calls
+
+
+def test_voice_restores_position_after_a_previous_device_api_writes(core):
+    repo, service, auth, _ = core
+    opening = start(service)
+    alice = SharedAlice(service, auth)
+    question = alice.handle(alice_event(0, 'сдаюсь'), 'owner')
+
+    def old_device_write(tx):
+        # Старый API обновлял games и оставлял поля dialog в players без изменений.
+        record = tx.get('games', 'owner', opening['game_id'])
+        state = service._apply(
+            SharedGameState.model_validate(record['state']), {'type': 'move', 'payload': {'uci': 'e2e4'}}
+        )
+        tx.put('games', 'owner', opening['game_id'], {'state': state.model_dump(), 'revision': 2})
+
+    repo.atomic(old_device_write)
+    restored = alice.handle(alice_event(1, 'назови позицию', question['user_state_update']), 'owner')
+    assert restored['user_state_update']['game_state']['board_state'] == service.current('owner')['fen']
+    assert restored['user_state_update']['game_state']['skill_state'] == 'WAITING_MOVE'
+    alice.handle(alice_event(2, 'да', restored['user_state_update'], restored['session_state']), 'owner')
+    assert service.current('owner')['status'] == 'playing'
+
+
+def test_voice_imported_undo_restores_previous_computer_move(core):
+    _, service, auth, _ = core
+    board = chess.Board()
+    for san in ('e4', 'e5'):
+        board.push_san(san)
+    before = board.fen()
+    for san in ('Nf3', 'Nc6'):
+        board.push_san(san)
+    user = {
+        'game_state': {
+            '_version': 2,
+            'board_state': board.fen(),
+            'prev_board_state': before,
+            'skill_state': 'WAITING_MOVE',
+            'user_color': 'WHITE',
+            'last_move': 'Nc6',
+            'prev_last_move': 'e5',
+        }
+    }
+    event = alice_event(0, 'отмени ход', user)
+    event['request']['nlu']['intents'] = {'UNDO': {}}
+    reply = SharedAlice(service, auth).handle(event, 'owner')
+    assert reply['user_state_update']['game_state']['last_move'] == 'e5'
+    assert service.current('owner')['fen'] == before
+    assert service.current('owner')['last_move'] == 'e5'
+    assert not service.current('owner')['can_undo']

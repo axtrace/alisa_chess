@@ -89,11 +89,16 @@ class SharedGameState(BaseModel):
     def legacy_snapshot(self):
         board = self.board()
         previous = self.legacy_undo_fen or ''
+        previous_move = ''
         if self.turn_starts:
             previous_board = chess.Board(self.initial_fen)
             for uci in self.moves_uci[: self.turn_starts[-1]]:
                 previous_board.push_uci(uci)
             previous = previous_board.fen()
+            previous_move = self.base_last_move
+            if previous_board.move_stack:
+                move = previous_board.pop()
+                previous_move = previous_board.san(move)
         return {
             '_version': 2,
             'board_state': board.fen(),
@@ -104,6 +109,7 @@ class SharedGameState(BaseModel):
             'skill_level': self.skill_level,
             'time_level': 0.1,
             'last_move': self.last_move(),
+            'prev_last_move': previous_move,
             'move_count': len(self.turn_starts),
         }
 

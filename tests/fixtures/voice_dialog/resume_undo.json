@@ -1,0 +1,40 @@
+{
+  "legacy": [
+    {
+      "response": {
+        "text": "\nКажется, мы с вами уже играли в предыдущей сессии.\nПродолжим нашу игру.\n\nЧерные пошли e5.\n\n8 ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜\n7 ♟ ♟ ♟ ♟ □ ♟ ♟ ♟\n6 □ □ □ □ □ □ □ □\n5 □ □ □ □ ♟ □ □ □\n4 □ □ □ □ ♙ □ □ □\n3 □ □ □ □ □ □ □ □\n2 ♙ ♙ ♙ ♙ □ ♙ ♙ ♙\n1 ♖ ♘ ♗ ♕ ♔ ♗ ♘ ♖\n  a b c d e f g h\n\nВаш ход!",
+        "tts": "\nКажется, мы с вами уже играли в предыдущей сессии.\nПродолжим нашу игру.\n\nЧерные пошли е 5.\n\nВаш ход!",
+        "end_session": false
+      },
+      "fen": "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2",
+      "stage": "WAITING_MOVE",
+      "color": "WHITE",
+      "level": 8,
+      "engine_calls": 0
+    },
+    {
+      "response": {
+        "text": "Черные пошли Nc6.\n\n8 ♜ ▫ ♝ ♛ ♚ ♝ ♞ ♜\n7 ♟ ♟ ♟ ♟ □ ♟ ♟ ♟\n6 □ □ ♞ □ □ □ □ □\n5 □ □ □ □ ♟ □ □ □\n4 □ □ □ □ ♙ □ □ □\n3 □ □ □ □ □ ♘ □ □\n2 ♙ ♙ ♙ ♙ □ ♙ ♙ ♙\n1 ♖ ♘ ♗ ♕ ♔ ♗ □ ♖\n  a b c d e f g h\n\nВаш ход!",
+        "tts": "Черные пошли Конь цэ 6.\n. Ваш ход!",
+        "end_session": false
+      },
+      "fen": "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3",
+      "stage": "WAITING_MOVE",
+      "color": "WHITE",
+      "level": 8,
+      "engine_calls": 1
+    },
+    {
+      "response": {
+        "text": "\nХод отменен. Вернула доску в предыдущее состояние.\n\nЧерные пошли .\n\n8 ♜ ♞ ♝ ♛ ♚ ♝ ♞ ♜\n7 ♟ ♟ ♟ ♟ □ ♟ ♟ ♟\n6 □ □ □ □ □ □ □ □\n5 □ □ □ □ ♟ □ □ □\n4 □ □ □ □ ♙ □ □ □\n3 □ □ □ □ □ □ □ □\n2 ♙ ♙ ♙ ♙ □ ♙ ♙ ♙\n1 ♖ ♘ ♗ ♕ ♔ ♗ ♘ ♖\n  a b c d e f g h\n",
+        "tts": "\nХод отменен. Вернула доску в предыдущее состояние.\n\nЧерные пошли .\n",
+        "end_session": false
+      },
+      "fen": "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2",
+      "stage": "WAITING_MOVE",
+      "color": "WHITE",
+      "level": 8,
+      "engine_calls": 0
+    }
+  ]
+}
