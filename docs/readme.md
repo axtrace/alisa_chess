@@ -267,24 +267,7 @@ NFR-3: Надежность
 ```
 
 # <a name="deployment"></a> Деплой
-## Конфигурация
-### Тестовая среда
-- Файл: `.github/workflows/yacloud-func-python-testing.yml`
-- Триггер: ручной запуск (workflow_dispatch)
-- Имя функции: `alice-chess-testing`
-- Память: 2048MB
-
-### Продакшен среда
-- Файл: `.github/workflows/yacloud-func-python prod.yml`
-- Триггер: ручной запуск
-- Имя функции: `alice-chess-stable`
-- Память: 4096MB
-
-## Переменные окружения
-- `YC_SA_JSON_CREDENTIALS` - ключ сервисного аккаунта
-- `FOLDER_ID` - ID папки в Яндекс Облаке
-- `DEBUG` - режим отладки
-- `COUNT` - счетчик запросов
+Правила запуска GitHub Actions, конфигурация трёх функций и порядок отката приведены в [инструкции по поставке](deployment.md).
 
 # <a name="tests"></a> Базовые тесты
 1. Проверка корректности ходов

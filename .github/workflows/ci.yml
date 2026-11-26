@@ -1,44 +1,57 @@
 name: CI
 
 on:
-  push:
-    branches: [main, master]
   pull_request:
-    branches: [main, master]
+    branches: [master, main]
+  workflow_call:
+    inputs:
+      target:
+        required: true
+        type: string
+
+permissions:
+  contents: read
 
 jobs:
   lint-and-test:
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ["3.11"]
-
+    runs-on: ubuntu-22.04
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: '3.14'
           cache: pip
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install ruff mypy pytest pytest-subtests
-
-      - name: Ruff lint
-        run: ruff check .
-
-      - name: Ruff format check
-        run: ruff format --check .
-
-      - name: Mypy (strict only on opinionated modules)
+      - run: python -m pip install -r requirements-app.txt ruff==0.17.6 pytest mypy
+      - run: ruff check .
+      - run: ruff format --check .
+      - name: Mypy (advisory)
         run: mypy game_state.py skill_state.py tts_builder.py
         continue-on-error: true
+      - run: python -m pytest tests/
 
-      - name: Pytest
-        run: pytest tests/ -v
+  package:
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        target: ${{ fromJSON(inputs.target && format('["{0}"]', inputs.target) || '["testing","api-testing","production"]') }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+          cache: pip
+      - name: Build and smoke-test the function ZIP
+        env:
+          TARGET: ${{ matrix.target }}
+        run: bash .github/scripts/build-function.sh "$TARGET"
+      - uses: actions/upload-artifact@v4
+        if: github.event_name != 'pull_request'
+        with:
+          name: function-${{ matrix.target }}-${{ github.sha }}
+          path: |
+            dist/function.zip
+            dist/function.sha256
+          if-no-files-found: error
+          overwrite: true
+          compression-level: 0
+          retention-days: 7

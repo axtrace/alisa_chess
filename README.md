@@ -12,6 +12,8 @@
 - Восстановление состояния игры между запросами через `user_state_update`
 - Идемпотентность повторных запросов по `message_id`
 - Поддержка `YANDEX.REPEAT` через `session_state`
+- «Назови позицию» перечисляет фигуры обеих сторон. «Где мои кони?» называет только поля коней игрока.
+- «Отмени ход» возвращает позицию и последний ход соперника к моменту перед последней сыгранной парой ходов.
 - Версионируемая схема состояния игры (Pydantic V2) с graceful fallback при ошибках десериализации
 
 ## Состояния навыка
@@ -150,10 +152,7 @@ python3 -m unittest discover tests
 
 ## Развёртывание
 
-Поддерживается развёртывание как Yandex Cloud Function. Точка входа — `alice_serverless.handler`. Workflow для деплоя лежат в [`.github/workflows/`](.github/workflows/). Подробнее в [`docs/deployment.md`](docs/deployment.md).
-
-**Изменения после одобрения модератора:**
-Удалены процессы `Manual Deploy to TESTING YaCloud Functions` и `Manual Deploy to PROD YaCloud Functions`, остались только `Manual Deploy 2 PROD YaCloud Functions` и `Auto Deploy 2 TESTING YaCloud Functions`. Переменные оставлены с постфиксом `_2` для совместимости.
+Поставки функций проходят через GitHub Actions. После слияния в основную ветку обновляется тестовый голосовой навык. Продовый навык и тестовый API обновляются ручным запуском Actions. Триггеры, состав пакетов и проверка версии описаны в [инструкции по поставке](docs/deployment.md).
 
 ## Архитектура
 
