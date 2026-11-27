@@ -1,108 +1,149 @@
 # Архитектура проекта
 
-`alisa_chess` — голосовой шахматный навык для Яндекс.Алисы, развёрнутый как Yandex Cloud Function. Движок — локальный бинарь [Stockfish](https://stockfishchess.org/) (минимально совместимая версия — 14+), поднимаемый по UCI через [python-chess](https://github.com/niklasf/python-chess).
+`alisa_chess` работает в двух контурах. Продовый голосовой навык сохраняет состояние
+через Яндекс Диалоги. Тестовый контур объединяет закрытый голосовой навык и
+Android-приложение общей партией в YDB.
 
-Общий режим `shared_alice_serverless.handler` хранит партии и этап голосового диалога в YDB.
-Он исполняет штатные обработчики `AliceChess` через `shared_chess/dialog.py`.
-Голос и приложение используют общий протокол команд с проверкой ревизий.
-[Устройство и проверки голосового диалога с YDB](shared-voice-dialog.md) описаны отдельно.
+## Контуры
 
-## Основные компоненты
+| Параметр | Прод | Тестовый навык | Тестовый API приложения |
+| --- | --- | --- | --- |
+| Функция | `alice-chess-stable` | `alice-chess-testing` | `alice-chess-duo-api-testing` |
+| Точка входа | `alice_serverless.handler` | `shared_alice_serverless.handler` | `app_serverless.handler` |
+| Runtime | Python 3.14 | Python 3.14 | Python 3.14 |
+| Память | 8 ГиБ | 2 ГиБ | 1 ГиБ |
+| Таймаут функции | 5 с | 5 с | 30 с |
+| Движок в пакете | Stockfish 14.1 | Stockfish 19 | Stockfish 19 |
+| Зависимости | `requirements.txt` | `requirements-app.txt` | `requirements-app.txt` |
+| Состояние партии | Диалоги | Тестовая YDB | Та же тестовая YDB |
+| Вход | Backend основного навыка | Закрытый IAM-вызов Диалогов | HTTPS Gateway и device-токен |
+| Поставка | Ручной workflow production | Автоматически после слияния в master | Ручной workflow api-testing |
 
-### 1. Точка входа (Cloud Function)
-- [`alice_serverless.py`](../alice_serverless.py) — функция `handler(event, context)`, верхний уровень catch-all, привязка контекста логирования, формирование ответа в формате протокола Алисы.
+Значения задаются в [скрипте поставки](../.github/scripts/publish-function.py).
+Перед выпуском workflow сверяет их с активной версией функции.
+Порядок запуска и отката описан в [инструкции по поставке](deployment.md).
 
-### 2. Координатор навыка
-- [`alice_chess.py`](../alice_chess.py) — класс `AliceChess`. Маршрутизация по [`SkillState`](../skill_state.py), идемпотентность по `message_id`, чтение/запись `session_state` (включая `previous_response` для `YANDEX.REPEAT`).
+## Прод
 
-### 3. Игровая логика
-- [`game.py`](../game.py) — класс `Game`: обёртка над `chess.Board` + UCI. Ленивая инициализация Stockfish, контекстный менеджер `__enter__/__exit__` с гарантированным `engine.quit()`.
-- [`move_extractor.py`](../move_extractor.py) — `MoveExtractor`: извлечение хода из NLU-интентов и свободного текста (RU/EN, SAN, длинная нотация, рокировки, превращения).
+### Обработка запроса
 
-### 4. Состояние игры и enum
-- [`game_state.py`](../game_state.py) — Pydantic-схемы `GameStateV1` / `GameStateV2`, автоопределение версии (`_version`), graceful миграция V1→V2, фабрика `create_game_state_from_game()`, восстановление `restore_game_from_state()`.
-- [`skill_state.py`](../skill_state.py) — `class SkillState(str, Enum)`. Используется во всех хендлерах и в `game.py` вместо строковых литералов.
+1. Диалоги передают `event` в [alice_serverless.handler](../alice_serverless.py).
+2. [AliceChess](../alice_chess.py) проверяет повторную доставку по `message_id`.
+3. Для нового запроса [GameState](../game_state.py) восстанавливает позицию и этап
+   диалога из `state.user.game_state`, при необходимости мигрируя V1 в V2.
+4. [SpecialIntentHandler](../handlers/special_intent_handler.py) проверяет специальные
+   команды. Затем выбирается обработчик текущего `SkillState`.
+5. Хендлер применяет ход через [Game](../game.py), при необходимости запрашивая Stockfish.
+6. Ответ содержит `response`, `user_state_update.game_state` и `session_state`.
+   Диалоги сохраняют их для следующего запроса.
 
-### 5. Обработчики состояний
-Каждый файл в [`handlers/`](../handlers/) отвечает за одно состояние навыка и наследуется от [`BaseHandler`](../handlers/base_handler.py):
+Stockfish создаётся лениво при первом расчёте хода. Контекстный менеджер `AliceChess`
+закрывает его через `Game.quit()` после обработки запроса.
 
-| Файл | Состояние / роль |
-|---|---|
-| `base_handler.py` | Абстрактный базовый класс + `safe_handle()` (per-handler try/except) |
-| `base_confirmation_handler.py` | Базовый класс для подтверждающих хендлеров (да/нет) |
-| `initiated_handler.py` | Стартовое состояние, приветствие |
-| `waiting_color_handler.py` | Ожидание выбора цвета пользователем |
-| `waiting_confirm_handler.py` | Подтверждение начала игры |
-| `waiting_move_handler.py` | Ожидание хода пользователя; основная боевая логика |
-| `waiting_skill_level_handler.py` | Установка уровня сложности |
-| `waiting_draw_confirm_handler.py` | Подтверждение ничьей |
-| `waiting_resign_confirm_handler.py` | Подтверждение сдачи |
-| `waiting_newgame_confirm_handler.py` | Подтверждение новой игры |
-| `game_over_handler.py` | Завершение партии |
-| `special_intent_handler.py` | Универсальные интенты (help, undo, repeat, show_board, …) через `_intent_registry` |
+### Состояние и повторы
 
-### 6. Тексты и TTS
-- [`texts.py`](../texts.py) — все текстовые шаблоны навыка.
-- [`text_preparer.py`](../text_preparer.py) — `TextPreparer`: формирование `text` и базового `tts`.
-- [`speaker.py`](../speaker.py) — `Speaker`: озвучка ходов, фигур, мат/пат.
-- [`tts_builder.py`](../tts_builder.py) — `TtsBuilder`: SSML-хелперы (паузы `silence`, `speaker` для звуковых эффектов, префиксы/суффиксы). Все SSML-теги вынесены сюда из хендлеров.
+| Данные | Где хранятся |
+| --- | --- |
+| Позиция, цвет, сложность, этап разговора, данные отмены | `state.user.game_state` |
+| Номер обработанного сообщения | `session_state.last_message_id` |
+| Полный предыдущий ответ | `session_state.previous_response` |
 
-### 7. Валидаторы
-- [`request_validators/`](../request_validators/) — `BaseValidator`, `IntentValidator` (yes/no/help/draw/resign/new_game/set_skill_level/show_board, …).
+Дубликат с тем же `message_id` возвращает сохранённый ответ. Команда `YANDEX.REPEAT`
+воспроизводит предыдущую реплику. `BaseHandler.safe_handle()` обрабатывает ошибку
+конкретного хендлера, а точка входа сохраняет доступное состояние при общей ошибке.
 
-### 8. NLU-интенты Алисы
-- [`intents/*.yaml`](../intents/) — описания намерений и сущностей (фигуры, цвета, рокировки, ходы).
+## Тест
 
-### 9. Логирование
-- [`logging_config.py`](../logging_config.py) — единственный источник конфигурации:
-  - `JsonFormatter` — структурированный вывод JSON (`ts`, `level`, `logger`, `message`, `ctx`, extra-поля).
-  - `setup_logging()` — идемпотентная установка root-handler'а.
-  - `_request_context: ContextVar` + `bind_request_context(**fields)` / `clear_request_context()` — привязка `session_id`/`message_id`/`user_id` к каждому запросу.
-- Все модули используют `logger = logging.getLogger(__name__)` без `setLevel`. Уровень задаётся переменной окружения `LOG_LEVEL` (по умолчанию `INFO`).
+### Голосовой навык
 
-### 10. Тесты
-- [`tests/`](../tests/) — pytest/unittest.
-- [`tests/conftest.py`](../tests/conftest.py) — autouse-фикстура, глобально подменяющая `chess.engine.SimpleEngine.popen_uci` фейковым движком. Гарантирует, что ни один unit-тест не запустит реальный бинарь Stockfish.
+Тестовый навык «Голосовые шахматы» имеет ID
+`462df9a1-7fb1-41d4-8082-810aad12ce69`. Общий режим включён для разрешённого аккаунта.
 
-## Поток данных
+[shared_alice_serverless.handler](../shared_alice_serverless.py) использует
+`SHARED_ALICE_AUTH=dialogs_iam`. Доступ обеспечивают закрытый IAM-вызов функции,
+проверка ID функции и навыка и постоянный `session.user.user_id`.
+[dialogs_owner](../shared_chess/dialogs_identity.py) получает псевдонимный ключ игрока,
+привязанный к аккаунту и навыку.
 
-1. Пользователь обращается к Алисе → платформа вызывает Yandex Cloud Function.
-2. [`alice_serverless.handler`](../alice_serverless.py) принимает `event`, вызывает `setup_logging()` (no-op при warm container), привязывает `session_id` / `message_id` / `user_id` к ContextVar.
-3. Создаётся `AliceChess` через `with`-блок (гарантирует `engine.quit()` через `Game.__exit__`).
-4. `AliceChess.handle_request()`:
-   - десериализует `state.user.game_state` через `GameState.from_dict()` (V1→V2 миграция при необходимости);
-   - проверяет идемпотентность по `last_message_id` из `session_state`;
-   - маршрутизирует на нужный хендлер по `SkillState`.
-5. Хендлер парсит интенты/текст, валидирует, при необходимости вызывает `Game.user_move()` / `Game.comp_move()`.
-6. Ответ собирается в `text`/`tts` через `TextPreparer`, `Speaker`, `TtsBuilder`.
-7. `alice_serverless` возвращает payload с `response`, `user_state_update.game_state`, `session_state.previous_response` (+ `last_message_id`).
-8. При исключении на любом уровне срабатывает либо `BaseHandler.safe_handle`, либо катастрофический catch в `alice_serverless` — оба сохраняют `user_state_update` со снимком состояния.
+[SharedAlice](../shared_chess/alice.py) обрабатывает повторы, привязку экрана и передачу
+голосовой команды в [GameService](../shared_chess/service.py).
+[play_dialog](../shared_chess/dialog.py) исполняет штатные `AliceChess` и `handlers/`.
+`VoiceGame` связывает эти обработчики с движком общего сервиса. Выбор цвета,
+подтверждения, сложность и тексты ответов проверяются сравнением с продовым диалогом.
 
-## Конфигурация
+Для аккаунта вне пилота без общей партии используется `alice_serverless.handler`.
+Для перенесённой партии сбой YDB или доступа возвращает ошибку с входным состоянием.
+Драйвер YDB и пул сессий создаются лениво и переиспользуются внутри контейнера функции.
 
-### Переменные окружения
-| Переменная | Назначение | По умолчанию |
-|---|---|---|
-| `LOG_LEVEL` | Уровень логирования root-logger'а | `INFO` |
+### Приложение и общая партия
 
-### Настройки деплоя (Yandex Cloud Function)
-- Runtime: Python 3.9 (минимально поддерживаемая версия; локально CI прогоняется и на 3.11).
-- Entry point: `alice_serverless.handler`.
-- Память: 2048 MB (testing), 4096 MB (prod).
-- Stockfish-бинарь кладётся рядом как `./stockfish` и НЕ коммитится в репозиторий (см. [`AGENTS.md`](../AGENTS.md), `.gitignore`).
-- Зависимости фиксируются в [`requirements.txt`](../requirements.txt) для деплоя; «канонический» источник истины — [`pyproject.toml`](../pyproject.toml).
+Приложение получает код подключения. Игрок подтверждает его в тестовом навыке.
+[DeviceAuth](../shared_chess/auth.py) связывает устройство с владельцем партии
+и проверяет device-токен в запросах к API.
 
-## Диаграммы
+Gateway предоставляет создание привязки, проверку её статуса, чтение текущей партии,
+отправку команды, чтение результата команды и отзыв сессии устройства.
+[ChessApi](../shared_chess/api.py) маршрутизирует эти запросы в сервис партий.
+Авторизованный маршрут `/v1/skill` доступен на уровне адаптера навыка.
+Публичный Gateway ограничен операциями устройства.
 
-- Конечный автомат состояний: [`docs/diagrams/state_diagram.md`](diagrams/state_diagram.md).
-- Sequence обработки запроса: [`docs/diagrams/sd_request_processing.md`](diagrams/sd_request_processing.md).
-- Диаграмма классов: [`docs/diagrams/class_diagram.md`](diagrams/class_diagram.md).
-- Контекстная диаграмма C4 L1: [`docs/diagrams/alice-chess-c4level1.jpg`](diagrams/alice-chess-c4level1.jpg).
+Общий код сервиса исполняется внутри каждой функции. Голосовой и экранный интерфейсы
+работают с одной YDB через собственные экземпляры `GameService`.
+SQLite доступна при явном `CHESS_STORAGE=sqlite` для локальной разработки.
+При `CHESS_STORAGE=ydb` ошибка базы возвращается вызывающему интерфейсу.
 
-## Связанные документы
+### Состояние и выполнение команды
 
-- [`AGENTS.md`](../AGENTS.md) — правила и инварианты для агентов и разработчиков.
-- [`README.md`](../README.md) — общее описание проекта.
-- [`docs/api.md`](api.md) — формат запроса/ответа Алисы.
-- [`docs/deployment.md`](deployment.md) — пошаговый деплой.
-- [`docs/skill_description.md`](skill_description.md) — публичное описание навыка для каталога.
+| Данные | Где хранятся |
+| --- | --- |
+| Позиция, история ходов, результат и ревизия партии | YDB, `games` |
+| Активная партия, снимок диалога и `dialog_revision` | YDB, `players` |
+| Резервирование, lease и результат команды | YDB, `commands` |
+| Полные неизменяемые ответы Алисы | YDB, `replies` |
+| Привязки и сессии устройств | YDB, `pairings` и `device_sessions` |
+| Совместимый снимок и ссылка на партию | `user_state_update.game_state` и `game_ref` |
+| Ссылка на ответ или короткий ответ | `session_state.previous_response` |
+
+1. Сервис проверяет ID команды и ожидаемые ревизии, затем резервирует операцию
+   короткой транзакцией Serializable Read Write.
+2. Диалог и Stockfish исполняются вне транзакции. Процесс движка закрывается после расчёта.
+3. Новая транзакция проверяет lease и ревизию, сохраняет позицию, этап диалога,
+   результат команды и полный ответ Алисы.
+4. Повторная доставка возвращает записанный результат. «Повтори» разрешает ссылку
+   на реплику. Короткую реплику об ошибке можно повторить из контекста сессии.
+
+Этап разговора сохраняется уже до создания партии, включая вопрос о цвете.
+Снимок диалога привязан к ID и ревизии партии. После хода с экрана устаревший снимок
+отбрасывается при чтении. `game_ref.dialog_revision` защищает ответ «да» при изменении
+вопроса другой сессией. Подробности и проверки приведены в [описании общего диалога](shared-voice-dialog.md).
+
+### Проверенные сценарии и проверка на устройстве
+
+На тестовом контуре проверены IAM-вход опубликованного навыка, привязка экрана и
+общая партия с APK. Касания и ответ облачного Stockfish проверены в эмуляторе Android.
+Доставка реальной речи в открытый APK через YaOS AppFunctions требует проверки на Дуо Макс.
+
+## Общие компоненты
+
+| Модуль | Роль |
+| --- | --- |
+| [alice_chess.py](../alice_chess.py) | Выбор специального интента или обработчика `SkillState` |
+| [handlers/](../handlers/) | Приветствие, выбор цвета, ход, подтверждения и сложность |
+| [game.py](../game.py) | `chess.Board`, ход, отмена, ленивая работа с UCI-движком |
+| [game_state.py](../game_state.py) | Pydantic V1/V2, сериализация и миграция состояния |
+| [move_extractor.py](../move_extractor.py) | Ход из NLU-интентов и текста |
+| [request_validators/](../request_validators/) | Проверка намерений пользователя |
+| [texts.py](../texts.py), [text_preparer.py](../text_preparer.py), [speaker.py](../speaker.py) | Текст и озвучка |
+| [tts_builder.py](../tts_builder.py) | SSML, паузы и звуковые эффекты |
+| [intents/](../intents/) | Описания NLU-интентов Диалогов |
+| [logging_config.py](../logging_config.py), [metrics.py](../metrics.py) | JSON-логи, контекст запроса и измерения |
+
+## Схемы и связанные документы
+
+- [Контекстные схемы прода и теста](readme.md#context_diagram).
+- [Обработка запроса в проде и тесте](diagrams/sd_request_processing.md).
+- [Общий автомат голосового диалога](diagrams/state_diagram.md).
+- [Классы прода и тестового режима](diagrams/class_diagram.md).
+- [Навигация по схемам](diagrams/readme.md).
+- [Протокол голосового навыка](api.md).
+- [Поставка через GitHub Actions](deployment.md).

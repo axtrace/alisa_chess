@@ -1,44 +1,41 @@
-stateDiagram-v2
-    [*] --> INITIATED: Новый пользователь / новая игра
-    INITIATED --> WAITING_CONFIRM: Приветствие
-    WAITING_CONFIRM --> WAITING_COLOR: Пользователь согласился
-    WAITING_COLOR --> WAITING_MOVE: Цвет выбран
-    WAITING_MOVE --> WAITING_PROMOTION: Требуется превращение пешки
-    WAITING_PROMOTION --> WAITING_MOVE: Пешка превращена
-    WAITING_MOVE --> WAITING_DRAW_CONFIRM: Предложение ничьей
-    WAITING_DRAW_CONFIRM --> WAITING_MOVE: Ничья отклонена
-    WAITING_DRAW_CONFIRM --> INITIATED: Ничья принята
-    WAITING_MOVE --> WAITING_RESIGN_CONFIRM: Предложение сдачи
-    WAITING_RESIGN_CONFIRM --> WAITING_MOVE: Сдача отклонена
-    WAITING_RESIGN_CONFIRM --> INITIATED: Сдача принята
-    WAITING_MOVE --> GAME_OVER: Мат или пат
-    WAITING_PROMOTION --> GAME_OVER: Мат или пат после превращения
-    GAME_OVER --> INITIATED: Новая игра
-    GAME_OVER --> [*]: Завершение сессии
-    WAITING_CONFIRM --> [*]: Завершение сессии
-    WAITING_COLOR --> [*]: Завершение сессии
-    WAITING_MOVE --> [*]: Завершение сессии
-    WAITING_PROMOTION --> [*]: Завершение сессии
-    WAITING_DRAW_CONFIRM --> [*]: Завершение сессии
-    WAITING_RESIGN_CONFIRM --> [*]: Завершение сессии
-    
-    %% Новые состояния и переходы
-    WAITING_MOVE --> WAITING_NEWGAME_CONFIRM: Запрос новой игры
-    WAITING_NEWGAME_CONFIRM --> WAITING_COLOR: Новая игра подтверждена
-    WAITING_NEWGAME_CONFIRM --> WAITING_MOVE: Новая игра отклонена
-    WAITING_MOVE --> WAITING_SKILL_LEVEL: Запрос изменения уровня
-    WAITING_SKILL_LEVEL --> WAITING_MOVE: Уровень изменен
-    WAITING_NEWGAME_CONFIRM --> [*]: Завершение сессии
-    WAITING_SKILL_LEVEL --> [*]: Завершение сессии
+# Состояния голосового диалога
 
-    note right of INITIATED: Начальное состояние
-    note right of WAITING_CONFIRM: Ожидание согласия пользователя
-    note right of WAITING_COLOR: Ожидание выбора цвета
-    note right of WAITING_MOVE: Ожидание хода пользователя
-    note right of WAITING_PROMOTION: Ожидание превращения пешки
-    note right of WAITING_DRAW_CONFIRM: Ожидание подтверждения ничьей
-    note right of WAITING_RESIGN_CONFIRM: Ожидание подтверждения сдачи
-    note right of WAITING_NEWGAME_CONFIRM: Ожидание подтверждения новой игры
-    note right of WAITING_SKILL_LEVEL: Ожидание выбора уровня сложности
-    note right of GAME_OVER: Игра завершена
-``` 
+Прод и разрешённый аккаунт тестового навыка используют одни обработчики `SkillState`.
+Схема показывает основной сценарий. Специальные интенты обрабатываются до выбора
+хендлера текущего состояния. При отказе от подтверждения или смены сложности
+восстанавливается `prev_skill_state`.
+
+```mermaid
+stateDiagram-v2
+    [*] --> INITIATED
+    INITIATED --> WAITING_CONFIRM: Приветствие
+    WAITING_CONFIRM --> WAITING_COLOR: Да
+    WAITING_COLOR --> WAITING_MOVE: Цвет выбран, при чёрных ходит Stockfish
+    WAITING_MOVE --> WAITING_NEWGAME_CONFIRM: Новая игра
+    GAME_OVER --> WAITING_NEWGAME_CONFIRM: Новая игра
+    WAITING_NEWGAME_CONFIRM --> WAITING_COLOR: Да, сброс позиции и цвета
+    WAITING_NEWGAME_CONFIRM --> WAITING_MOVE: Нет, возврат к предыдущему состоянию
+    WAITING_MOVE --> WAITING_DRAW_CONFIRM: Ничья
+    WAITING_DRAW_CONFIRM --> INITIATED: Да
+    WAITING_DRAW_CONFIRM --> WAITING_MOVE: Нет
+    WAITING_MOVE --> WAITING_RESIGN_CONFIRM: Сдаюсь
+    WAITING_RESIGN_CONFIRM --> INITIATED: Да
+    WAITING_RESIGN_CONFIRM --> WAITING_MOVE: Нет
+    WAITING_MOVE --> WAITING_SKILL_LEVEL: Изменить сложность
+    WAITING_SKILL_LEVEL --> WAITING_MOVE: Уровень выбран или изменение отменено
+    WAITING_MOVE --> GAME_OVER: Мат, пат или условие ничьей
+
+    note right of WAITING_MOVE
+        Ход, помощь, показ позиции и отмена
+        обычно сохраняют WAITING_MOVE
+    end note
+```
+
+| Данные автомата | Прод | Тестовый общий режим |
+| --- | --- | --- |
+| Текущий и предыдущий этап | `state.user.game_state` | YDB, `players.dialog` |
+| Возврат в новой сессии | Снимок из Диалогов | Снимок диалога, согласованный с ревизией партии |
+| Подтверждение после изменения позиции | Контекст одного навыка | Проверка `game_ref` и `dialog_revision` |
+
+Превращение пешки разбирается в ходе обработки хода. Реальные значения состояний
+перечислены в [skill_state.py](../../skill_state.py).

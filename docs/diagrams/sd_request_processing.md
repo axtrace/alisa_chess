@@ -1,76 +1,78 @@
+# Обработка голосового запроса
+
+## Прод
+
 ```mermaid
 sequenceDiagram
-    autonumber
-    loop Основной цикл обработки запросов
-        User->>Yandex_Dialogs: Запрос
-        Yandex_Dialogs->>alice_chess_skill: Запрос + интенты
-        
-        rect rgb(200, 200, 255)
-            Note over alice_chess_skill: Специальные интенты (не зависят от состояния)
-            alt Запрос = помощь
-                alice_chess_skill-->>Yandex_Dialogs: Ответ помощи
-                Yandex_Dialogs-->>User: Произнести помощь
-            else Запрос = показать доску
-                alice_chess_skill-->>Yandex_Dialogs: Текущая позиция
-                Yandex_Dialogs-->>User: Показать доску
-            else Запрос = новая игра
-                alice_chess_skill->>alice_chess_skill: game.set_skill_state('WAITING_NEWGAME_CONFIRM')
-                alice_chess_skill-->>Yandex_Dialogs: Запрос подтверждения
-                Yandex_Dialogs-->>User: Произнести запрос
-            else Запрос = уровень сложности
-                alice_chess_skill->>alice_chess_skill: game.set_skill_state('WAITING_SKILL_LEVEL')
-                alice_chess_skill-->>Yandex_Dialogs: Запрос уровня
-                Yandex_Dialogs-->>User: Произнести запрос
+    participant D as Яндекс Диалоги
+    participant F as alice_serverless.handler
+    participant A as AliceChess
+    participant G as Game
+    participant E as Stockfish 14.1
+    D->>F: Запрос, state.user и state.session
+    F->>A: handle_request(event)
+    alt Дубликат message_id
+        A-->>F: previous_response из session_state
+    else Новый запрос
+        A->>G: Восстановить GameState V1/V2
+        A->>A: Специальный интент или обработчик SkillState
+        alt YANDEX.REPEAT
+            A-->>F: previous_response из session_state
+        else Обычная команда
+            opt Нужен ответный ход
+                A->>G: comp_move()
+                G->>E: Ленивый запуск UCI и расчёт
+                E-->>G: Ход
             end
-        end
-
-        rect rgb(255, 200, 200)
-            Note over alice_chess_skill: Обработка состояний
-            alt Состояние == 'INITIATED'
-                alice_chess_skill->>alice_chess_skill: game.set_skill_state('WAITING_CONFIRM')
-                alice_chess_skill-->>Yandex_Dialogs: Приветствие
-                Yandex_Dialogs-->>User: Произнести приветствие
-            else Состояние == 'WAITING_CONFIRM'
-                alice_chess_skill->>alice_chess_skill: game.set_skill_state('WAITING_COLOR')
-                alice_chess_skill-->>Yandex_Dialogs: Запрос выбора цвета
-                Yandex_Dialogs-->>User: Произнести запрос цвета
-            else Состояние == 'WAITING_COLOR'
-                alt Цвет определен
-                    alice_chess_skill->>alice_chess_skill: game.set_user_color()
-                    alice_chess_skill->>alice_chess_skill: game.set_skill_state('WAITING_MOVE')
-                else Цвет не определен
-                    alice_chess_skill-->>Yandex_Dialogs: Сообщение об ошибке
-                    Yandex_Dialogs-->>User: Произнести ошибку
-                end
-            else Состояние == 'WAITING_MOVE'
-                opt Если пользователь выбрал ЧЕРНЫЙ
-                    alice_chess_skill->>alice_chess_skill: Ход компьютера
-                end
-                loop Пока игра не завершена
-                    alice_chess_skill-->>Yandex_Dialogs: Ход компьютера + доска
-                    Yandex_Dialogs-->>User: Показать ход + доска
-                    User->>Yandex_Dialogs: Новый запрос
-                    Yandex_Dialogs->>alice_chess_skill: Запрос + интенты
-                    alt Легальный ход
-                        alice_chess_skill->>alice_chess_skill: Обработка хода
-                        alt Требуется превращение пешки
-                            alice_chess_skill->>alice_chess_skill: game.set_skill_state('WAITING_PROMOTION')
-                        else Предложение ничьей
-                            alice_chess_skill->>alice_chess_skill: game.set_skill_state('WAITING_DRAW_CONFIRM')
-                        else Предложение сдачи
-                            alice_chess_skill->>alice_chess_skill: game.set_skill_state('WAITING_RESIGN_CONFIRM')
-                        else Игра продолжается
-                            alice_chess_skill->>alice_chess_skill: game.set_skill_state('WAITING_MOVE')
-                        end
-                    else Нелегальный ход
-                        alice_chess_skill-->>Yandex_Dialogs: Сообщение об ошибке
-                        Yandex_Dialogs-->>User: Произнести ошибку
-                    end
-                end
-                alice_chess_skill->>alice_chess_skill: game.set_skill_state('GAME_OVER')
-                alice_chess_skill-->>Yandex_Dialogs: Результат игры + доска
-                Yandex_Dialogs-->>User: Показать результат + доска
-            end
+            A-->>F: Ответ и обновлённые состояния
         end
     end
+    F->>G: Game.quit() при выходе из with AliceChess
+    Note over G,E: Созданный процесс Stockfish закрывается
+    F-->>D: response, user_state_update, session_state
+    D->>D: Сохранить позицию и контекст сессии
 ```
+
+## Тестовый навык
+
+Схема показывает обычную команду разрешённого аккаунта. Входной адаптер также
+может вернуть короткую сохранённую реплику из сессии или передать аккаунт вне
+пилота без `game_ref` продовому обработчику.
+
+```mermaid
+sequenceDiagram
+    participant D as Яндекс Диалоги
+    participant F as shared_alice_serverless.handler
+    participant A as SharedAlice
+    participant S as GameService
+    participant DB as YDB
+    participant C as AliceChess и VoiceGame
+    participant E as Stockfish 19
+    D->>F: Закрытый IAM-вызов с запросом и state
+    F->>F: Проверить функцию, навык, аккаунт и allowlist
+    F->>A: handle(event, owner)
+    A->>DB: Найти команду или сохранённый ответ
+    alt Команда уже завершена или запрошен повтор
+        DB-->>A: Сохранённый результат или полная реплика
+    else Новая команда
+        A->>S: execute() с ID команды и ревизиями
+        S->>DB: Транзакция резервирования
+        DB-->>S: Снимок партии, диалог и lease
+        S->>C: play_dialog() со штатными обработчиками
+        opt Нужен ответный ход
+            C->>E: Локальный UCI-расчёт вне транзакции YDB
+            E-->>C: Ход
+            Note over C,E: Процесс Stockfish закрывается
+        end
+        C-->>S: Позиция, этап диалога и ответ
+        S->>DB: Проверить lease и ревизию, сохранить всё одной транзакцией
+        DB-->>S: Записанный результат команды
+        S-->>A: Результат и ссылка на ответ
+    end
+    A-->>F: Ответ, совместимый снимок и game_ref
+    F-->>D: response, user_state_update, session_state
+```
+
+Ходы приложения проходят через Gateway и `ChessApi` в собственный экземпляр
+того же `GameService`. Конфликтующие операции проверяются по общей ревизии в YDB.
+Резервирование и завершение команды описаны в [архитектуре тестового контура](../architecture.md#тест).
