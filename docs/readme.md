@@ -77,16 +77,25 @@ erDiagram
 
 Игрок обращается к основному навыку через Алису. Платформа Диалогов передаёт позицию
 и этап разговора в каждом запросе и сохраняет обновления из ответа.
+Серый пунктирный контур объединяет компоненты на стороне платформы Яндекса.
 
 ```mermaid
 flowchart TB
-    U["Игрок"] <-->|Голос и ответы| D["Алиса / основной навык"]
+    U["Игрок"]
+    subgraph PLATFORM["Внешний контур Яндекса"]
+        D["Алиса / основной навык"]
+        S["Состояние Диалогов<br/>user.game_state и session"]
+        D <-->|Чтение и сохранение| S
+    end
+    U <-->|Голос и ответы| D
     D -->|Запрос и state| F["alice-chess-stable<br/>alice_serverless.handler"]
     F --> C["AliceChess и handlers"]
     C --> G["Game / python-chess"]
     G <-->|UCI| E["Stockfish 14.1<br/>процесс внутри функции"]
     F -->|response и обновления state| D
-    D <-->|Чтение и сохранение| S["Состояние Диалогов<br/>user.game_state и session"]
+    style PLATFORM fill:#f3f4f6,stroke:#9ca3af,stroke-dasharray:5 5,color:#4b5563
+    classDef external fill:#f3f4f6,stroke:#9ca3af,color:#374151
+    class D,S external
 ```
 
 ## Тест
