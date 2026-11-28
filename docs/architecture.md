@@ -30,11 +30,13 @@ Android-приложение общей партией в YDB.
 1. Диалоги передают `event` в [alice_serverless.handler](../alice_serverless.py).
 2. [AliceChess](../alice_chess.py) проверяет повторную доставку по `message_id`.
 3. Для нового запроса [GameState](../game_state.py) восстанавливает позицию и этап
-   диалога из `state.user.game_state`, при необходимости мигрируя V1 в V2.
+   диалога из `state.user.game_state` для аккаунта или `state.application.game_state`
+   для анонимного приложения, при необходимости мигрируя V1 в V2.
 4. [SpecialIntentHandler](../handlers/special_intent_handler.py) проверяет специальные
    команды. Затем выбирается обработчик текущего `SkillState`.
 5. Хендлер применяет ход через [Game](../game.py), при необходимости запрашивая Stockfish.
-6. Ответ содержит `response`, `user_state_update.game_state` и `session_state`.
+6. Ответ содержит `response`, `session_state` и выбранное обновление:
+   `user_state_update.game_state` для аккаунта или `application_state.game_state` для анонима.
    Диалоги сохраняют их для следующего запроса.
 
 Stockfish создаётся лениво при первом расчёте хода. Контекстный менеджер `AliceChess`
@@ -44,13 +46,17 @@ Stockfish создаётся лениво при первом расчёте х�
 
 | Данные | Где хранятся |
 | --- | --- |
-| Позиция, цвет, сложность, этап разговора, данные отмены | `state.user.game_state` |
+| Позиция, цвет, сложность, этап разговора, данные отмены | `state.user.game_state` для аккаунта; `state.application.game_state` для анонима |
 | Номер обработанного сообщения | `session_state.last_message_id` |
 | Полный предыдущий ответ | `session_state.previous_response` |
 
 Дубликат с тем же `message_id` возвращает сохранённый ответ. Команда `YANDEX.REPEAT`
 воспроизводит предыдущую реплику. `BaseHandler.safe_handle()` обрабатывает ошибку
 конкретного хендлера, а точка входа сохраняет доступное состояние при общей ошибке.
+Область выбирает [alice_state.py](../alice_state.py) по наличию `session.user.user_id`.
+Вход и выход из аккаунта не объединяют партии автоматически. Анонимная партия привязана
+к экземпляру приложения, а не к человеку; ограничения и ручная проверка описаны
+в [документе об анонимной игре](anonymous-games.md).
 
 ## Тест
 
@@ -64,6 +70,10 @@ Stockfish создаётся лениво при первом расчёте х�
 проверка ID функции и навыка и постоянный `session.user.user_id`.
 [dialogs_owner](../shared_chess/dialogs_identity.py) получает псевдонимный ключ игрока,
 привязанный к аккаунту и навыку.
+Для анонима ключ имеет отдельный префикс `dialogs-application:` и зависит от навыка и
+`session.application.application_id`. Для такого ключа требуется отдельный явный допуск
+`SHARED_DIALOGS_ALLOWED_APPLICATION_OWNER`; без него аноним играет через контекст приложения.
+Проверки закрытого IAM-входа обязательны для обоих видов идентичности.
 
 [SharedAlice](../shared_chess/alice.py) обрабатывает повторы, привязку экрана и передачу
 голосовой команды в [GameService](../shared_chess/service.py).
@@ -101,7 +111,7 @@ SQLite доступна при явном `CHESS_STORAGE=sqlite` для лока
 | Резервирование, lease и результат команды | YDB, `commands` |
 | Полные неизменяемые ответы Алисы | YDB, `replies` |
 | Привязки и сессии устройств | YDB, `pairings` и `device_sessions` |
-| Совместимый снимок и ссылка на партию | `user_state_update.game_state` и `game_ref` |
+| Совместимый снимок и ссылка на партию | `game_state` и `game_ref` в `user_state_update` для аккаунта или `application_state` для анонима |
 | Ссылка на ответ или короткий ответ | `session_state.previous_response` |
 
 1. Сервис проверяет ID команды и ожидаемые ревизии, затем резервирует операцию

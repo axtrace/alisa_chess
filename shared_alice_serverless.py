@@ -2,6 +2,7 @@
 
 import os
 
+from alice_state import has_account, player_state, player_state_update
 from logging_config import setup_logging
 from metrics import measure_skill_request
 from shared_chess.replies import inline_state
@@ -17,7 +18,7 @@ def handler(event, context):
 
 
 def _handle(event, context):
-    user = event.get('state', {}).get('user', {})
+    user = player_state(event)
     enabled = os.environ.get('SHARED_GAMES_ENABLED', '').lower() == 'true'
     # Existing users stay on the current handler until explicitly enabled and linked.
     if not enabled and not user.get('game_ref'):
@@ -40,7 +41,7 @@ def _handle(event, context):
             'version': '1.0',
             'session': session,
             'response': previous['response'],
-            'user_state_update': user,
+            **player_state_update(session, user),
             'session_state': {**session_state, 'last_message_id': session.get('message_id')},
         }
     access_token = (session.get('user') or {}).get('access_token', '')
@@ -57,10 +58,13 @@ def _handle(event, context):
                     'version': '1.0',
                     'session': session,
                     'response': response,
-                    'user_state_update': user,
+                    **player_state_update(session, user),
                     'session_state': state,
                 }
-            if not owner or owner != os.environ.get('SHARED_DIALOGS_ALLOWED_OWNER'):
+            setting = (
+                'SHARED_DIALOGS_ALLOWED_OWNER' if has_account(session) else 'SHARED_DIALOGS_ALLOWED_APPLICATION_OWNER'
+            )
+            if not owner or owner != os.environ.get(setting):
                 if user.get('game_ref'):
                     raise ValueError('Shared player is not enabled')
                 from alice_serverless import handler as legacy
@@ -88,6 +92,6 @@ def _handle(event, context):
             'version': '1.0',
             'session': session,
             'response': response,
-            'user_state_update': user,
+            **player_state_update(session, user),
             'session_state': state,
         }

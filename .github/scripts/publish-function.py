@@ -38,7 +38,7 @@ def expected_environment(target, current):
     owner = current.get('SHARED_DIALOGS_ALLOWED_OWNER', '')
     if not re.fullmatch(r'dialogs:[0-9a-f]{64}', owner):
         raise ValueError('Missing or invalid tester allowlist on the current testing version')
-    return {
+    environment = {
         **YDB,
         'DEBUG': 'True',
         'COUNT': '1',
@@ -49,6 +49,13 @@ def expected_environment(target, current):
         'SHARED_DIALOGS_SKILL_ID': '462df9a1-7fb1-41d4-8082-810aad12ce69',
         'SHARED_DIALOGS_FUNCTION_ID': TARGETS['testing'][0],
     }
+    # Отдельный допуск анонимного приложения сохраняется только если уже задан.
+    application = current.get('SHARED_DIALOGS_ALLOWED_APPLICATION_OWNER')
+    if application is not None:
+        if not re.fullmatch(r'dialogs-application:[0-9a-f]{64}', application):
+            raise ValueError('Invalid anonymous application allowlist')
+        environment['SHARED_DIALOGS_ALLOWED_APPLICATION_OWNER'] = application
+    return environment
 
 
 def publish():

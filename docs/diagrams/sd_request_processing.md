@@ -9,7 +9,8 @@ sequenceDiagram
     participant A as AliceChess
     participant G as Game
     participant E as Stockfish 14.1
-    D->>F: Запрос, state.user и state.session
+    D->>F: Запрос, state.user / state.application и state.session
+    Note over F,A: Аккаунт — user; аноним — application
     F->>A: handle_request(event)
     alt Дубликат message_id
         A-->>F: previous_response из session_state
@@ -29,7 +30,7 @@ sequenceDiagram
     end
     F->>G: Game.quit() при выходе из with AliceChess
     Note over G,E: Созданный процесс Stockfish закрывается
-    F-->>D: response, user_state_update, session_state
+    F-->>D: response, user_state_update / application_state, session_state
     D->>D: Сохранить позицию и контекст сессии
 ```
 
@@ -49,7 +50,7 @@ sequenceDiagram
     participant C as AliceChess и VoiceGame
     participant E as Stockfish 19
     D->>F: Закрытый IAM-вызов с запросом и state
-    F->>F: Проверить функцию, навык, аккаунт и allowlist
+    F->>F: Проверить функцию, навык, аккаунт / приложение и его allowlist
     F->>A: handle(event, owner)
     A->>DB: Найти команду или сохранённый ответ
     alt Команда уже завершена или запрошен повтор
@@ -70,7 +71,7 @@ sequenceDiagram
         S-->>A: Результат и ссылка на ответ
     end
     A-->>F: Ответ, совместимый снимок и game_ref
-    F-->>D: response, user_state_update, session_state
+    F-->>D: response, user_state_update / application_state, session_state
 ```
 
 Ходы приложения проходят через Gateway и `ChessApi` в собственный экземпляр

@@ -1,6 +1,7 @@
 import logging
 
 from alice_chess import AliceChess
+from alice_state import player_state, player_state_update
 from logging_config import (
     bind_request_context,
     clear_request_context,
@@ -42,6 +43,7 @@ def handler(event, context):
 
     bind_request_context(**_extract_request_ids(event))
     alice = None
+    game_state = player_state(event).get('game_state')
     try:
         with measure_skill_request('legacy'):
             # Инициализируем класс для обработки запросов с контекстным менеджером
@@ -55,7 +57,7 @@ def handler(event, context):
             'version': '1.0',
             'session': event['session'],
             'response': response,
-            'user_state_update': {'game_state': game_state},
+            **player_state_update(event['session'], {'game_state': game_state}),
             'session_state': session_state,
         }
     except Exception as e:
@@ -63,7 +65,6 @@ def handler(event, context):
         logger.error(f'Error in handler: {str(e)}')
 
         # Пытаемся сохранить состояние игры, если оно было инициализировано
-        game_state = None
         try:
             if alice is not None:
                 game_state = alice.get_game_state()
@@ -79,7 +80,7 @@ def handler(event, context):
                 'text': error_text,
                 'end_session': True,
             },
-            'user_state_update': {'game_state': game_state} if game_state else {},
+            **player_state_update(event['session'], {'game_state': game_state} if game_state else {}),
             'session_state': {
                 'previous_response': {
                     'tts': 'Произошла ошибка при обработке запроса',

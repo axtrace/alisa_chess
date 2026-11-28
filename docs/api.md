@@ -78,6 +78,10 @@ class Speaker:
 
 ## Форматы данных
 
+Состояние аккаунта читается из `state.user` и возвращается в `user_state_update`.
+Без `session.user.user_id` используется `state.application` → `application_state`.
+`session.user_id` устарел и не обозначает аккаунт; [контракт анонимной игры](anonymous-games.md).
+
 ### 1. Входящий запрос
 ```json
 {
@@ -138,4 +142,4 @@ else:
 if game.is_game_over():
     result = game.get_game_result()
     response = f'Игра окончена. Результат: {result}'
-``` 
+```

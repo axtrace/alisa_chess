@@ -84,7 +84,7 @@ flowchart TB
     U["Игрок"]
     subgraph PLATFORM["Внешний контур Яндекса"]
         D["Алиса / основной навык"]
-        S["Состояние Диалогов<br/>user.game_state и session"]
+        S["Состояние Диалогов<br/>user.game_state / application.game_state<br/>и session"]
         D <-->|Чтение и сохранение| S
     end
     U <-->|Голос и ответы| D
@@ -249,8 +249,9 @@ NFR-3: Надежность
 
 Основной навык использует функцию `alice-chess-stable` с точкой входа
 `alice_serverless.handler`. `AliceChess` восстанавливает `GameStateV2` из
-`state.user.game_state`, выбирает обработчик по `SkillState` и возвращает
-обновлённую позицию через `user_state_update.game_state`.
+`state.user.game_state` для аккаунта или `state.application.game_state` для анонима,
+выбирает обработчик по `SkillState` и возвращает обновлённую позицию через
+`user_state_update.game_state` или `application_state.game_state` соответственно.
 
 Повторная доставка проверяется по `session_state.last_message_id`.
 Полный предыдущий ответ хранится в `session_state.previous_response` и используется
@@ -277,6 +278,9 @@ YDB хранит партию, этап разговора, журнал ком�
 Для аккаунтов вне пилота без `game_ref` тестовая функция использует обработчик
 `alice_serverless.handler`. Для уже перенесённой партии ошибка доступа или YDB
 возвращает сообщение о недоступности с сохранением входного состояния.
+Анонимное приложение получает отдельный ключ YDB и требует отдельного допуска в пилот.
+Без допуска оно использует `application_state`. Автоматического переноса между
+аккаунтом и анонимным приложением нет; [контракт анонимной игры](anonymous-games.md).
 
 ## Документы и схемы
 

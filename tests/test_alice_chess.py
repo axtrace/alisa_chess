@@ -210,7 +210,12 @@ class TestAliceChess(unittest.TestCase):
         }
 
         test_request = {
-            'session': {'new': True, 'message_id': 0, 'session_id': 'test-session-id', 'user_id': 'test-user-id'},
+            'session': {
+                'new': True,
+                'message_id': 0,
+                'session_id': 'test-session-id',
+                'user': {'user_id': 'test-user-id'},
+            },
             'state': {'user': {'game_state': saved_game_state}},
             'request': {'command': '', 'original_utterance': '', 'nlu': {'tokens': [], 'entities': [], 'intents': {}}},
         }
@@ -230,7 +235,12 @@ class TestAliceChess(unittest.TestCase):
     def test_new_session_without_saved_state(self):
         """Тест обработки новой сессии без сохраненного состояния."""
         test_request = {
-            'session': {'new': True, 'message_id': 0, 'session_id': 'test-session-id', 'user_id': 'test-user-id'},
+            'session': {
+                'new': True,
+                'message_id': 0,
+                'session_id': 'test-session-id',
+                'user': {'user_id': 'test-user-id'},
+            },
             'state': {'user': {}},
             'request': {'command': '', 'original_utterance': '', 'nlu': {'tokens': [], 'entities': [], 'intents': {}}},
         }
@@ -253,7 +263,12 @@ class TestAliceChess(unittest.TestCase):
         }
 
         test_request = {
-            'session': {'new': True, 'message_id': 0, 'session_id': 'test-session-id', 'user_id': 'test-user-id'},
+            'session': {
+                'new': True,
+                'message_id': 0,
+                'session_id': 'test-session-id',
+                'user': {'user_id': 'test-user-id'},
+            },
             'state': {'user': {'game_state': saved_game_state}},
             'request': {'command': '', 'original_utterance': '', 'nlu': {'tokens': [], 'entities': [], 'intents': {}}},
         }
@@ -273,7 +288,12 @@ class TestAliceChess(unittest.TestCase):
         }
 
         test_request = {
-            'session': {'new': True, 'message_id': 0, 'session_id': 'test-session-id', 'user_id': 'test-user-id'},
+            'session': {
+                'new': True,
+                'message_id': 0,
+                'session_id': 'test-session-id',
+                'user': {'user_id': 'test-user-id'},
+            },
             'state': {'user': {'game_state': saved_game_state}},
             'request': {'command': '', 'original_utterance': '', 'nlu': {'tokens': [], 'entities': [], 'intents': {}}},
         }
@@ -299,7 +319,12 @@ class TestAliceChess(unittest.TestCase):
         }
 
         test_request = {
-            'session': {'new': True, 'message_id': 0, 'session_id': 'test-session-id', 'user_id': 'test-user-id'},
+            'session': {
+                'new': True,
+                'message_id': 0,
+                'session_id': 'test-session-id',
+                'user': {'user_id': 'test-user-id'},
+            },
             'state': {'user': {'game_state': saved_game_state}},
             'request': {
                 'command': 'e2e4',

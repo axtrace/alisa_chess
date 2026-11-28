@@ -19,7 +19,7 @@ import alice_serverless
 import shared_alice_serverless
 from shared_chess.auth import DeviceAuth
 from shared_chess.dialogs_identity import dialogs_owner
-from shared_chess.repository import SQLiteRepository
+from shared_chess.repository import SQLiteRepository, encode
 from shared_chess.service import GameService
 
 DATA = Path(__file__).parent / 'fixtures' / 'voice_dialog'
@@ -109,7 +109,7 @@ def old_game():
     }
 
 
-def play(scenario, handler, context, account, engine, current=None):
+def play(scenario, handler, context, account, engine, current=None, *, anonymous=False):
     user = {} if scenario == 'black' else old_game()
     session = {}
     turns = []
@@ -117,10 +117,15 @@ def play(scenario, handler, context, account, engine, current=None):
     for index, (command, intents) in enumerate(SCENARIOS[scenario]):
         event = make_event(command, intents, message_id=index, new=index == 0)
         event['session']['user']['user_id'] = account
-        event['state'].update(user=deepcopy(user), session=deepcopy(session))
+        if anonymous:
+            event['session'].pop('user')
+            event['session']['application']['application_id'] = account
+        scope, output = ('application', 'application_state') if anonymous else ('user', 'user_state_update')
+        event['state'].update({scope: deepcopy(user), 'session': deepcopy(session)})
         calls = engine.play.call_count
         reply = handler(event, context)
-        user, session = reply['user_state_update'], reply['session_state']
+        user, session = reply[output], reply['session_state']
+        assert ('user_state_update' if anonymous else 'application_state') not in reply
         game = user.get('game_state', {})
         turn = {
             'response': reply['response'],
@@ -131,6 +136,8 @@ def play(scenario, handler, context, account, engine, current=None):
             'engine_calls': engine.play.call_count - calls,
         }
         if current:
+            assert len(encode(session).encode()) <= 1024
+            assert len(encode(user).encode()) <= 1024
             snapshot = current()
             if game.get('user_color'):
                 assert snapshot['fen'] == turn['fen']
@@ -147,7 +154,7 @@ def play(scenario, handler, context, account, engine, current=None):
                 # Первый ответ потерян: Диалоги ещё не получили новые state и game_ref.
                 replay = handler(deepcopy(event), context)
                 assert replay == reply
-            event['state'].update(user=deepcopy(user), session=deepcopy(session))
+            event['state'].update({scope: deepcopy(user), 'session': deepcopy(session)})
             duplicate = handler(event, context)
             assert duplicate == reply
             assert engine.play.call_count == calls_after_move
@@ -160,7 +167,8 @@ def play(scenario, handler, context, account, engine, current=None):
 
 
 @pytest.mark.parametrize('scenario', SCENARIOS)
-def test_dialog_parity(scenario, repository, monkeypatch, _stub_stockfish_engine):
+@pytest.mark.parametrize('anonymous', [False, True], ids=['account', 'anonymous'])
+def test_dialog_parity(scenario, anonymous, repository, monkeypatch, _stub_stockfish_engine):
     context = SimpleNamespace(function_name='parity-function')
     account = 'parity-' + str(uuid4())
     monkeypatch.setenv('SHARED_GAMES_ENABLED', 'true')
@@ -169,8 +177,12 @@ def test_dialog_parity(scenario, repository, monkeypatch, _stub_stockfish_engine
     event = make_event('')
     monkeypatch.setenv('SHARED_DIALOGS_SKILL_ID', event['session']['skill_id'])
     event['session']['user']['user_id'] = account
+    if anonymous:
+        event['session'].pop('user')
+        event['session']['application']['application_id'] = account
     owner = dialogs_owner(event, context)
-    monkeypatch.setenv('SHARED_DIALOGS_ALLOWED_OWNER', owner)
+    setting = 'SHARED_DIALOGS_ALLOWED_APPLICATION_OWNER' if anonymous else 'SHARED_DIALOGS_ALLOWED_OWNER'
+    monkeypatch.setenv(setting, owner)
     service = GameService(repository)
     monkeypatch.setattr('shared_chess.runtime.services', lambda: (repository, service, DeviceAuth(repository)))
 
@@ -178,8 +190,16 @@ def test_dialog_parity(scenario, repository, monkeypatch, _stub_stockfish_engine
     engine.play.return_value.move = chess.Move.from_uci('e2e4' if scenario == 'black' else 'b8c6')
     _stub_stockfish_engine.side_effect = None
     _stub_stockfish_engine.return_value = engine
-    legacy = play(scenario, alice_serverless.handler, context, account, engine)
-    pilot = play(scenario, shared_alice_serverless.handler, context, account, engine, lambda: service.current(owner))
+    legacy = play(scenario, alice_serverless.handler, context, account, engine, anonymous=anonymous)
+    pilot = play(
+        scenario,
+        shared_alice_serverless.handler,
+        context,
+        account,
+        engine,
+        lambda: service.current(owner),
+        anonymous=anonymous,
+    )
     # Сравниваем весь response, включая кнопки, если они появились.
     if (DATA / f'{scenario}.json').exists():
         expected = json.loads((DATA / f'{scenario}.json').read_text())

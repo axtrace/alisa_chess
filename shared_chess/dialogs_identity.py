@@ -21,8 +21,14 @@ def dialogs_owner(event, context):
     if session.get('skill_id') != skill_id:
         raise ValueError('Unexpected skill')
     user_id = (session.get('user') or {}).get('user_id')
-    if user_id is None:
-        return None  # Anonymous application IDs are not an account identity.
-    if not isinstance(user_id, str) or not 1 <= len(user_id) <= 128:
-        raise ValueError('Invalid account identity')
-    return 'dialogs:' + hashlib.sha256(encode([skill_id, user_id]).encode()).hexdigest()
+    if user_id is not None:
+        if not isinstance(user_id, str) or not 1 <= len(user_id) <= 128:
+            raise ValueError('Invalid account identity')
+        # Сохраняем ключи уже перенесённых аккаунтов без изменений.
+        return 'dialogs:' + hashlib.sha256(encode([skill_id, user_id]).encode()).hexdigest()
+    application_id = (session.get('application') or {}).get('application_id')
+    if application_id is None:
+        return None
+    if not isinstance(application_id, str) or not 1 <= len(application_id) <= 128:
+        raise ValueError('Invalid application identity')
+    return 'dialogs-application:' + hashlib.sha256(encode([skill_id, application_id]).encode()).hexdigest()

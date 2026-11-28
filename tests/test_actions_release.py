@@ -90,3 +90,18 @@ def test_wrong_pilot_configuration_stops_before_upload(pipeline):
     with pytest.raises(RuntimeError, match='configuration'):
         release.publish()
     assert len(calls) == 1
+
+
+def test_publish_preserves_explicit_anonymous_allowlist(pipeline):
+    _, state = pipeline('testing')
+    owner = 'dialogs-application:' + 'b' * 64
+    state['environment']['SHARED_DIALOGS_ALLOWED_APPLICATION_OWNER'] = owner
+    release.publish()
+    assert state['environment']['SHARED_DIALOGS_ALLOWED_APPLICATION_OWNER'] == owner
+
+
+def test_publish_does_not_enroll_anonymous_applications():
+    environment = release.expected_environment('testing', {'SHARED_DIALOGS_ALLOWED_OWNER': 'dialogs:' + 'f' * 64})
+    assert 'SHARED_DIALOGS_ALLOWED_APPLICATION_OWNER' not in environment
+    with pytest.raises(ValueError, match='anonymous application'):
+        release.expected_environment('testing', {**environment, 'SHARED_DIALOGS_ALLOWED_APPLICATION_OWNER': '*all*'})

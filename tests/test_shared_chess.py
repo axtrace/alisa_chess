@@ -248,7 +248,7 @@ def test_http_rejects_forged_owner_and_recovers_response(core):
 
 def alice_event(message, text, user=None, state=None):
     return {
-        'session': {'skill_id': 'skill', 'session_id': 'dialog', 'message_id': message},
+        'session': {'skill_id': 'skill', 'session_id': 'dialog', 'message_id': message, 'user': {'user_id': 'account'}},
         'request': {'command': text, 'nlu': {'intents': {}}},
         'state': {'user': user or {}, 'session': state or {}},
     }

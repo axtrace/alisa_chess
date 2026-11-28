@@ -1,5 +1,6 @@
 import logging
 
+from alice_state import player_state
 from game import Game
 from handlers.game_over_handler import GameOverHandler
 from handlers.initiated_handler import InitiatedHandler
@@ -68,10 +69,10 @@ class AliceChess:
         session_state = request.get('state', {}).get('session', {})
         last_message_id = session_state.get('last_message_id')
 
-        state = request.get('state', {}).get('user', {}).get('game_state', {})
-        self._replayed_game_state = None
+        state = player_state(request).get('game_state', {})
+        # Если восстановление Game упадёт, точка входа сохранит входную партию.
+        self._replayed_game_state = state
         if current_message_id is not None and current_message_id == last_message_id:
-            self._replayed_game_state = state
             self.session_state = session_state
             logger.info(f'Идемпотентность: пропускаем дублирующий запрос message_id={current_message_id}')
             # Возвращаем предыдущий ответ из session_state
@@ -82,6 +83,7 @@ class AliceChess:
                 return {'text': 'Повторный запрос пропущен', 'tts': 'Повторный запрос пропущен', 'end_session': False}
 
         self.game = self._game_factory(game_state=state)
+        self._replayed_game_state = None
 
         # Сначала проверяем специальные интенты, не зависящие от состояния
         special_intent_handler = SpecialIntentHandler(self.game, request)
