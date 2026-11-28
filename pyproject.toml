@@ -45,6 +45,7 @@ Repository = "https://github.com/Sofinma/alisa_chess"
 py-modules = [
     "alice_chess",
     "alice_serverless",
+    "alice_state",
     "app_serverless",
     "shared_alice_serverless",
     "game",

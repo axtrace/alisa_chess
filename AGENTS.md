@@ -8,7 +8,7 @@ Instructions for LLM agents (Codex, Cursor, Cline, Continue, Claude Code, etc.) 
 
 ## 1. About the project in one paragraph
 
-`alisa_chess` is a voice chess skill for Yandex Alice. It is deployed as a Yandex Cloud Function ([`alice_serverless.handler`](alice_serverless.py:7)). Engine moves are computed by a local Stockfish binary launched via UCI using [python-chess](https://github.com/niklasf/python-chess). Game state is passed between requests via `state.user.game_state` (the schema is described in [`game_state.py`](game_state.py:1)).
+`alisa_chess` is a voice chess skill for Yandex Alice. It is deployed as a Yandex Cloud Function ([`alice_serverless.handler`](alice_serverless.py:7)). Engine moves are computed by a local Stockfish binary launched via UCI using [python-chess](https://github.com/niklasf/python-chess). Game state is passed via `state.user.game_state` for accounts or `state.application.game_state` for anonymous applications. Scope selection is in [`alice_state.py`](alice_state.py); the schema is in [`game_state.py`](game_state.py).
 
 ---
 
@@ -20,7 +20,7 @@ These are contracts that must NOT be broken. If it seems a task requires breakin
 2. **`engine.quit()` is mandatory**. The current solution is [`Game.__exit__`](game.py:179) and `with AliceChess() as alice` in [`alice_serverless.handler`](alice_serverless.py:18). Any code path that opens the engine must guarantee it is closed.
 3. **Idempotency by `message_id`**. A repeated request with the same `message_id` must return `previous_response` from `session_state` without a second engine move.
 4. **`YANDEX.REPEAT` lives in `session_state.previous_response`**, not in `user_state_update`.
-5. **`user_state_update` is ALWAYS saved**, including in the catch-all. Never return a response without `user_state_update` when state exists — this would lose the player's game.
+5. **The selected player state is ALWAYS saved**, including in the catch-all: `user_state_update` for `session.user.user_id`, otherwise `application_state`. Never use the deprecated `session.user_id` as an account ID or implicitly merge the two scopes. Preserve input game state if initialization or restoration fails.
 6. **The session is NOT closed on a handler error**. `end_session: True` — only in the catastrophic catch in [`alice_serverless`](alice_serverless.py:34) and on `GAME_OVER`.
 7. **State serialization is via Pydantic** ([`GameStateV2`](game_state.py:60)) with versioning (`_version`) and graceful V1→V2 migration.
 8. **`SkillState` is an enum** ([`skill_state.py`](skill_state.py:4)). When comparing states, prefer `SkillState.WAITING_MOVE` over the string `'WAITING_MOVE'` (migration in progress — task №11).
@@ -38,6 +38,12 @@ Legacy response objects remain supported. A `game_ref` binds subsequent answers 
 revision and `dialog_revision`. Dialogue snapshots are also bound to the game's ID and revision
 so older device API releases can safely update the same game. Comparative tests cover complete
 response payloads and positions. See [shared voice dialogue](docs/shared-voice-dialog.md).
+Anonymous YDB owners use a distinct `dialogs-application:` namespace scoped to skill and
+application ID. They require their own `SHARED_DIALOGS_ALLOWED_APPLICATION_OWNER` pilot
+allowlist; account enrollment never enables anonymous applications. Without enrollment,
+anonymous players use the legacy handler and application state. IAM transport checks also
+apply to application IDs; public device requests cannot authenticate with JSON IDs.
+See [anonymous games](docs/anonymous-games.md).
 
 ---
 
@@ -49,6 +55,7 @@ response payloads and positions. See [shared voice dialogue](docs/shared-voice-d
 | Coordinator | [`alice_chess.py`](alice_chess.py:1) | `AliceChess`, routing by `SkillState`, idempotency, `session_state` |
 | Game model | [`game.py`](game.py:1) | `Game`: `chess.Board` wrapper + UCI, lazy engine |
 | State | [`game_state.py`](game_state.py:1) | Pydantic schemas V1/V2, migrations, (de)serialize |
+| Player scope | [`alice_state.py`](alice_state.py) | Account/application state selection, including errors and replay |
 | State enum | [`skill_state.py`](skill_state.py:1) | `SkillState` |
 | Handlers | [`handlers/`](handlers/) | One file per state, inherit [`BaseHandler`](handlers/base_handler.py:8) |
 | Move parser | [`move_extractor.py`](move_extractor.py:1) | Extracts a move from intents and text (RU/EN, SAN, long notation) |
@@ -150,7 +157,7 @@ Any response fields (`response.text`, `response.tts`, `end_session`, `buttons`) 
 | An `AliceChess` mock does not work in the serverless test | The code uses `with AliceChess() as alice:`, the actual object is `__enter__()` | `mock_instance.__enter__.return_value = mock_instance` |
 | `_find_matching_moves` returns empty on a mock | `board.legal_moves` on a MagicMock is an empty collection | Replace `game.board` with a real `chess.Board(fen)` |
 | `previous_response` is lost between moves | It is written to `user_state_update` instead of `session_state` | Store it in `session_state.previous_response` |
-| The game "forgets" the match after an error | `user_state_update` is not passed in the error response | Snapshot the input state → the catastrophic catch returns it |
+| The game "forgets" the match after an error | The selected player state is not passed in the error response | Snapshot input state → the catastrophic catch returns `user_state_update` or `application_state` |
 
 ---
 

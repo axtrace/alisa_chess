@@ -62,7 +62,8 @@ def play_dialog(state, snapshot, payload, engine):
     event = {
         'session': payload['session'],
         'request': payload['request'],
-        'state': {'user': {'game_state': snapshot}, 'session': {}},
+        # Внутренний вызов не содержит аккаунта; снимок уже выбран по owner.
+        'state': {'application': {'game_state': snapshot}, 'session': {}},
     }
     # Сохраняем поддержку произнесённых координат без NLU в прежнем пилоте.
     if snapshot.get('skill_state') == SkillState.WAITING_MOVE and not payload['request'].get('nlu', {}).get('intents'):

@@ -17,7 +17,15 @@ COMMON = (
     'position_query.py',
     'speaker.py',
 )
-SKILL = ('alice_serverless.py', 'alice_chess.py', 'logging_config.py', 'text_preparer.py', 'texts.py', 'tts_builder.py')
+SKILL = (
+    'alice_serverless.py',
+    'alice_chess.py',
+    'alice_state.py',
+    'logging_config.py',
+    'text_preparer.py',
+    'texts.py',
+    'tts_builder.py',
+)
 
 
 def build(engine, destination, include_skill=False, *, target=None):

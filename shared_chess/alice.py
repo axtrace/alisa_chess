@@ -4,6 +4,7 @@ import hashlib
 import re
 import uuid
 
+from alice_state import player_state, player_state_update
 from position_query import position_query
 from request_validators.intent_validator import IntentValidator
 from shared_chess.replies import inline_state, resolve_reply
@@ -26,7 +27,7 @@ class SharedAlice:
             response, state = inline_state(
                 event['session']['message_id'], 'Номер сообщения уже использован. Повторите запрос новым сообщением.'
             )
-            return self._envelope(event['session'], response, event.get('state', {}).get('user', {}), state)
+            return self._envelope(event['session'], response, player_state(event), state)
         result = self._handle(event, owner, request_hash)
         result['session_state']['request_hash'] = request_hash
         return result
@@ -40,7 +41,7 @@ class SharedAlice:
             'message_id': message_id,
             'input_hash': request_hash,
         }
-        user = dict(event.get('state', {}).get('user', {}))
+        user = dict(player_state(event))
         saved = event.get('state', {}).get('session', {})
         request = event.get('request', {})
         text = request.get('command', '').strip().lower()
@@ -175,6 +176,6 @@ class SharedAlice:
             'version': '1.0',
             'session': session,
             'response': response,
-            'user_state_update': user,
+            **player_state_update(session, user),
             'session_state': state,
         }
